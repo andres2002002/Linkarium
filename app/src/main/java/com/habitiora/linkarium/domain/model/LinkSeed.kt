@@ -1,12 +1,15 @@
 package com.habitiora.linkarium.domain.model
 
 import android.net.Uri
+import java.time.LocalDateTime
 
-data class LinkSeed(
-    val name: String,
-    val links: List<Uri>,
-    val isFavorite: Boolean = false,
-    val notes: String? = null,
-    val tags: List<String> = emptyList(),
-    val date: Long = System.currentTimeMillis()
-)
+interface LinkSeed{
+    val id: Long
+    val name: String
+    val links: List<Uri>
+    val collection: Long
+    val isFavorite: Boolean
+    val notes: String?
+    val tags: List<String>
+    val modifiedAt: LocalDateTime
+}

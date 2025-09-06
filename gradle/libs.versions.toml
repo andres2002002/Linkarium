@@ -17,6 +17,10 @@ daggerHilt = "2.57.1"
 
 datastore = "1.1.7"
 
+room = "2.7.2"
+
+json = "2.13.1"
+
 junitJupiter = "5.13.4"
 
 timber = "5.0.1"
@@ -50,6 +54,13 @@ androidx-datastore-preferences = { group ="androidx.datastore", name = "datastor
 
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "daggerHilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "daggerHilt" }
+
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+room-pagin = { group = "androidx.room", name = "room-paging", version.ref = "room" }
+
+google-gson = { group = "com.google.code.gson", name = "gson", version.ref = "json" }
 
 junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junitJupiter" }
 

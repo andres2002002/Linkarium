@@ -87,6 +87,15 @@ dependencies {
     //DataStore
     implementation(libs.androidx.datastore.preferences)
 
+    //room
+    implementation(libs.room.runtime)
+    ksp(libs.room.compiler)
+    implementation(libs.room.ktx)
+    implementation(libs.room.pagin)
+
+    //gson
+    implementation(libs.google.gson)
+
     //test
     testImplementation(libs.junit.jupiter)
 
