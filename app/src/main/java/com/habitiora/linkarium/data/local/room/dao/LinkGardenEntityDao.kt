@@ -30,7 +30,7 @@ interface LinkGardenEntityDao {
     fun getAll(): Flow<List<LinkGardenEntity>>
     @Transaction
     @Query("SELECT * FROM $TABLE_NAME WHERE id = :id")
-    fun getGardenWithSeeds(id: Long): Flow<GardenWithSeeds>
+    fun getGardenWithSeeds(id: Long): Flow<GardenWithSeeds?>
 
     @Query("SELECT * FROM $TABLE_NAME WHERE id = :id")
     fun getById(id: Long): Flow<LinkGardenEntity?>

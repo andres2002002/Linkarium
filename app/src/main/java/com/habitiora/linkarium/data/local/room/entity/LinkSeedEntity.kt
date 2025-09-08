@@ -47,4 +47,24 @@ data class LinkSeedEntity(
     override val tags: List<String> = emptyList(),
     @ColumnInfo(name = DatabaseContract.LinkSeed.COLUMN_DATE_TIME)
     override val modifiedAt: LocalDateTime = LocalDateTime.now()
-): LinkSeed
+) : LinkSeed {
+    override fun update(
+        id: Long,
+        name: String,
+        links: List<Uri>,
+        collection: Long,
+        isFavorite: Boolean,
+        notes: String?,
+        tags: List<String>,
+        modifiedAt: LocalDateTime
+    ): LinkSeed = LinkSeedEntity(
+        id = id,
+        name = name,
+        links = links,
+        collection = collection,
+        isFavorite = isFavorite,
+        notes = notes,
+        tags = tags,
+        modifiedAt = modifiedAt
+    )
+}

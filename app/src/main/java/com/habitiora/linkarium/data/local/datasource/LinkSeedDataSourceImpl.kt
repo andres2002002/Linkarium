@@ -1,19 +1,16 @@
-package com.habitiora.linkarium.data.repository
+package com.habitiora.linkarium.data.local.datasource
 
 import com.habitiora.linkarium.data.local.room.dao.LinkSeedEntityDao
-import com.habitiora.linkarium.data.local.room.entity.LinkSeedEntity
-import com.habitiora.linkarium.data.local.usecase.toDomain
 import com.habitiora.linkarium.data.local.usecase.toEntity
 import com.habitiora.linkarium.domain.model.LinkSeed
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class LinkSeedRepositoryImp @Inject constructor(
+class LinkSeedDataSourceImpl @Inject constructor(
     private val dao: LinkSeedEntityDao
-): LinkSeedRepository {
+): LinkSeedDataSource {
 
     override suspend fun insert(linkSeed: LinkSeed): Long =
         dao.insert(linkSeed.toEntity())

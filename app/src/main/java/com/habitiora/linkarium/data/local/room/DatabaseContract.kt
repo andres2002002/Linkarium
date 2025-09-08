@@ -1,5 +1,7 @@
 package com.habitiora.linkarium.data.local.room
 
+import com.habitiora.linkarium.data.local.room.entity.GardenWithSeeds
+import com.habitiora.linkarium.data.local.room.entity.LinkGardenEntity
 import com.habitiora.linkarium.data.local.room.entity.LinkSeedEntity
 
 object DatabaseContract {
@@ -26,5 +28,12 @@ object DatabaseContract {
         const val COLUMN_ID = "id"
         const val COLUMN_NAME = "name"
         const val COLUMN_DESCRIPTION = "description"
+    }
+
+    object LinkGardenWithSeeds {
+        val Empty = GardenWithSeeds(
+            garden = LinkGardenEntity(0, "", ""),
+            seeds = emptyList()
+        )
     }
 }

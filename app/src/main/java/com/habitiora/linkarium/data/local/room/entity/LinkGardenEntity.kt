@@ -18,4 +18,14 @@ data class LinkGardenEntity(
     override val name: String,
     @ColumnInfo(name = DatabaseContract.LinkGarden.COLUMN_DESCRIPTION)
     override val description: String = "",
-): LinkGarden
+): LinkGarden{
+    override fun update(
+        id: Long,
+        name: String,
+        description: String
+    ): LinkGarden = LinkGardenEntity(
+        id = id,
+        name = name,
+        description = description
+    )
+}
