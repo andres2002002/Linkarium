@@ -1,5 +1,6 @@
 package com.habitiora.linkarium.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -11,6 +12,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
@@ -69,6 +71,8 @@ fun ScaffoldApp(
 
     val scaffoldConfig = ScaffoldConfig.Builder()
         .enabledGesturesInModal(false)
+        .containerColor(MaterialTheme.colorScheme.background)
+        .contentColor(MaterialTheme.colorScheme.onBackground)
         .topBar(WindowWidthSizeClass.Compact){
             TopAppBar(
                 title = { Text(text = stringResource(id = Screens.ShowGarden.normalTitle)) },
@@ -104,7 +108,7 @@ fun ScaffoldApp(
         windowSizeClass = windowSizeClass,
         navController = navController,
         config = scaffoldConfig.build(),
-        content = { modifier -> NavigationHost(modifier, navController)}
+        content = { NavigationHost(navController)}
     )
 }
 @Composable
@@ -112,7 +116,7 @@ fun ScaffoldLinkarium(
     windowSizeClass: WindowSizeClass,
     navController: NavHostController,
     config: ScaffoldConfig,
-    content: @Composable (Modifier) -> Unit
+    content: @Composable () -> Unit
 ){
     val currentBackStack by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStack?.destination?.route
@@ -162,7 +166,7 @@ fun CompactScaffold(
     currentRoute: String?,
     config: ScaffoldConfig,
     onNavigate: (Screens) -> Unit,
-    content: @Composable (Modifier) -> Unit
+    content: @Composable () -> Unit
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -203,7 +207,9 @@ fun CompactScaffold(
             containerColor = config.containerColor,
             contentColor = config.contentColor
         ) { padding ->
-            content(Modifier.padding(padding))
+            Box(modifier = Modifier.padding(padding)){
+                content()
+            }
         }
     }
 
@@ -215,7 +221,7 @@ fun MediumScaffold(
     currentRoute: String?,
     config: ScaffoldConfig,
     onNavigate: (Screens) -> Unit,
-    content: @Composable (Modifier) -> Unit
+    content: @Composable () -> Unit
 ) {
     val menuItems = listOf(
         Screens.ShowGarden,
@@ -246,7 +252,9 @@ fun MediumScaffold(
                     )
                 }
             }
-            content(Modifier.weight(1f))
+            Box(modifier = Modifier.weight(1f)){
+                content()
+            }
         }
     }
 }
@@ -257,7 +265,7 @@ fun ExpandedScaffold(
     currentRoute: String?,
     config: ScaffoldConfig,
     onNavigate: (Screens) -> Unit,
-    content: @Composable (Modifier) -> Unit
+    content: @Composable () -> Unit
 ) {
     val menuItems = listOf(
         Screens.ShowGarden,
@@ -292,7 +300,9 @@ fun ExpandedScaffold(
                     }
                 }
             ) {
-                content(Modifier.weight(1f))
+                Box(modifier = Modifier.weight(1f)){
+                    content()
+                }
             }
         }
     }

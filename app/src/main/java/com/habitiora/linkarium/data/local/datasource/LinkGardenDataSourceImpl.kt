@@ -1,18 +1,16 @@
-package com.habitiora.linkarium.data.repository
+package com.habitiora.linkarium.data.local.datasource
 
 import com.habitiora.linkarium.data.local.room.dao.LinkGardenEntityDao
-import com.habitiora.linkarium.data.local.room.entity.GardenWithSeeds
 import com.habitiora.linkarium.data.local.usecase.toEntity
 import com.habitiora.linkarium.domain.model.LinkGarden
 import com.habitiora.linkarium.domain.model.LinkGardenWithSeeds
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
-
 @Singleton
-class LinkGardenRepositoryImp @Inject constructor(
+class LinkGardenDataSourceImpl @Inject constructor(
     private val dao: LinkGardenEntityDao
-): LinkGardenRepository {
+): LinkGardenDataSource {
     override suspend fun insert(linkGarden: LinkGarden): Long =
         dao.insert(linkGarden.toEntity())
 
@@ -31,7 +29,7 @@ class LinkGardenRepositoryImp @Inject constructor(
     override fun getById(id: Long): Flow<LinkGarden?> =
         dao.getById(id)
 
-    override fun getGardenWithSeeds(gardenId: Long): Flow<LinkGardenWithSeeds> =
+    override fun getGardenWithSeeds(gardenId: Long): Flow<LinkGardenWithSeeds?> =
         dao.getGardenWithSeeds(gardenId)
 
     override suspend fun deleteById(id: Long) =
