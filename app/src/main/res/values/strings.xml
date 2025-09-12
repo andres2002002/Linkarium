@@ -5,4 +5,8 @@
     <string name="plant">Add Link</string>
     <string name="gardens">Collections</string>
 
+    <string name="name_no_empty">Name cannot be empty</string>
+    <string name="name_characters">Name must have at least 3 characters</string>
+    <string name="select_garden">Select a Garden</string>
+
 </resources>
