@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.habitiora.linkarium.ui.screens.plantSeed.PlantSeedScreen
 import com.habitiora.linkarium.ui.screens.showGarden.ShowGardenScreen
 
 @Composable
@@ -27,8 +28,9 @@ fun NavigationHost(
             //SettingsScreen()
         }
         composable(route = Screens.PlantNew.route) {
-            Text("Plant New")
-            //PlantNewScreen()
+            PlantSeedScreen{
+                navController.popBackStack()
+            }
         }
     }
 }

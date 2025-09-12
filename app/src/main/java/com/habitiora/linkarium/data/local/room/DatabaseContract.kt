@@ -28,6 +28,10 @@ object DatabaseContract {
         const val COLUMN_ID = "id"
         const val COLUMN_NAME = "name"
         const val COLUMN_DESCRIPTION = "description"
+        val Empty = LinkGardenEntity(
+            name = "",
+            description = ""
+        )
     }
 
     object LinkGardenWithSeeds {

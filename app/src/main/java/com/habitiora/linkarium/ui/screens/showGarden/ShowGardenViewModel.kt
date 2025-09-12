@@ -27,7 +27,7 @@ class ShowGardenViewModel @Inject constructor(
         .distinctUntilChanged()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Lazily,
+            started = SharingStarted.Eagerly,
             initialValue = emptyList()
         )
 
@@ -43,9 +43,16 @@ class ShowGardenViewModel @Inject constructor(
                 it ?: DatabaseContract.LinkGardenWithSeeds.Empty
             }
         }
+        .distinctUntilChanged()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Lazily,
+            started = SharingStarted.Eagerly,
             initialValue = DatabaseContract.LinkGardenWithSeeds.Empty
         )
+
+    private val _openGardenDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val openGardenDialog: StateFlow<Boolean> = _openGardenDialog.asStateFlow()
+    fun setOpenGardenDialog(value: Boolean) {
+        _openGardenDialog.value = value
+    }
 }
