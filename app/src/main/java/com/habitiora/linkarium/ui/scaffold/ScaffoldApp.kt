@@ -1,4 +1,4 @@
-package com.habitiora.linkarium.ui
+package com.habitiora.linkarium.ui.scaffold
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,35 +36,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.navigation.NavController
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.habitiora.linkarium.ui.navigation.NavigationHost
 import com.habitiora.linkarium.ui.navigation.Screens
-import com.habitiora.linkarium.ui.utils.ScaffoldConfig
+import com.habitiora.linkarium.ui.scaffold.ScaffoldConfig
+import com.habitiora.linkarium.ui.utils.localNavigator.navigateSingleTopTo
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScaffoldApp(
-    windowSizeClass: WindowSizeClass
+    windowSizeClass: WindowSizeClass,
+    viewModel: ScaffoldViewModel = hiltViewModel()
 ){
     val navController = rememberNavController()
     val currentBackStack by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStack?.destination?.route
 
-    val onNavigate: (Screens) -> Unit = { dest ->
-        navController.navigate(dest.route) {
-            // Evita duplicados y conserva estado donde es posible
-            popUpTo(navController.graph.findStartDestination().id) {
-                saveState = true
-            }
-            launchSingleTop = true
-            restoreState = true
-        }
-    }
     val menuItems = listOf(
         Screens.ShowGarden,
         Screens.Gardens
@@ -77,7 +70,7 @@ fun ScaffoldApp(
             TopAppBar(
                 title = { Text(text = stringResource(id = Screens.ShowGarden.normalTitle)) },
                 actions = {
-                    IconButton(onClick = { onNavigate(Screens.Settings) }) {
+                    IconButton(onClick = { navController.navigateSingleTopTo(Screens.Settings) }) {
                         Icon(Icons.Filled.Settings, contentDescription = "Settings")
                     }
                 }
@@ -91,24 +84,27 @@ fun ScaffoldApp(
                     val icon = ImageVector.vectorResource(if (selected) item.iconSelect else item.iconUnselect)
                     NavigationBarItem(
                         selected = selected,
-                        onClick = { onNavigate(item) },
+                        onClick = { navController.navigateSingleTopTo(item) },
                         icon = { Icon(imageVector = icon, contentDescription = text) },
                         label = { Text(text = text) }
                     )
                 }
             }
         }
-        .floatingActionButton {
-            FloatingActionButton(onClick = { onNavigate(Screens.PlantNew) }) {
+        .floatingActionButton(WindowWidthSizeClass.Compact) {
+            FloatingActionButton(
+                onClick = { navController.navigateSingleTopTo(Screens.PlantNew) },
+            ) {
                 Icon(Icons.Filled.Add, contentDescription = "add")
             }
         }
+        .floatingActionButtonPosition(WindowWidthSizeClass.Compact, FabPosition.End)
 
     ScaffoldLinkarium(
         windowSizeClass = windowSizeClass,
         navController = navController,
         config = scaffoldConfig.build(),
-        content = { NavigationHost(navController)}
+        content = { NavigationHost(navController, windowSizeClass)}
     )
 }
 @Composable
@@ -121,23 +117,12 @@ fun ScaffoldLinkarium(
     val currentBackStack by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStack?.destination?.route
 
-    val onNavigate: (Screens) -> Unit = { dest ->
-        navController.navigate(dest.route) {
-            // Evita duplicados y conserva estado donde es posible
-            popUpTo(navController.graph.findStartDestination().id) {
-                saveState = true
-            }
-            launchSingleTop = true
-            restoreState = true
-        }
-    }
-
     when (windowSizeClass.widthSizeClass) {
         WindowWidthSizeClass.Compact -> {
             CompactScaffold(
                 currentRoute = currentRoute,
                 config = config,
-                onNavigate = onNavigate,
+                onNavigate = navController::navigateSingleTopTo,
                 content = content
             )
         }
@@ -145,7 +130,7 @@ fun ScaffoldLinkarium(
             MediumScaffold(
                 currentRoute = currentRoute,
                 config = config,
-                onNavigate = onNavigate,
+                onNavigate = navController::navigateSingleTopTo,
                 content = content
             )
         }
@@ -153,7 +138,7 @@ fun ScaffoldLinkarium(
             ExpandedScaffold(
                 currentRoute = currentRoute,
                 config = config,
-                onNavigate = onNavigate,
+                onNavigate = navController::navigateSingleTopTo,
                 content = content
             )
         }
@@ -283,26 +268,21 @@ fun ExpandedScaffold(
         contentColor = config.contentColor
     ) { padding ->
         Row(modifier = Modifier.padding(padding)) {
-            PermanentNavigationDrawer(
-                drawerContent = {
-                    PermanentDrawerSheet {
-                        menuItems.forEach { item ->
-                            val selected = item.route == currentRoute
-                            val text = stringResource(item.normalTitle)
-                            val icon = ImageVector.vectorResource(if (selected) item.iconSelect else item.iconUnselect)
-                            NavigationDrawerItem(
-                                label = { Text(text = text) },
-                                selected = item.route == currentRoute,
-                                onClick = { onNavigate(item) },
-                                icon = { Icon(imageVector = icon, contentDescription = text) }
-                            )
-                        }
-                    }
+            NavigationRail {
+                menuItems.forEach { item ->
+                    val selected = item.route == currentRoute
+                    val text = stringResource(item.normalTitle)
+                    val icon = ImageVector.vectorResource(if (selected) item.iconSelect else item.iconUnselect)
+                    NavigationRailItem(
+                        selected = item.route == currentRoute,
+                        onClick = { onNavigate(item) },
+                        icon = { Icon(imageVector = icon, contentDescription = text) },
+                        label = { Text(text = text) }
+                    )
                 }
-            ) {
-                Box(modifier = Modifier.weight(1f)){
-                    content()
-                }
+            }
+            Box(modifier = Modifier.weight(1f)) {
+                content()
             }
         }
     }

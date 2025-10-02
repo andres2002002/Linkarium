@@ -109,6 +109,7 @@ Este documento describe las librerías y plugins utilizados en el proyecto, junt
 * **Hilt Navigation Compose**
   `androidx.hilt:hilt-navigation-compose` — v1.2.0
   👉 Integración de Hilt con Jetpack Navigation y Compose.
+  👉 Necesario para usar hiltViewModel() en composables.
   🔗 [Hilt Navigation Compose](https://developer.android.com/jetpack/androidx/releases/hilt)
 
 ---

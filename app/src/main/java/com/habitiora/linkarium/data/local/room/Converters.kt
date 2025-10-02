@@ -11,6 +11,15 @@ class Converters {
 
     private val gson = Gson()
 
+    // --- Uri ---
+    @TypeConverter
+    fun fromUri(uri: Uri?): String? =
+        uri?.toString()
+
+    @TypeConverter
+    fun toUri(data: String?): Uri? =
+        data?.toUri()
+
     // --- Uri List ---
     @TypeConverter
     fun fromUriList(list: List<Uri>?): String? =

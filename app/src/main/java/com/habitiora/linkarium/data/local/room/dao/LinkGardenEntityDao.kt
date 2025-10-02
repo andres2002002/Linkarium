@@ -9,7 +9,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import com.habitiora.linkarium.data.local.room.DatabaseContract
 import com.habitiora.linkarium.data.local.room.entity.LinkGardenEntity
-import com.habitiora.linkarium.data.local.room.entity.GardenWithSeeds
+import com.habitiora.linkarium.domain.usecase.LinkGardenWithSeedsImpl
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -28,9 +28,6 @@ interface LinkGardenEntityDao {
     suspend fun deleteAll()
     @Query("SELECT * FROM $TABLE_NAME")
     fun getAll(): Flow<List<LinkGardenEntity>>
-    @Transaction
-    @Query("SELECT * FROM $TABLE_NAME WHERE id = :id")
-    fun getGardenWithSeeds(id: Long): Flow<GardenWithSeeds?>
 
     @Query("SELECT * FROM $TABLE_NAME WHERE id = :id")
     fun getById(id: Long): Flow<LinkGardenEntity?>

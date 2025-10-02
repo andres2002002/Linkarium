@@ -121,3 +121,14 @@ Esta pantalla muestra los enlaces (seed) en las collecciones (garden) a forma de
 
 * Separamos el código en `ContentScreen` (parte visual) y `ShowGardenScreen` (acceso al viewmodel y obtiene los datos).
 * Implementamos el viewmodel en `ShowGardenViewModel` que accede a `LinkGardenRepository`.
+
+## ⚙️ Helpers
+
+* ClipboardHelper:
+  - Helper para copiar y obtener datos del clipboard
+  - Usa funciones suspendidas para que se ejecute en un hilo separado
+  - rememberClipboarHelper es una función de Compose que recuerda el estado del helper
+
+* UriHelperUriHelper:
+   - Helper para manejar acciones de uri (abrir navegador, compartir, etc)
+   - rememberUriHelper es una función de Compose que recuerda el estado del helper

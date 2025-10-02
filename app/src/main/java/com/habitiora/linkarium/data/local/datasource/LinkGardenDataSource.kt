@@ -11,7 +11,6 @@ interface LinkGardenDataSource {
     suspend fun deleteAll()
     fun getAll(): Flow<List<LinkGarden>>
     fun getById(id: Long): Flow<LinkGarden?>
-    fun getGardenWithSeeds(gardenId: Long): Flow<LinkGardenWithSeeds?>
     suspend fun deleteById(id: Long)
 
 }

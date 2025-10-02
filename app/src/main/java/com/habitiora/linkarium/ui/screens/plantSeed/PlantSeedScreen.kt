@@ -1,11 +1,13 @@
 package com.habitiora.linkarium.ui.screens.plantSeed
 
-import android.net.Uri
-import android.widget.Space
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +21,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
@@ -28,7 +32,11 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -36,35 +44,42 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component3
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.unit.times
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.habitiora.linkarium.R
 import com.habitiora.linkarium.core.DataValidator
 import com.habitiora.linkarium.data.local.room.DatabaseContract
+import com.habitiora.linkarium.domain.model.LinkEntry
 import com.habitiora.linkarium.domain.model.LinkGarden
 import com.habitiora.linkarium.ui.components.textField.ProTextFieldState
 import com.habitiora.linkarium.ui.components.textField.RoundedTextFieldPro
+import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LabelDescriptionTextFieldValues
+import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LinkEntryTextFieldValues
+
+private val PaddingSmall = 4.dp
 
 @Composable
 fun PlantSeedScreen(
     viewModel: PlantSeedViewModel = hiltViewModel(),
     popBackStack: () -> Unit
 ){
-    val nameTextFieldValue by viewModel.nameTextFieldValue.collectAsState()
-    val newUrlTextFieldValue by viewModel.newUrlTextFieldValue.collectAsState()
-    val notesTextFieldValue by viewModel.notesTextFieldValue.collectAsState()
-    val linksList: List<Uri> by viewModel.urlList.collectAsState()
-    val linksListString = linksList.map { it.toString() }
-    val collectionId by viewModel.collectionId.collectAsState()
+    val nameNotesTextFieldValue by viewModel.nameNotesTextFieldValue.collectAsState()
+    val newEntryTextFieldValues by viewModel.newEntryTextFieldValues.collectAsState()
+    val entries: List<LinkEntry> by viewModel.entries.collectAsState()
+    val collectionId by viewModel.gardenId.collectAsState()
     val gardens by viewModel.gardens.collectAsState()
     val isValidSeed by viewModel.isValidSeed.collectAsState()
 
@@ -72,17 +87,16 @@ fun PlantSeedScreen(
         gardenId = collectionId,
         gardens = gardens,
         onGardenChange = { garden ->
-            viewModel.setCollectionId(garden.id)
+            viewModel.setGardenId(garden.id)
         },
-        nameTextFieldValue = nameTextFieldValue,
-        onNameTextFieldValueChange = viewModel::setNameTextFieldValue,
-        newUrlTextFieldValue = newUrlTextFieldValue,
-        onNewUrlTextFieldValueChange = viewModel::setNewUrlTextFieldValue,
-        linksList = linksListString,
-        addLink = viewModel::addUrl,
-        removeLink = viewModel::removeUrl,
-        notesTextFieldValue = notesTextFieldValue,
-        onNotesTextFieldValueChange = viewModel::setNotesTextFieldValue,
+        nameNotesTextFieldValue = nameNotesTextFieldValue,
+        updateNameNotesTextFieldValue = viewModel::updateNameNotesTextFieldValue,
+        newEntryTextFieldValues = newEntryTextFieldValues,
+        updateNewEntryTextFieldValues = viewModel::updateNewEntryTextFieldValues,
+        entries = entries,
+        addLink = viewModel::addEntryOfCurrent,
+        editLink = viewModel::editEntry,
+        removeLink = viewModel::removeEntry,
         isValidSeed = isValidSeed,
         onSave = { viewModel.saveSeed(onSuccess = popBackStack) }
     )
@@ -93,21 +107,25 @@ private fun PlantSeedContent(
     gardenId: Long,
     gardens: List<LinkGarden>,
     onGardenChange: (LinkGarden) -> Unit,
-    nameTextFieldValue: TextFieldValue,
-    onNameTextFieldValueChange: (TextFieldValue) -> Unit,
-    newUrlTextFieldValue: TextFieldValue,
-    onNewUrlTextFieldValueChange: (TextFieldValue) -> Unit = {},
-    linksList: List<String>,
-    addLink: (String) -> Unit,
-    removeLink: (String) -> Unit,
-    notesTextFieldValue: TextFieldValue,
-    onNotesTextFieldValueChange: (TextFieldValue) -> Unit = {},
+    nameNotesTextFieldValue: LabelDescriptionTextFieldValues,
+    updateNameNotesTextFieldValue: (String, TextFieldValue) -> Unit,
+    newEntryTextFieldValues: LinkEntryTextFieldValues,
+    updateNewEntryTextFieldValues: (String, TextFieldValue) -> Unit,
+    entries: List<LinkEntry>,
+    addLink: () -> Unit,
+    editLink: (LinkEntry) -> Unit,
+    removeLink: (LinkEntry) -> Unit,
     isValidSeed: Boolean,
     onSave: () -> Unit
 ){
-    val (nameFocusRequester, newUrlFocusRequester, notesFocusRequester) = remember { FocusRequester.createRefs() }
+    val (entryUrlFocusRequester, entryLabelFocusRequester, entryNotesFocusRequester) = remember { FocusRequester.createRefs() }
+    val (nameFocusRequester, notesFocusRequester) = remember { FocusRequester.createRefs() }
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(16.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentPadding = PaddingValues(bottom = 64.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
             GardenDropDown(
@@ -116,30 +134,48 @@ private fun PlantSeedContent(
                 onClick = onGardenChange
             )
         }
-        item { NameFieldAndFavorites(
-            nameTextFieldValue = nameTextFieldValue,
-            focusRequester = nameFocusRequester,
-            onNameTextFieldValueChange = onNameTextFieldValueChange
-        ) }
-        item { LinksComponent(
-            newUrlTextFieldValue = newUrlTextFieldValue,
-            focusRequester = newUrlFocusRequester,
-            onNewUrlTextFieldValueChange = onNewUrlTextFieldValueChange,
-            linksList = linksList,
-            addLink = addLink,
-            removeLink = removeLink
-        ) }
-        item { NotesComponent(
-            notesTextFieldValue = notesTextFieldValue,
-            focusRequester = notesFocusRequester,
-            onNotesTextFieldValueChange = onNotesTextFieldValueChange
-        ) }
+        item {
+            NameFieldAndFavorites(
+                nameTextFieldValue = nameNotesTextFieldValue.label,
+                focusRequester = nameFocusRequester,
+                onNameTextFieldValueChange = {
+                    updateNameNotesTextFieldValue(
+                        LabelDescriptionTextFieldValues.LABEL_KEY,
+                        it
+                    )
+                }
+            )
+        }
+        item {
+            LinksComponent(
+                entryTextFieldValues = newEntryTextFieldValues,
+                updateNewEntryTextFieldValues = updateNewEntryTextFieldValues,
+                focusRequesters = Triple(entryUrlFocusRequester, entryLabelFocusRequester, entryNotesFocusRequester),
+                entries = entries,
+                addLink = addLink,
+                editLink = editLink,
+                removeLink = removeLink
+            )
+        }
+        item {
+            NotesComponent(
+                notesTextFieldValue = nameNotesTextFieldValue.description,
+                focusRequester = notesFocusRequester,
+                onNotesTextFieldValueChange = {
+                    updateNameNotesTextFieldValue(
+                        LabelDescriptionTextFieldValues.DESCRIPTION_KEY,
+                        it
+                    )
+                }
+            )
+        }
         item { TagsComponent() }
-        item { SaveButton(
-            onSave = onSave,
-            enabled = isValidSeed
-        ) }
-        item { Spacer(modifier = Modifier.height(64.dp)) }
+        item {
+            SaveButton(
+                onSave = onSave,
+                enabled = isValidSeed
+            )
+        }
     }
 }
 
@@ -149,7 +185,7 @@ private fun GardenDropDown(
     gardens: List<LinkGarden>,
     onClick: (LinkGarden) -> Unit
 ){
-    val currentGarden = remember(currentGardenId) {
+    val currentGarden = remember(currentGardenId, gardens.size) {
         gardens.find { it.id == currentGardenId } ?: DatabaseContract.LinkGarden.Empty
     }
     GardenSelector(
@@ -172,38 +208,148 @@ private fun NameFieldAndFavorites(
             focusRequester = focusRequester
         )
     }
+    Text("Name")
+    Spacer(modifier = Modifier.height(PaddingSmall))
     RoundedTextFieldPro(state = nameState)
 }
 
 @Composable
 private fun LinksComponent(
-    newUrlTextFieldValue: TextFieldValue = TextFieldValue(""),
-    focusRequester: FocusRequester,
-    onNewUrlTextFieldValueChange: (TextFieldValue) -> Unit = {},
-    linksList: List<String>,
-    addLink: (String) -> Unit,
-    removeLink: (String) -> Unit
+    entryTextFieldValues: LinkEntryTextFieldValues,
+    updateNewEntryTextFieldValues: (String, TextFieldValue) -> Unit,
+    focusRequesters: Triple<FocusRequester, FocusRequester, FocusRequester>,
+    entries: List<LinkEntry>,
+    addLink: () -> Unit,
+    editLink: (LinkEntry) -> Unit,
+    removeLink: (LinkEntry) -> Unit
 ){
-    val isUrlValid = remember(newUrlTextFieldValue.text) {
-        DataValidator.validateUrl(newUrlTextFieldValue.text).isValid
+    val isUrlValid = remember(entryTextFieldValues.url.text) {
+        DataValidator.validateUrl(entryTextFieldValues.url.text).isValid && entryTextFieldValues.url.text.isNotBlank()
     }
-    LinksTextField(
-        newUrlTextFieldValue = newUrlTextFieldValue,
-        focusRequester = focusRequester,
-        onNewUrlTextFieldValueChange = onNewUrlTextFieldValueChange
+    val (urlFocusRequester, labelFocusRequester, notesFocusRequester) = focusRequesters
+    Text("Add link")
+    Spacer(modifier = Modifier.height(PaddingSmall))
+    LinksMetaData(
+        labelTextFieldValue = entryTextFieldValues.label,
+        notesTextFieldValue = entryTextFieldValues.note,
+        labelFocusRequester = labelFocusRequester,
+        notesFocusRequester = notesFocusRequester,
+        onLabelTextFieldValueChange = {
+            updateNewEntryTextFieldValues(LinkEntryTextFieldValues.LABEL_KEY, it)
+        },
+        onNotesTextFieldValueChange = {
+            updateNewEntryTextFieldValues(LinkEntryTextFieldValues.NOTE_KEY, it)
+        }
     )
-    LinksButton(
-        addLink = { addLink(newUrlTextFieldValue.text) },
-        enabled = isUrlValid
-    )
+    Spacer(modifier = Modifier.height(2 * PaddingSmall))
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        LinksTextField(
+            modifier = Modifier.weight(1f),
+            newUrlTextFieldValue = entryTextFieldValues.url,
+            focusRequester = urlFocusRequester,
+            onNewUrlTextFieldValueChange = {
+                updateNewEntryTextFieldValues(LinkEntryTextFieldValues.URL_KEY, it)
+            }
+        )
+        LinksButton(
+            modifier = Modifier,
+            addLink = addLink,
+            enabled = isUrlValid
+        )
+    }
+    Spacer(modifier = Modifier.height(PaddingSmall))
     LinksList(
-        linksList = linksList,
+        entries = entries,
+        editLink = editLink,
         removeLink = removeLink
     )
 }
 
 @Composable
+private fun LinksMetaData(
+    modifier: Modifier = Modifier,
+    labelTextFieldValue: TextFieldValue,
+    notesTextFieldValue: TextFieldValue,
+    labelFocusRequester: FocusRequester,
+    notesFocusRequester: FocusRequester,
+    onLabelTextFieldValueChange: (TextFieldValue) -> Unit,
+    onNotesTextFieldValueChange: (TextFieldValue) -> Unit
+){
+
+    val labelState = remember(labelTextFieldValue, labelFocusRequester) {
+        ProTextFieldState(
+            value = labelTextFieldValue,
+            onValueChange = onLabelTextFieldValueChange,
+            focusRequester = labelFocusRequester
+        )
+    }
+    val notesState = remember(notesTextFieldValue, notesFocusRequester) {
+        ProTextFieldState(
+            value = notesTextFieldValue,
+            onValueChange = onNotesTextFieldValueChange,
+            focusRequester = notesFocusRequester
+        )
+    }
+
+    var isAddMetadata by rememberSaveable { mutableStateOf(false) }
+
+    Column(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier,
+            horizontalArrangement = Arrangement.spacedBy(PaddingSmall),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Switch(
+                checked = isAddMetadata,
+                onCheckedChange = { isAddMetadata = it }
+            )
+            Text(
+                text = "Add Metadata",
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+        Text(
+            text = "Only visible for multiple links",
+            style = MaterialTheme.typography.labelMedium
+        )
+        AnimatedVisibility(
+            visible = isAddMetadata,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("Label")
+                Row {
+                    RoundedTextFieldPro(
+                        state = labelState,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Spacer(modifier = Modifier.height(PaddingSmall))
+                Text("Notes")
+                Row {
+                    RoundedTextFieldPro(
+                        state = notesState,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun LinksTextField(
+    modifier: Modifier = Modifier,
     newUrlTextFieldValue: TextFieldValue = TextFieldValue(""),
     focusRequester: FocusRequester,
     onNewUrlTextFieldValueChange: (TextFieldValue) -> Unit = {}
@@ -215,15 +361,20 @@ private fun LinksTextField(
             focusRequester = focusRequester
         )
     }
-    RoundedTextFieldPro(state = newUrlState)
+    RoundedTextFieldPro(
+        modifier = modifier,
+        state = newUrlState
+    )
 }
 
 @Composable
 private fun LinksButton(
+    modifier: Modifier = Modifier,
     addLink: () -> Unit,
     enabled: Boolean,
 ){
     IconButton(
+        modifier = modifier,
         onClick = { addLink() },
         enabled = enabled
     ) {
@@ -233,23 +384,81 @@ private fun LinksButton(
 
 @Composable
 private fun LinksList(
-    linksList: List<String>,
-    removeLink: (String) -> Unit
+    entries: List<LinkEntry>,
+    editLink: (LinkEntry) -> Unit,
+    removeLink: (LinkEntry) -> Unit
 ){
-    Column {
-        linksList.forEach { link ->
-            Text(link)
-            IconButton(
-                onClick = { removeLink(link) }
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Remove Link")
-            }
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        entries.forEach { entry ->
+            LinkItem(
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.medium),
+                entry = entry,
+                onEdit = { editLink(entry) },
+                onClear = { removeLink(entry) }
+            )
         }
     }
 }
 
 @Composable
+private fun LinkItem(
+    modifier: Modifier = Modifier,
+    entry: LinkEntry,
+    onClear: () -> Unit,
+    onEdit: () -> Unit,
+){
+    ListItem(
+        modifier = modifier,
+        colors = ListItemDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f)
+
+        ),
+        overlineContent = entry.label?.let { label ->
+            {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
+        },
+        headlineContent = {
+            Text(
+                text = entry.uri.toString(),
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
+        supportingContent = entry.note?.let { note ->
+            {
+                Text(
+                    text = note,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        },
+        trailingContent = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onEdit) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit Link")
+                }
+                IconButton(onClick = onClear) {
+                    Icon(Icons.Default.Clear, contentDescription = "Clear Link")
+                }
+            }
+        }
+    )
+}
+
+@Composable
 private fun NotesComponent(
+    modifier: Modifier = Modifier,
     notesTextFieldValue: TextFieldValue,
     focusRequester: FocusRequester,
     onNotesTextFieldValueChange: (TextFieldValue) -> Unit = {}
@@ -261,11 +470,18 @@ private fun NotesComponent(
             focusRequester = focusRequester
         )
     }
-    RoundedTextFieldPro(state = notesState)
+    Text("Notes")
+    Spacer(modifier = Modifier.height(PaddingSmall))
+    RoundedTextFieldPro(
+        state = notesState,
+        modifier = modifier
+    )
 }
 
 @Composable
 private fun TagsComponent(){
+    Text("Tags")
+    Spacer(modifier = Modifier.height(PaddingSmall))
     TextField(
         value = "",
         onValueChange = {},

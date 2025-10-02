@@ -1,4 +1,4 @@
-package com.habitiora.linkarium.ui.utils
+package com.habitiora.linkarium.ui.scaffold
 
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.SnackbarHostState
@@ -36,11 +36,11 @@ class ScaffoldConfig private constructor(
         private var floatingActionButtonCompact: @Composable () -> Unit = {},
         private var floatingActionButtonMedium: @Composable () -> Unit = {},
         private var floatingActionButtonExpanded: @Composable () -> Unit = {},
-        private var floatingActionButtonPositionCompact: FabPosition = FabPosition.End,
-        private var floatingActionButtonPositionMedium: FabPosition = FabPosition.End,
-        private var floatingActionButtonPositionExpanded: FabPosition = FabPosition.End,
-        private var containerColor: Color = Color.Transparent,
-        private var contentColor: Color = Color.Unspecified,
+        private var floatingActionButtonPositionCompact: FabPosition = FabPosition.Companion.End,
+        private var floatingActionButtonPositionMedium: FabPosition = FabPosition.Companion.End,
+        private var floatingActionButtonPositionExpanded: FabPosition = FabPosition.Companion.End,
+        private var containerColor: Color = Color.Companion.Transparent,
+        private var contentColor: Color = Color.Companion.Unspecified,
         private var enabledGesturesInModal: Boolean = true
     ) {
 
@@ -49,9 +49,18 @@ class ScaffoldConfig private constructor(
             topBar: @Composable () -> Unit
         ) = apply {
             when (widthSizeClass) {
-                WindowWidthSizeClass.Compact -> topBarCompact = topBar
-                WindowWidthSizeClass.Medium -> topBarMedium = topBar
-                WindowWidthSizeClass.Expanded -> topBarExpanded = topBar
+                WindowWidthSizeClass.Companion.Compact -> topBarCompact = topBar
+                WindowWidthSizeClass.Companion.Medium -> topBarMedium = topBar
+                WindowWidthSizeClass.Companion.Expanded -> topBarExpanded = topBar
+            }
+        }
+
+        fun topBar(
+            windowWidthSizeClasses: Array<WindowWidthSizeClass>,
+            topBar: @Composable () -> Unit
+        ) = apply {
+            windowWidthSizeClasses.forEach { widthSizeClass ->
+                topBar(widthSizeClass, topBar)
             }
         }
 
@@ -66,9 +75,18 @@ class ScaffoldConfig private constructor(
             bottomBar: @Composable () -> Unit
         ) = apply {
             when (widthSizeClass) {
-                WindowWidthSizeClass.Compact -> bottomBarCompact = bottomBar
-                WindowWidthSizeClass.Medium -> bottomBarMedium = bottomBar
-                WindowWidthSizeClass.Expanded -> bottomBarExpanded = bottomBar
+                WindowWidthSizeClass.Companion.Compact -> bottomBarCompact = bottomBar
+                WindowWidthSizeClass.Companion.Medium -> bottomBarMedium = bottomBar
+                WindowWidthSizeClass.Companion.Expanded -> bottomBarExpanded = bottomBar
+            }
+        }
+
+        fun bottomBar(
+            windowWidthSizeClasses: Array<WindowWidthSizeClass>,
+            bottomBar: @Composable () -> Unit
+        ) = apply {
+            windowWidthSizeClasses.forEach { widthSizeClass ->
+                bottomBar(widthSizeClass, bottomBar)
             }
         }
 
@@ -86,9 +104,18 @@ class ScaffoldConfig private constructor(
             floatingActionButton: @Composable () -> Unit
         ) = apply {
             when (widthSizeClass) {
-                WindowWidthSizeClass.Compact -> floatingActionButtonCompact = floatingActionButton
-                WindowWidthSizeClass.Medium -> floatingActionButtonMedium = floatingActionButton
-                WindowWidthSizeClass.Expanded -> floatingActionButtonExpanded = floatingActionButton
+                WindowWidthSizeClass.Companion.Compact -> floatingActionButtonCompact = floatingActionButton
+                WindowWidthSizeClass.Companion.Medium -> floatingActionButtonMedium = floatingActionButton
+                WindowWidthSizeClass.Companion.Expanded -> floatingActionButtonExpanded = floatingActionButton
+            }
+        }
+
+        fun floatingActionButton(
+            windowWidthSizeClasses: Array<WindowWidthSizeClass>,
+            floatingActionButton: @Composable () -> Unit
+        ) = apply {
+            windowWidthSizeClasses.forEach { widthSizeClass ->
+                floatingActionButton(widthSizeClass, floatingActionButton)
             }
         }
 
@@ -103,9 +130,18 @@ class ScaffoldConfig private constructor(
             floatingActionButtonPosition: FabPosition
         ) = apply {
             when (widthSizeClass) {
-                WindowWidthSizeClass.Compact -> this.floatingActionButtonPositionCompact = floatingActionButtonPosition
-                WindowWidthSizeClass.Medium -> this.floatingActionButtonPositionMedium = floatingActionButtonPosition
-                WindowWidthSizeClass.Expanded -> this.floatingActionButtonPositionExpanded = floatingActionButtonPosition
+                WindowWidthSizeClass.Companion.Compact -> this.floatingActionButtonPositionCompact = floatingActionButtonPosition
+                WindowWidthSizeClass.Companion.Medium -> this.floatingActionButtonPositionMedium = floatingActionButtonPosition
+                WindowWidthSizeClass.Companion.Expanded -> this.floatingActionButtonPositionExpanded = floatingActionButtonPosition
+            }
+        }
+
+        fun floatingActionButtonPosition(
+            windowWidthSizeClasses: Array<WindowWidthSizeClass>,
+            floatingActionButtonPosition: FabPosition
+        ){
+            windowWidthSizeClasses.forEach { widthSizeClass ->
+                floatingActionButtonPosition(widthSizeClass, floatingActionButtonPosition)
             }
         }
 
