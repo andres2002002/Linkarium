@@ -10,6 +10,8 @@ val LocalNavigator = staticCompositionLocalOf<NavHostController> {
 }
 
 fun NavHostController.navigateSingleTopTo(screen: Screens) {
+    val currentRoute = currentBackStackEntry?.destination?.route
+    if (currentRoute == screen.route) return
     this.navigate(screen.route) {
         // Evita duplicados y conserva estado donde es posible
         popUpTo(graph.findStartDestination().id) {

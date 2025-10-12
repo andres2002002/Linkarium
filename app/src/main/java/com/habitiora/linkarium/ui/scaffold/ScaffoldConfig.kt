@@ -1,179 +1,168 @@
 package com.habitiora.linkarium.ui.scaffold
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
-import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarColors
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
+import androidx.navigation.NavHostController
+import com.habitiora.linkarium.ui.navigation.Screens
+import com.habitiora.linkarium.ui.navigation.TypeScreen
+import com.habitiora.linkarium.ui.utils.localNavigator.navigateSingleTopTo
 
 class ScaffoldConfig private constructor(
-    val topBarCompact: @Composable () -> Unit,
-    val topBarMedium: @Composable () -> Unit,
-    val topBarExpanded: @Composable () -> Unit,
-    val bottomBarCompact: @Composable () -> Unit,
-    val bottomBarMedium: @Composable () -> Unit,
-    val bottomBarExpanded: @Composable () -> Unit,
-    val snackbarHostState: SnackbarHostState,
-    val floatingActionButtonCompact: @Composable () -> Unit,
-    val floatingActionButtonMedium: @Composable () -> Unit,
-    val floatingActionButtonExpanded: @Composable () -> Unit,
-    val floatingActionButtonPositionCompact: FabPosition,
-    val floatingActionButtonPositionMedium: FabPosition,
-    val floatingActionButtonPositionExpanded: FabPosition,
-    val containerColor: Color,
-    val contentColor: Color,
-    val enabledGesturesInModal: Boolean
+    val gesturesEnabled: Boolean = true,
+    val containerColor: Color = Color.Transparent,
+    val contentColor: Color = Color.Unspecified,
+    val snackbarHost: (@Composable () -> Unit)? = null,
+    internal val topBar: Map<WindowWidthSizeClass, @Composable () -> Unit> = emptyMap(),
+    internal val bottomBar: Map<WindowWidthSizeClass, @Composable () -> Unit> = emptyMap(),
+    internal val fab: Map<WindowWidthSizeClass, @Composable () -> Unit> = emptyMap(),
+    internal val fabPosition: Map<WindowWidthSizeClass, FabPosition> = emptyMap(),
+    internal val navigationRail: Map<WindowWidthSizeClass, @Composable (String?, NavHostController) -> Unit> = emptyMap(),
+    internal val drawer: (@Composable (String?, NavHostController, () -> Unit) -> Unit)? = null
 ) {
 
-    data class Builder(
-        private var topBarCompact: @Composable () -> Unit = {},
-        private var topBarMedium: @Composable () -> Unit = {},
-        private var topBarExpanded: @Composable () -> Unit = {},
-        private var bottomBarCompact: @Composable () -> Unit = {},
-        private var bottomBarMedium: @Composable () -> Unit = {},
-        private var bottomBarExpanded: @Composable () -> Unit = {},
-        private var snackbarHostState: SnackbarHostState = SnackbarHostState(),
-        private var floatingActionButtonCompact: @Composable () -> Unit = {},
-        private var floatingActionButtonMedium: @Composable () -> Unit = {},
-        private var floatingActionButtonExpanded: @Composable () -> Unit = {},
-        private var floatingActionButtonPositionCompact: FabPosition = FabPosition.Companion.End,
-        private var floatingActionButtonPositionMedium: FabPosition = FabPosition.Companion.End,
-        private var floatingActionButtonPositionExpanded: FabPosition = FabPosition.Companion.End,
-        private var containerColor: Color = Color.Companion.Transparent,
-        private var contentColor: Color = Color.Companion.Unspecified,
-        private var enabledGesturesInModal: Boolean = true
-    ) {
+    class Builder {
+        private var gesturesEnabled: Boolean = true
+        private var containerColor: Color = Color.Transparent
+        private var contentColor: Color = Color.Unspecified
+        private var snackbarHost: (@Composable () -> Unit)? = null
+        private val topBar = mutableMapOf<WindowWidthSizeClass, @Composable () -> Unit>()
+        private val bottomBar = mutableMapOf<WindowWidthSizeClass, @Composable () -> Unit>()
+        private val fab = mutableMapOf<WindowWidthSizeClass, @Composable () -> Unit>()
+        private val fabPosition = mutableMapOf<WindowWidthSizeClass, FabPosition>()
+        private val navigationRail = mutableMapOf<WindowWidthSizeClass, @Composable (String?, NavHostController) -> Unit>()
+        private var drawer: (@Composable (String?, NavHostController, () -> Unit) -> Unit)? = null
 
-        fun topBar(
-            widthSizeClass: WindowWidthSizeClass,
-            topBar: @Composable () -> Unit
-        ) = apply {
-            when (widthSizeClass) {
-                WindowWidthSizeClass.Companion.Compact -> topBarCompact = topBar
-                WindowWidthSizeClass.Companion.Medium -> topBarMedium = topBar
-                WindowWidthSizeClass.Companion.Expanded -> topBarExpanded = topBar
+        fun enableGestures(enabled: Boolean) = apply { gesturesEnabled = enabled }
+
+        fun containerColor(color: Color) = apply { containerColor = color }
+
+        fun contentColor(color: Color) = apply { contentColor = color }
+
+        fun snackbarHost(host: @Composable () -> Unit) = apply { snackbarHost = host }
+
+        fun topBar(content: @Composable () -> Unit) = apply {
+            topBar[WindowWidthSizeClass.Compact] = content
+            topBar[WindowWidthSizeClass.Medium] = content
+            topBar[WindowWidthSizeClass.Expanded] = content
+        }
+
+        fun topBar(widthSizeClasses: Array<WindowWidthSizeClass>, content: @Composable () -> Unit) = apply {
+            widthSizeClasses.forEach { widthSizeClass ->
+                topBar(widthSizeClass, content)
+            }
+        }
+        fun topBar(widthSizeClass: WindowWidthSizeClass, content: @Composable () -> Unit) = apply {
+            topBar[widthSizeClass] = content
+        }
+
+        fun bottomBar(content: @Composable () -> Unit) = apply {
+            bottomBar[WindowWidthSizeClass.Compact] = content
+            bottomBar[WindowWidthSizeClass.Medium] = content
+            bottomBar[WindowWidthSizeClass.Expanded] = content
+        }
+
+        fun bottomBar(widthSizeClasses: Array<WindowWidthSizeClass>, content: @Composable () -> Unit) = apply {
+            widthSizeClasses.forEach { widthSizeClass ->
+                bottomBar(widthSizeClass, content)
             }
         }
 
-        fun topBar(
-            windowWidthSizeClasses: Array<WindowWidthSizeClass>,
-            topBar: @Composable () -> Unit
-        ) = apply {
-            windowWidthSizeClasses.forEach { widthSizeClass ->
-                topBar(widthSizeClass, topBar)
-            }
+        fun bottomBar(widthSizeClass: WindowWidthSizeClass, content: @Composable () -> Unit) = apply {
+            bottomBar[widthSizeClass] = content
         }
 
-        fun topBar(topBar: @Composable () -> Unit) = apply {
-            this.topBarCompact = topBar
-            this.topBarMedium = topBar
-            this.topBarExpanded = topBar
+        fun floatingActionButton(content: @Composable () -> Unit) = apply {
+            fab[WindowWidthSizeClass.Compact] = content
+            fab[WindowWidthSizeClass.Medium] = content
+            fab[WindowWidthSizeClass.Expanded] = content
         }
 
-        fun bottomBar(
-            widthSizeClass: WindowWidthSizeClass,
-            bottomBar: @Composable () -> Unit
-        ) = apply {
-            when (widthSizeClass) {
-                WindowWidthSizeClass.Companion.Compact -> bottomBarCompact = bottomBar
-                WindowWidthSizeClass.Companion.Medium -> bottomBarMedium = bottomBar
-                WindowWidthSizeClass.Companion.Expanded -> bottomBarExpanded = bottomBar
-            }
-        }
-
-        fun bottomBar(
-            windowWidthSizeClasses: Array<WindowWidthSizeClass>,
-            bottomBar: @Composable () -> Unit
-        ) = apply {
-            windowWidthSizeClasses.forEach { widthSizeClass ->
-                bottomBar(widthSizeClass, bottomBar)
-            }
-        }
-
-        fun bottomBar(bottomBar: @Composable () -> Unit) = apply {
-            this.bottomBarCompact = bottomBar
-            this.bottomBarMedium = bottomBar
-            this.bottomBarExpanded = bottomBar
-        }
-
-        fun snackbarHostState(snackbarHostState: SnackbarHostState) =
-            apply { this.snackbarHostState = snackbarHostState }
-
-        fun floatingActionButton(
-            widthSizeClass: WindowWidthSizeClass,
-            floatingActionButton: @Composable () -> Unit
-        ) = apply {
-            when (widthSizeClass) {
-                WindowWidthSizeClass.Companion.Compact -> floatingActionButtonCompact = floatingActionButton
-                WindowWidthSizeClass.Companion.Medium -> floatingActionButtonMedium = floatingActionButton
-                WindowWidthSizeClass.Companion.Expanded -> floatingActionButtonExpanded = floatingActionButton
+        fun floatingActionButton(widthSizeClasses: Array<WindowWidthSizeClass>, content: @Composable () -> Unit) = apply {
+            widthSizeClasses.forEach { widthSizeClass ->
+                floatingActionButton(widthSizeClass, content)
             }
         }
 
         fun floatingActionButton(
-            windowWidthSizeClasses: Array<WindowWidthSizeClass>,
-            floatingActionButton: @Composable () -> Unit
+            widthSizeClass: WindowWidthSizeClass,
+            content: @Composable () -> Unit
         ) = apply {
-            windowWidthSizeClasses.forEach { widthSizeClass ->
-                floatingActionButton(widthSizeClass, floatingActionButton)
-            }
+            fab[widthSizeClass] = content
         }
 
-        fun floatingActionButton(floatingActionButton: @Composable () -> Unit) = apply {
-            this.floatingActionButtonCompact = floatingActionButton
-            this.floatingActionButtonMedium = floatingActionButton
-            this.floatingActionButtonExpanded = floatingActionButton
+        fun floatingActionButtonPosition(
+            position: FabPosition
+        ) = apply {
+            fabPosition[WindowWidthSizeClass.Compact] = position
+            fabPosition[WindowWidthSizeClass.Medium] = position
+            fabPosition[WindowWidthSizeClass.Expanded] = position
+        }
+
+        fun floatingActionButtonPosition(
+            widthSizeClasses: Array<WindowWidthSizeClass>,
+            position: FabPosition
+        ) = apply {
+            widthSizeClasses.forEach { widthSizeClass ->
+                floatingActionButtonPosition(widthSizeClass, position)
+            }
         }
 
         fun floatingActionButtonPosition(
             widthSizeClass: WindowWidthSizeClass,
-            floatingActionButtonPosition: FabPosition
+            position: FabPosition
         ) = apply {
-            when (widthSizeClass) {
-                WindowWidthSizeClass.Companion.Compact -> this.floatingActionButtonPositionCompact = floatingActionButtonPosition
-                WindowWidthSizeClass.Companion.Medium -> this.floatingActionButtonPositionMedium = floatingActionButtonPosition
-                WindowWidthSizeClass.Companion.Expanded -> this.floatingActionButtonPositionExpanded = floatingActionButtonPosition
+            fabPosition[widthSizeClass] = position
+        }
+
+        fun navigationRail(content: @Composable (String?, NavHostController) -> Unit) = apply {
+            navigationRail[WindowWidthSizeClass.Compact] = content
+            navigationRail[WindowWidthSizeClass.Medium] = content
+            navigationRail[WindowWidthSizeClass.Expanded] = content
+        }
+
+        fun navigationRail(widthSizeClasses: Array<WindowWidthSizeClass>, content: @Composable (String?, NavHostController) -> Unit) = apply {
+            widthSizeClasses.forEach { widthSizeClass ->
+                navigationRail(widthSizeClass, content)
             }
         }
 
-        fun floatingActionButtonPosition(
-            windowWidthSizeClasses: Array<WindowWidthSizeClass>,
-            floatingActionButtonPosition: FabPosition
-        ){
-            windowWidthSizeClasses.forEach { widthSizeClass ->
-                floatingActionButtonPosition(widthSizeClass, floatingActionButtonPosition)
-            }
+        fun navigationRail(
+            widthSizeClass: WindowWidthSizeClass,
+            content: @Composable (String?, NavHostController) -> Unit
+        ) = apply {
+            navigationRail[widthSizeClass] = content
         }
 
-        fun floatingActionButtonPosition(floatingActionButtonPosition: FabPosition) = apply {
-            this.floatingActionButtonPositionCompact = floatingActionButtonPosition
-            this.floatingActionButtonPositionMedium = floatingActionButtonPosition
-            this.floatingActionButtonPositionExpanded = floatingActionButtonPosition
+        fun drawer(content: @Composable (String?, NavHostController, () -> Unit) -> Unit) = apply {
+            drawer = content
         }
-
-        fun containerColor(containerColor: Color) = apply { this.containerColor = containerColor }
-
-        fun contentColor(contentColor: Color) = apply { this.contentColor = contentColor }
-
-        fun enabledGesturesInModal(enabled: Boolean) = apply { this.enabledGesturesInModal = enabled }
 
         fun build() = ScaffoldConfig(
-            topBarCompact = topBarCompact,
-            topBarMedium = topBarMedium,
-            topBarExpanded = topBarExpanded,
-            bottomBarCompact = bottomBarCompact,
-            bottomBarMedium = bottomBarMedium,
-            bottomBarExpanded = bottomBarExpanded,
-            snackbarHostState = snackbarHostState,
-            floatingActionButtonCompact = floatingActionButtonCompact,
-            floatingActionButtonMedium = floatingActionButtonMedium,
-            floatingActionButtonExpanded = floatingActionButtonExpanded,
-            floatingActionButtonPositionCompact = floatingActionButtonPositionCompact,
-            floatingActionButtonPositionMedium = floatingActionButtonPositionMedium,
-            floatingActionButtonPositionExpanded = floatingActionButtonPositionExpanded,
+            gesturesEnabled = gesturesEnabled,
             containerColor = containerColor,
             contentColor = contentColor,
-            enabledGesturesInModal = enabledGesturesInModal
+            snackbarHost = snackbarHost,
+            topBar = topBar.toMap(),
+            bottomBar = bottomBar.toMap(),
+            fab = fab.toMap(),
+            fabPosition = fabPosition.toMap(),
+            navigationRail = navigationRail.toMap(),
+            drawer = drawer
         )
     }
 }
