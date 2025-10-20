@@ -1,5 +1,10 @@
 package com.habitiora.linkarium.data.repository
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.PagingSource
+import androidx.paging.map
 import androidx.room.withTransaction
 import com.habitiora.linkarium.data.local.datasource.LinkEntryDataSource
 import com.habitiora.linkarium.data.local.datasource.LinkGardenDataSource
@@ -9,7 +14,6 @@ import com.habitiora.linkarium.data.local.room.AppDatabase
 import com.habitiora.linkarium.data.local.room.entity.LinkEntryEntity
 import com.habitiora.linkarium.data.local.room.entity.LinkSeedEntity
 import com.habitiora.linkarium.data.local.room.entity.LinkTagEntity
-import com.habitiora.linkarium.data.local.usecase.toComplete
 import com.habitiora.linkarium.data.local.usecase.toDomain
 import com.habitiora.linkarium.data.local.usecase.toListEntryEntity
 import com.habitiora.linkarium.data.local.usecase.toListTagEntity
@@ -18,7 +22,9 @@ import com.habitiora.linkarium.domain.model.LinkSeed
 import com.habitiora.linkarium.domain.model.LinkTag
 import com.habitiora.linkarium.domain.usecase.LinkSeedImpl
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
@@ -33,118 +39,148 @@ class LinkSeedRepositoryImpl @Inject constructor(
     private val linkTagDataSource: LinkTagDataSource,
     private val linkGardenDataSource: LinkGardenDataSource
 ): LinkSeedRepository {
-    // Caché en memoria
-    private val seedsCache = mutableMapOf<Long, LinkSeed>()
 
-    override fun getAll(): Flow<List<LinkSeed>> =
-        linkSeedDataSource.getAll().map { seeds ->
-                seeds.map { seed ->
-                    val links = linkEntryDataSource.getLinksBySeed(seed.id).first()
-                    val tags = linkTagDataSource.getTagsBySeed(seed.id).first()
-                    val linkSeed = seed.toDomain(links, tags)
-                    seedsCache[linkSeed.id] = linkSeed
-                    linkSeed
-                }
-            }
-
-    // Obtener uno por ID con preferencia por caché
-    override fun getById(id: Long): Flow<LinkSeed?> {
-        val cached = seedsCache[id]
-        return if (cached != null) {
-            flowOf(cached)
-        } else {
-            linkSeedDataSource.getById(id)
-                .map { seed ->
-                    if (seed == null) return@map null
-                    val links = linkEntryDataSource.getLinksBySeed(seed.id).first()
-                    val tags = linkTagDataSource.getTagsBySeed(seed.id).first()
-                    val linkSeed = seed.toDomain(links, tags)
-                    linkSeed.also { seedsCache[it.id] = it }
-                }
-        }
+    companion object {
+        private const val PAGE_SIZE = 30
+        private val PAGING_CONFIG = PagingConfig(
+            pageSize = PAGE_SIZE,
+            enablePlaceholders = false,
+            prefetchDistance = PAGE_SIZE / 2,
+            initialLoadSize = PAGE_SIZE * 2
+        )
     }
 
-    override fun getSeedsByGarden(gardenId: Long): Flow<List<LinkSeed>> {
-        // Primero intenta obtener desde el caché
-        val cachedSeeds = seedsCache.values.filter { it.gardenId == gardenId }
+    // ---------------------------------------------------------
+    // READ - Con estrategia cache-first
+    // ---------------------------------------------------------
 
-        return if (cachedSeeds.isNotEmpty()) {
-            // Si hay datos en caché para este jardín, los devuelve
-            flowOf(cachedSeeds)
-        } else {
-            // Si no hay datos en caché, consulta el data source
-            linkSeedDataSource.getSeedsByGarden(gardenId)
-                .map { seeds ->
-                    seeds.map {
-                        val links = linkEntryDataSource.getLinksBySeed(it.id).first()
-                        val tags = linkTagDataSource.getTagsBySeed(it.id).first()
-                        val linkSeed = it.toDomain(links, tags)
-                        seedsCache[linkSeed.id] = linkSeed
-                        linkSeed
-                    }
-                }
+    override fun getAll(): Flow<List<LinkSeed>> = linkSeedDataSource.getAll()
+        .map { seeds -> seeds.map { it.toFullDomain() } }
+    
+    override fun getById(id: Long): Flow<LinkSeed?> = linkSeedDataSource.getById(id)
+        .map { it?.toFullDomain() }
+
+    override fun getSeedsByGarden(gardenId: Long): Flow<PagingData<LinkSeed>> =
+        Pager(
+            config = PAGING_CONFIG,
+            pagingSourceFactory = { linkSeedDataSource.getSeedsByGarden(gardenId) }
+        ).flow.map { paging ->
+            paging.map { entity -> entity.toFullDomain() }
         }
-    }
 
-    // Insertar con validaciones
+    // ---------------------------------------------------------
+    // WRITE - Con sincronización de caché
+    // ---------------------------------------------------------
+
     override suspend fun insert(linkSeed: LinkSeedImpl): Result<Long> =
         db.withTransaction {
-            try {
-                require(linkSeed.name.isNotBlank()) { "El nombre no puede estar vacío" }
+            runCatching {
+                validateSeedData(linkSeed)
                 require(validateGarden(linkSeed.gardenId)) { "Garden not found" }
-                val id = linkSeedDataSource.insert(linkSeed)
-                require(validateSeed(id)) { "Seed not found" }
 
+                // Insert seed
+                val id = linkSeedDataSource.insert(linkSeed)
+                require(validateSeed(id)) { "Seed not found after insert" }
+
+                // Insert related entities
                 val links = linkSeed.links.toListEntryEntity(id)
                 val linksIds = linkEntryDataSource.insertAll(links)
                 require(linksIds.size == links.size) { "Not all links were inserted" }
 
-                require(handleTags(linkSeed.tags, id).isEmpty()) { "Error handling tags" }
-
-                seedsCache[id] = linkSeed.copy(id = id)
-                Timber.d("Seed inserted: $linkSeed")
-                Result.success(id)
-            } catch (e: Exception) {
-                Result.failure(e)
+                val tagErrors = handleTags(linkSeed.tags, id)
+                require(tagErrors.isEmpty()) { "Error handling tags: ${tagErrors.size} failed" }
+                id
+            }.onSuccess { id ->
+                Timber.d("✅ Seed inserted and cached: $id")
+            }.onFailure { e ->
+                Timber.e(e, "❌ Error inserting seed")
             }
         }
 
-    // Actualizar con validaciones
     override suspend fun update(linkSeed: LinkSeed): Result<Unit> =
         db.withTransaction {
-            try {
-                require(linkSeed.id > 0) { "El ID debe ser válido" }
-                require(linkSeed.name.isNotBlank()) { "El nombre no puede estar vacío" }
+            runCatching {
+                require(linkSeed.id > 0) { "Invalid seed ID" }
+                validateSeedData(linkSeed)
                 require(validateGarden(linkSeed.gardenId)) { "Garden not found" }
                 require(validateSeed(linkSeed.id)) { "Seed not found" }
-                Timber.d("Updating seed: $linkSeed")
+
+                Timber.d("🔄 Updating seed: ${linkSeed.id}")
+
+                // Update seed
                 linkSeedDataSource.update(linkSeed)
 
-                require(
-                    handleLinks(
-                        linkSeed.links,
-                        linkSeed.id
-                    ).isEmpty()
-                ) { "Error handling links" }
-                require(handleTags(linkSeed.tags, linkSeed.id).isEmpty()) { "Error handling tags" }
+                // Update related entities
+                val linkErrors = handleLinks(linkSeed.links, linkSeed.id)
+                require(linkErrors.isEmpty()) { "Error handling links: ${linkErrors.size} failed" }
 
-                seedsCache[linkSeed.id] = linkSeed
-                Timber.d("Seed updated: $linkSeed")
-                Result.success(Unit)
-            } catch (e: Exception) {
-                Result.failure(e)
+                val tagErrors = handleTags(linkSeed.tags, linkSeed.id)
+                require(tagErrors.isEmpty()) { "Error handling tags: ${tagErrors.size} failed" }
+            }.onSuccess {
+                Timber.d("✅ Seed updated and cached: ${linkSeed.id}")
+            }.onFailure { e ->
+                Timber.e(e, "❌ Error updating seed: ${linkSeed.id}")
             }
         }
 
+    // ---------------------------------------------------------
+    // DELETE - Con limpieza de caché
+    // ---------------------------------------------------------
+
+    override suspend fun delete(linkSeed: LinkSeed): Result<Unit> =
+        db.withTransaction {
+            runCatching {
+                require(linkSeed.id > 0) { "Invalid seed ID" }
+                linkSeedDataSource.delete(linkSeed)
+            }.onSuccess {
+                Timber.d("✅ Seed deleted and removed from cache: ${linkSeed.id}")
+            }.onFailure { e ->
+                Timber.e(e, "❌ Error deleting seed: ${linkSeed.id}")
+            }
+        }
+
+    override suspend fun deleteById(id: Long): Result<Unit> =
+        db.withTransaction {
+            runCatching {
+                require(id > 0) { "Invalid seed ID" }
+                linkSeedDataSource.deleteById(id)
+            }.onSuccess {
+                Timber.d("✅ Seed deleted and removed from cache: $id")
+            }.onFailure { e ->
+                Timber.e(e, "❌ Error deleting seed: $id")
+            }
+        }
+
+    override suspend fun deleteAll(): Result<Unit> =
+        db.withTransaction {
+            runCatching {
+                linkSeedDataSource.deleteAll()
+            }.onSuccess {
+                Timber.d("✅ All seeds deleted and cache cleared")
+            }.onFailure { e ->
+                Timber.e(e, "❌ Error deleting all seeds")
+            }
+        }
+
+    // ---------------------------------------------------------
+    // Métodos auxiliares privados
+    // ---------------------------------------------------------
+
+    private fun validateSeedData(linkSeed: LinkSeed) {
+        require(linkSeed.name.isNotBlank()) { "Seed name cannot be empty" }
+        // Agrega más validaciones según necesites
+    }
+
     private suspend fun validateGarden(gardenId: Long): Boolean {
+        // Si no está en caché, consulta BD
         val garden = linkGardenDataSource.getById(gardenId).first()
-        Timber.d("Garden found: $garden")
+        Timber.d("Garden validation: ${garden != null} for ID: $gardenId")
         return garden != null
     }
 
     private suspend fun validateSeed(seedId: Long): Boolean {
         val seed = linkSeedDataSource.getById(seedId).first()
-        Timber.d("Seed found: $seed")
+        Timber.d("Seed validation: ${seed != null} for ID: $seedId")
         return seed != null
     }
 
@@ -159,11 +195,13 @@ class LinkSeedRepositoryImpl @Inject constructor(
                     linkTagDataSource.insert(tag)
                 }
             } catch (e: Exception) {
-                Timber.e(e, "Error handling tag: $tag")
+                Timber.e(e, "❌ Error handling tag: $tag")
                 errorTags.add(tag)
             }
         }
-        Timber.d("Error tags: $errorTags")
+        if (errorTags.isNotEmpty()) {
+            Timber.w("⚠️ Failed to handle ${errorTags.size} tags")
+        }
         return errorTags
     }
 
@@ -178,44 +216,23 @@ class LinkSeedRepositoryImpl @Inject constructor(
                     linkEntryDataSource.insert(link)
                 }
             } catch (e: Exception) {
-                Timber.e(e, "Error handling link: $link")
+                Timber.e(e, "❌ Error handling link: $link")
                 errorLinks.add(link)
             }
         }
-        Timber.d("Error links: $errorLinks")
+        if (errorLinks.isNotEmpty()) {
+            Timber.w("⚠️ Failed to handle ${errorLinks.size} links")
+        }
         return errorLinks
     }
 
-    // Eliminar
-    override suspend fun delete(linkSeed: LinkSeed): Result<Unit> {
-        return try {
-            require(linkSeed.id > 0) { "El ID debe ser válido" }
-            linkSeedDataSource.delete(linkSeed)
-            seedsCache.remove(linkSeed.id)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
+    /**
+     * Extension function para convertir una entidad de BD a dominio con todas sus relaciones
+     */
+    private suspend fun LinkSeedEntity.toFullDomain(): LinkSeed =
+        db.withTransaction {
+            val links = linkEntryDataSource.getLinksBySeed(id).first()
+            val tags = linkTagDataSource.getTagsBySeed(id).first()
+            toDomain(links, tags)
         }
-    }
-
-    override suspend fun deleteById(id: Long): Result<Unit> {
-        return try {
-            require(id > 0) { "El ID debe ser válido" }
-            linkSeedDataSource.deleteById(id)
-            seedsCache.remove(id)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    override suspend fun deleteAll(): Result<Unit> {
-        return try {
-            linkSeedDataSource.deleteAll()
-            seedsCache.clear()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
 }

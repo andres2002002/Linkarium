@@ -7,7 +7,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -15,20 +14,21 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,10 +54,12 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.habitiora.linkarium.R
 import com.habitiora.linkarium.domain.model.LinkEntry
 import com.habitiora.linkarium.domain.model.LinkSeed
+import com.habitiora.linkarium.ui.components.buttons.PlainTooltipIconButton
 import com.habitiora.linkarium.ui.components.checkBox.CheckBoxComponent
 import com.habitiora.linkarium.ui.utils.clipBoardHelper.ClipboardHelper
 import com.habitiora.linkarium.ui.utils.uirHelper.UriHelper
@@ -79,20 +82,37 @@ fun ItemSeed(
     contentColor: Color = MaterialTheme.colorScheme.onSurface
 ){
     var showContent by remember { mutableStateOf(false) }
-    var showMenu by remember { mutableStateOf(false) }
 
-    // Memorizar valores calculados
-    val isSingleLink by remember(seed.links.size) {
-        mutableStateOf(seed.links.size == 1)
+    // Usar derivedStateOf para evitar recomposiciones innecesarias
+    val isSingleLink by remember { derivedStateOf { seed.links.size == 1 } }
+    val hasLinks by remember { derivedStateOf { seed.links.isNotEmpty() } }
+
+    // Crear callbacks estables con remember
+    val onMainClick = remember(isSingleLink, hasLinks) {
+        {
+            if (hasLinks) {
+                if (isSingleLink) urlHelper.open(seed.links.first().uri)
+                else showContent = !showContent
+            }
+        }
     }
 
-    val interactionSource = remember { MutableInteractionSource() }
-
-    val copyUri: (String, Uri) -> Unit = remember {
-        { name, uri ->
-            scope.launch {
-                clipboardHelper.copyAsUri(name, uri)
+    val onCopyLink = remember(seed.name, isSingleLink, hasLinks) {
+        {
+            if (hasLinks && isSingleLink) {
+                scope.launch {
+                    clipboardHelper.copyAsUri(seed.name, seed.links.first().uri)
+                }
             }
+        }
+    }
+
+    val cardBorder = CardDefaults.outlinedCardBorder()
+    val cardBorderWidth = remember(showSelector, checked) {
+        when {
+            !showSelector -> ItemSeedDefaults.BorderWidthSelectModeOff
+            checked -> ItemSeedDefaults.BorderWidthSelected
+            else -> ItemSeedDefaults.BorderWidthUnselected
         }
     }
 
@@ -103,11 +123,7 @@ fun ItemSeed(
         elevation = CardDefaults.cardElevation(
             defaultElevation = ItemSeedDefaults.CardElevation
         ),
-        border = when {
-            !showSelector -> CardDefaults.outlinedCardBorder().copy(width = ItemSeedDefaults.BorderWidthSelectModeOff)
-            checked -> CardDefaults.outlinedCardBorder().copy(width = ItemSeedDefaults.BorderWidthSelected)
-            else -> CardDefaults.outlinedCardBorder().copy(width = ItemSeedDefaults.BorderWidthUnselected)
-        },
+        border = cardBorder.copy(width = cardBorderWidth),
         shape = shape,
         colors = CardDefaults.cardColors(
             containerColor = containerColor,
@@ -122,39 +138,26 @@ fun ItemSeed(
                     .fillMaxWidth()
                     .clip(shape)
                     .combinedClickable(
-                        interactionSource = interactionSource,
-                        indication = ripple(
-                            color = MaterialTheme.colorScheme.primary
-                        ),
-                        onClick = {
-                            if (seed.links.isNotEmpty()) {
-                                if (isSingleLink) urlHelper.open(seed.links.first().uri)
-                                else showContent = !showContent
-                            }
-                        },
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(color = MaterialTheme.colorScheme.primary),
+                        onClick = onMainClick,
                         onDoubleClick = callbacks.onDoubleTap,
                         onLongClick = callbacks.onLongPress
                     )
-                    .padding(top = 8.dp, bottom = 2.dp)
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
                     .semantics { contentDescription = "Seed item: ${seed.name}" },
                 showSelector = showSelector,
                 checked = checked,
                 onCheckedChange = callbacks.onCheckedChange,
                 isSingleLink = isSingleLink,
-                onSingleLink = { copyUri(seed.name, seed.links.first().uri) },
+                onSingleLink = onCopyLink,
                 onMultiLink = { showContent = !showContent },
                 seed = seed,
-                showContent = showContent
+                showContent = showContent,
+                onEdit = { callbacks.onEdit(seed) },
+                onDelete = { callbacks.onDelete(seed) },
+                widthSizeClass = widthSizeClass
             )
-            if (widthSizeClass == WindowWidthSizeClass.Compact) {
-                ExpandableMenu(
-                    showMenu = showMenu,
-                    onToggleMenu = { showMenu = !showMenu },
-                    onEdit = { callbacks.onEdit(seed) },
-                    onDelete = { callbacks.onDelete(seed) }
-                )
-            }
             MultiLinksContent(
                 modifier = Modifier.padding(start = 16.dp),
                 visible = showContent && !isSingleLink,
@@ -178,11 +181,14 @@ private fun MainSection(
     seed: LinkSeed,
     showSelector: Boolean,
     showContent: Boolean,
+    widthSizeClass: WindowWidthSizeClass,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     isSingleLink: Boolean,
     onSingleLink: () -> Unit,
-    onMultiLink: () -> Unit
+    onMultiLink: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
 ){
     Row(
         modifier = modifier,
@@ -195,17 +201,19 @@ private fun MainSection(
             checked = checked,
             onCheckedChange = onCheckedChange
         )
-        Box(
+
+        SeedInfo(
             modifier = Modifier.weight(1f),
-            contentAlignment = Alignment.CenterStart
-        ){
-            SeedInfo(seed = seed)
-        }
+            seed = seed
+        )
         TrailButtons(
             showContent = showContent,
             isSingleLink = isSingleLink,
             onSingleLink = onSingleLink,
-            onMultiLink = onMultiLink
+            onMultiLink = onMultiLink,
+            onEdit = onEdit,
+            onDelete = onDelete,
+            widthSizeClass = widthSizeClass
         )
     }
 }
@@ -241,6 +249,7 @@ private fun LeadingSection(
                 }
             )
         }
+
         AnimatedVisibility(
             visible = !showSelector,
             enter = fadeIn(animationSpec = tween(ItemSeedDefaults.AnimationDuration)),
@@ -257,86 +266,44 @@ private fun LeadingSection(
 
 @Composable
 private fun SeedInfo(
+    modifier: Modifier = Modifier,
     seed: LinkSeed
 ){
-    val isSingleLink by remember(seed.links.size) {
-        mutableStateOf(seed.links.size == 1)
+    val mainText = remember(seed.links.size) {
+        when(seed.links.size){
+            0 -> "No links"
+            1 -> seed.links.first().uri.toString()
+            else -> "${seed.links.size} links"
+        }
     }
     Column(
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        if (isSingleLink) {
-            SeedInfoSingleLink(seed = seed)
-        } else {
-            SeedInfoMultiLink(seed = seed)
-        }
-    }
-}
-
-@Composable
-private fun SeedInfoSingleLink(
-    seed: LinkSeed
-){
-    if (seed.links.isNotEmpty()) {
-        SelectionContainer{
-            Text(
-                text = seed.links.first().toString(),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-
-    Text(
-        text = seed.name,
-        style = MaterialTheme.typography.titleMedium,
-        maxLines = 2,
-        overflow = TextOverflow.Ellipsis
-    )
-
-    seed.notes?.takeIf { it.isNotBlank() }?.let { notes ->
         Text(
-            text = notes,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
-@Composable
-private fun SeedInfoMultiLink(
-    seed: LinkSeed
-){
-
-    if (seed.links.isNotEmpty()) {
-        Text(
-            text = "Links: ${seed.links.size}",
+            text = mainText,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.primary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-    }
 
-    Text(
-        text = seed.name,
-        style = MaterialTheme.typography.titleMedium,
-        maxLines = 2,
-        overflow = TextOverflow.Ellipsis
-    )
-
-    seed.notes?.takeIf { it.isNotBlank() }?.let { notes ->
         Text(
-            text = notes,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = seed.name,
+            style = MaterialTheme.typography.titleMedium,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
+
+        seed.notes?.takeIf { it.isNotBlank() }?.let { notes ->
+            Text(
+                text = notes,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 
@@ -344,19 +311,24 @@ private fun SeedInfoMultiLink(
 private fun TrailButtons(
     modifier: Modifier = Modifier,
     isSingleLink: Boolean,
-    onSingleLink: () -> Unit,
+    widthSizeClass: WindowWidthSizeClass,
     showContent: Boolean = false,
-    onMultiLink: () -> Unit
+    onSingleLink: () -> Unit,
+    onMultiLink: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
 ) {
-    val (iconRes, contentDescription, onClick) = when {
-        isSingleLink ->
-            Triple(R.drawable.round_content_copy_24, "Copy link", onSingleLink)
+    val (iconRes, contentDescription, onClick) = remember(isSingleLink, showContent) {
+        when {
+            isSingleLink ->
+                Triple(R.drawable.round_content_copy_24, "Copy link", onSingleLink)
 
-        showContent ->
-            Triple(R.drawable.round_unfold_less_24, "Hide more links", onMultiLink)
+            showContent ->
+                Triple(R.drawable.round_unfold_less_24, "Hide more links", onMultiLink)
 
-        else ->
-            Triple(R.drawable.round_unfold_more_24, "Show more links", onMultiLink)
+            else ->
+                Triple(R.drawable.round_unfold_more_24, "Show more links", onMultiLink)
+        }
     }
 
     val iconRotation by animateFloatAsState(
@@ -365,162 +337,108 @@ private fun TrailButtons(
         label = "Trail Icon Rotation"
     )
 
+    val buttonSize = ItemSeedDefaults.IconSizeMedium + 8.dp
+    val iconSize = ItemSeedDefaults.IconSizeMedium
+
     Row(
         modifier = modifier.semantics {
             this.contentDescription = contentDescription
         },
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(
+        PlainTooltipIconButton(
+            modifier = Modifier.size(buttonSize),
+            tooltipText = contentDescription,
             onClick = onClick
         ) {
             Icon(
                 modifier = Modifier
-                    .size(ItemSeedDefaults.IconSizeMedium)
+                    .size(iconSize)
                     .rotate(iconRotation),
                 imageVector = ImageVector.vectorResource(iconRes),
                 contentDescription = contentDescription
             )
         }
+        MoreOptions(
+            widthSizeClass = widthSizeClass,
+            buttonSize = buttonSize,
+            iconSize = iconSize,
+            onEdit = onEdit,
+            onDelete = onDelete
+        )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ExpandableMenu(
-    modifier: Modifier = Modifier,
-    showMenu: Boolean,
-    onToggleMenu: () -> Unit,
+private fun MoreOptions(
+    widthSizeClass: WindowWidthSizeClass,
+    buttonSize: Dp,
+    iconSize: Dp,
     onEdit: () -> Unit,
     onDelete: () -> Unit
-) {
-    val iconRotation by animateFloatAsState(
-        targetValue = if (showMenu) 180f else 0f,
-        animationSpec = tween(ItemSeedDefaults.AnimationDuration),
-        label = "Menu Icon Rotation"
-    )
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        AnimatedVisibility(
-            visible = showMenu,
-            enter = fadeIn(animationSpec = tween(ItemSeedDefaults.AnimationDuration)),
-            exit = fadeOut(animationSpec = tween(ItemSeedDefaults.AnimationDuration))
-        ) {
-            MenuButtons(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                onEdit = onEdit,
-                onDelete = onDelete
-            )
-        }
+){
+    var showMenu by remember { mutableStateOf(false) }
+
+    if (widthSizeClass == WindowWidthSizeClass.Compact) {
         Box(
-            modifier = Modifier
-                .height(25.dp)
-                .fillMaxWidth()
-                .clip(MaterialTheme.shapes.small)
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                    shape = MaterialTheme.shapes.extraSmall
-                )
-                .clickable(
-                    indication = ripple(
-                        bounded = true,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                    ),
-                    interactionSource = remember { MutableInteractionSource() },
-                    onClick = onToggleMenu
-                ),
-            contentAlignment = Alignment.Center
+            modifier = Modifier.wrapContentSize()
         ) {
-            Icon(
-                modifier = Modifier.rotate(iconRotation),
-                imageVector = ImageVector.vectorResource(R.drawable.baseline_expand_more_24),
-                contentDescription = null
-            )
-        }
-    }
-}
-
-@Composable
-private fun MenuButtons(
-    modifier: Modifier = Modifier,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        MenuButton(
-            onClick = onEdit,
-            label = "Edit",
-            icon = Icons.Default.Edit,
-            contentDescription = "Edit seed",
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-
-        MenuButton(
-            onClick = onDelete,
-            label = "Delete",
-            icon = Icons.Default.Delete,
-            contentDescription = "Delete seed",
-            containerColor = MaterialTheme.colorScheme.errorContainer,
-            contentColor = MaterialTheme.colorScheme.onErrorContainer
-        )
-    }
-}
-
-@Composable
-private fun MenuButton(
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-    label: String? = null,
-    icon: ImageVector,
-    contentDescription: String,
-    containerColor: Color,
-    contentColor: Color
-) {
-    Box(
-        modifier = modifier
-            .clip(MaterialTheme.shapes.small)
-            .height(ItemSeedDefaults.IconSizeMedium)
-            .background(containerColor)
-            .clickable(
-                indication = ripple(
-                    bounded = true,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                ),
-                interactionSource = remember { MutableInteractionSource() },
-                onClick = onClick
-            ),
-        contentAlignment = Alignment.Center
-    ){
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                modifier = Modifier.fillMaxHeight(),
-                imageVector = icon,
-                contentDescription = contentDescription,
-                tint = contentColor
-            )
-            label?.let {
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    modifier = Modifier,
-                    text = it,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = contentColor,
-                    maxLines = 1
+            PlainTooltipIconButton(
+                modifier = Modifier.size(buttonSize),
+                tooltipText = "Options",
+                onClick = { showMenu = !showMenu }
+            ) {
+                Icon(
+                    modifier = Modifier.size(iconSize),
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "More options"
                 )
             }
+            DropdownMenu(
+                expanded = showMenu,
+                onDismissRequest = { showMenu = false }
+            ) {
+                DropdownMenuItem(
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
+                    },
+                    text = { Text("Edit") },
+                    onClick = { onEdit(); showMenu = false }
+                )
+                DropdownMenuItem(
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
+                    },
+                    text = { Text("Delete") },
+                    onClick = { onDelete(); showMenu = false }
+                )
+            }
+        }
+    } else {
+        PlainTooltipIconButton(
+            modifier = Modifier.size(buttonSize),
+            tooltipText = "Edit",
+            onClick = onEdit
+        ) {
+            Icon(
+                modifier = Modifier.size(iconSize),
+                imageVector = Icons.Default.Edit,
+                contentDescription = "Edit"
+            )
+        }
+        PlainTooltipIconButton(
+            modifier = Modifier.size(buttonSize),
+            tooltipText = "Delete",
+            onClick = onDelete
+        ) {
+            Icon(
+                modifier = Modifier.size(iconSize),
+                imageVector = Icons.Default.Delete,
+                tint = MaterialTheme.colorScheme.error,
+                contentDescription = "Delete"
+            )
         }
     }
 }
@@ -577,7 +495,7 @@ private fun ItemLink(
         headlineContent = {
             SelectionContainer {
                 Text(
-                    text = entry.toString(),
+                    text = entry.uri.toString(),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )

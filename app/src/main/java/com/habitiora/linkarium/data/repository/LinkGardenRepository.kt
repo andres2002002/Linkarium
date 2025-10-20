@@ -1,17 +1,15 @@
 package com.habitiora.linkarium.data.repository
 
+import com.habitiora.linkarium.core.ProcessStatus
 import com.habitiora.linkarium.domain.model.LinkGarden
 import com.habitiora.linkarium.domain.model.LinkGardenWithSeeds
+import com.habitiora.linkarium.domain.model.LinkSeed
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 interface LinkGardenRepository {
-
-    fun clearCache()
-    fun clearCache(gardenId: Long)
     fun getAll(): Flow<List<LinkGarden>>
     fun getById(id: Long): Flow<LinkGarden?>
-    suspend fun getGardenWithSeeds(gardenId: Long): LinkGardenWithSeeds?
-    suspend fun getAllWithSeeds(): List<LinkGardenWithSeeds>
     suspend fun insert(linkGarden: LinkGarden): Result<Long>
     suspend fun update(linkGarden: LinkGarden): Result<Unit>
     suspend fun delete(linkGarden: LinkGarden): Result<Unit>

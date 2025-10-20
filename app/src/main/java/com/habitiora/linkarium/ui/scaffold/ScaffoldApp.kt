@@ -1,39 +1,31 @@
 package com.habitiora.linkarium.ui.scaffold
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddLink
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -41,13 +33,15 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.habitiora.linkarium.R
 import com.habitiora.linkarium.ui.components.buttons.PlainTooltipFAB
 import com.habitiora.linkarium.ui.components.buttons.PlainTooltipIconButton
 import com.habitiora.linkarium.ui.navigation.NavigationHost
 import com.habitiora.linkarium.ui.navigation.Screens
 import com.habitiora.linkarium.ui.navigation.TypeScreen
-import com.habitiora.linkarium.ui.utils.localNavigator.navigateSingleTopTo
-import kotlinx.coroutines.launch
+import com.habitiora.linkarium.ui.scaffold.dialogs.DialogApp
+import com.habitiora.linkarium.ui.utils.localNavigator.navigateToRoute
+import com.habitiora.linkarium.ui.utils.localNavigator.navigateToScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,13 +49,24 @@ fun ScaffoldApp(
     windowSizeClass: WindowSizeClass,
     viewModel: ScaffoldViewModel = hiltViewModel()
 ){
+    val message by viewModel.message.collectAsState()
+
     val navController = rememberNavController()
     val currentBackStack by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStack?.destination?.route
-    val currentScreen = remember(currentRoute) { Screens.getScreenByRoute(currentRoute) }
+    val currentScreen = remember(currentRoute) { Screens.fromRoute(currentRoute) }
 
     val snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 
+    LaunchedEffect(viewModel) {
+        viewModel.snackbarEvents.collect { event ->
+            snackbarHostState.showSnackbar(
+                message = event.message,
+                actionLabel = event.actionLabel,
+                duration = event.duration
+            )
+        }
+    }
 
     val menuItems = listOf(
         Screens.ShowGarden,
@@ -69,6 +74,8 @@ fun ScaffoldApp(
     )
 
     val linkariumScaffoldConfig = scaffoldConfig(navController, snackbarHostState, currentScreen, menuItems)
+
+    message?.let { value -> DialogApp(value, viewModel::dismissDialog) }
 
     LinkariumScaffold(
         windowSizeClass = windowSizeClass,
@@ -115,7 +122,7 @@ private fun scaffoldConfig(
                     ) {
                         PlainTooltipIconButton(
                             tooltipText = "Settings",
-                            onClick = { navController.navigateSingleTopTo(Screens.Settings) }
+                            onClick = { navController.navigateToScreen(Screens.Settings) }
                         ) {
                             Icon(Icons.Filled.Settings, contentDescription = "Settings")
                         }
@@ -129,11 +136,11 @@ private fun scaffoldConfig(
                     menuItems.forEach { item ->
                         val selected = item.route == currentScreen?.route
                         val text = stringResource(item.normalTitle)
-                        val icon =
-                            ImageVector.vectorResource(if (selected) item.iconSelect else item.iconUnselect)
+                        val iconRes = if (selected) item.iconSelect else item.iconUnselect
+                        val icon = ImageVector.vectorResource(iconRes?: R.drawable.round_home_24)
                         NavigationBarItem(
                             selected = selected,
-                            onClick = { navController.navigateSingleTopTo(item) },
+                            onClick = { navController.navigateToScreen(item) },
                             icon = { Icon(imageVector = icon, contentDescription = text) },
                             label = { Text(text = text) }
                         )
@@ -144,9 +151,9 @@ private fun scaffoldConfig(
         .floatingActionButton(WindowWidthSizeClass.Compact) {
             if (currentScreen?.typeScreen == TypeScreen.Primary) {
                 FloatingActionButton(
-                    onClick = { navController.navigateSingleTopTo(Screens.PlantNew) },
+                    onClick = { navController.navigateToRoute(Screens.PlantNew.createRoute()) },
                 ) {
-                    Icon(Icons.Filled.Add, contentDescription = "add")
+                    Icon(Icons.Filled.AddLink, contentDescription = "add link")
                 }
             }
         }
@@ -161,9 +168,9 @@ private fun scaffoldConfig(
                     ) {
                         PlainTooltipFAB(
                             tooltipText = "Add New Seed",
-                            onClick = { navController.navigateSingleTopTo(Screens.PlantNew) }
+                            onClick = { navController.navigateToRoute(Screens.PlantNew.createRoute()) }
                         ) {
-                            Icon(Icons.Filled.Add, contentDescription = "add")
+                            Icon(Icons.Filled.AddLink, contentDescription = "add link")
                         }
                     }
                     AnimatedVisibility(
@@ -182,10 +189,11 @@ private fun scaffoldConfig(
                 menuItems.forEach { item ->
                     val selected = item.route == currentScreen?.route
                     val text = stringResource(item.normalTitle)
-                    val icon = ImageVector.vectorResource(if (selected) item.iconSelect else item.iconUnselect)
+                    val iconRes = if (selected) item.iconSelect else item.iconUnselect
+                    val icon = ImageVector.vectorResource(iconRes?: R.drawable.round_home_24)
                     NavigationRailItem(
                         selected = selected,
-                        onClick = { navController.navigateSingleTopTo(item) },
+                        onClick = { navController.navigateToScreen(item) },
                         icon = { Icon(imageVector = icon, contentDescription = text) },
                         label = { Text(text = text) }
                     )
@@ -194,66 +202,11 @@ private fun scaffoldConfig(
                 val iconSettings = if (selected) Icons.Filled.Settings else Icons.Outlined.Settings
                 NavigationRailItem(
                     selected = selected,
-                    onClick = { navController.navigateSingleTopTo(Screens.Settings) },
+                    onClick = { navController.navigateToScreen(Screens.Settings) },
                     icon = { Icon(iconSettings, contentDescription = "Settings") },
                     label = { Text("Settings") }
                 )
             }
         }
         .build()
-}
-
-@Composable
-fun LinkariumScaffold(
-    windowSizeClass: WindowSizeClass,
-    navController: NavHostController,
-    config: ScaffoldConfig,
-    content: @Composable () -> Unit
-) {
-    val currentBackStack by navController.currentBackStackEntryAsState()
-    val currentRoute = currentBackStack?.destination?.route
-
-    val scaffoldState = rememberDrawerState(DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-
-    Scaffold(
-        topBar = {
-            config.topBar[windowSizeClass.widthSizeClass]?.invoke()
-        },
-        bottomBar = {
-            config.bottomBar[windowSizeClass.widthSizeClass]?.invoke()
-        },
-        floatingActionButton = {
-            config.fab[windowSizeClass.widthSizeClass]?.invoke()
-        },
-        floatingActionButtonPosition =
-            config.fabPosition[windowSizeClass.widthSizeClass] ?: FabPosition.End,
-        snackbarHost = { config.snackbarHost?.invoke() },
-        containerColor = config.containerColor,
-        contentColor = config.contentColor
-    ) { padding ->
-        Row(modifier = Modifier.padding(padding)) {
-            // Rail opcional
-            config.navigationRail[windowSizeClass.widthSizeClass]?.invoke(currentRoute, navController)
-
-            // Drawer opcional (solo si Compact, por ejemplo)
-            if (windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact &&
-                config.drawer != null
-            ) {
-                ModalNavigationDrawer(
-                    drawerState = scaffoldState,
-                    gesturesEnabled = config.gesturesEnabled,
-                    drawerContent = {
-                        config.drawer.invoke(currentRoute, navController) {
-                            scope.launch { scaffoldState.close() }
-                        }
-                    }
-                ) {
-                    Box(Modifier.weight(1f)) { content() }
-                }
-            } else {
-                Box(Modifier.weight(1f)) { content() }
-            }
-        }
-    }
 }

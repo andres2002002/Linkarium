@@ -7,35 +7,39 @@ junitVersion = "1.3.0"
 espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.9.4"
 activityCompose = "1.11.0"
-composeBom = "2025.09.01"
+composeBom = "2025.10.00"
 
 navigation = "2.9.5"
 
 hiltViewModelCompose = "1.3.0"
 
-daggerHilt = "2.57.1"
+daggerHilt = "2.57.2"
 
 datastore = "1.1.7"
 
-room = "2.8.1"
+room = "2.8.2"
 
 json = "2.13.2"
 
-junitJupiter = "5.13.4"
+junitJupiter = "6.0.0"
 
 runner = "1.7.0"
 rules = "1.7.0"
+
+pagin = "3.3.6"
 
 testCore = "1.7.0"
 testCoreKtx = "1.7.0"
 
 mockito = "5.20.0"
-mockitoKotlin = "6.0.0"
+mockitoKotlin = "6.1.0"
 
 timber = "5.0.1"
 
 kotlinSerialization = "1.9.0"
 pluginKotlinSerialization = "2.2.20"
+
+apachePdfBox = "2.0.27.0"
 
 kspVersion = "2.2.20-2.0.3"
 
@@ -86,10 +90,15 @@ androidx-rules = { group = "androidx.test", name = "rules", version.ref = "rules
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "testCore" }
 androidx-test-core-ktx = { group = "androidx.test", name = "core-ktx", version.ref = "testCoreKtx" }
 
+androidx-paging-runtime-ktx = { group = "androidx.paging", name = "paging-runtime-ktx", version.ref = "pagin" }
+androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "pagin" }
+
 mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
 mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlin" }
 
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+
+apache-pdfbox = { group = "com.tom-roush", name = "pdfbox-android", version.ref = "apachePdfBox" }
 
 kotlinx-serialization-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version.ref = "kotlinSerialization" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinSerialization" }

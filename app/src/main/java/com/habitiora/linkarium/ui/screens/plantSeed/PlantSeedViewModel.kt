@@ -1,6 +1,5 @@
 package com.habitiora.linkarium.ui.screens.plantSeed
 
-import android.database.sqlite.SQLiteConstraintException
 import android.net.Uri
 import android.util.Patterns
 import androidx.compose.ui.text.input.TextFieldValue
@@ -12,8 +11,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import timber.log.Timber
 import javax.inject.Inject
 import androidx.core.net.toUri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.sqlite.SQLiteException
+import com.habitiora.linkarium.core.SnackbarMessage
 import com.habitiora.linkarium.data.repository.LinkGardenRepository
 import com.habitiora.linkarium.data.repository.LinkSeedRepository
 import com.habitiora.linkarium.domain.model.LinkEntry
@@ -23,7 +24,7 @@ import com.habitiora.linkarium.domain.usecase.LinkSeedImpl
 import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LabelDescriptionTextFieldValues
 import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LinkEntryTextFieldValues
 import com.habitiora.linkarium.ui.utils.pubsAndSubs.GardenBus
-import com.habitiora.linkarium.ui.utils.pubsAndSubs.SeedManagerBus
+import com.habitiora.linkarium.ui.utils.pubsAndSubs.SnackbarEventBus
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -35,11 +36,14 @@ import java.time.LocalDateTime
 
 @HiltViewModel
 class PlantSeedViewModel @Inject constructor(
+    private val savedStateHandle: SavedStateHandle,
     private val seedRepository: LinkSeedRepository,
     private val gardenRepository: LinkGardenRepository,
     private val gardenBus: GardenBus,
-    private val seedManagerBus: SeedManagerBus
+    private val snackbarEventBus: SnackbarEventBus
 ) : ViewModel() {
+
+    val seedId: Long? = savedStateHandle["seedId"]
 
     val gardens: StateFlow<List<LinkGarden>> = gardenRepository.getAll()
         .distinctUntilChanged()
@@ -103,33 +107,41 @@ class PlantSeedViewModel @Inject constructor(
     val entries: StateFlow<List<LinkEntry>> = _entriesList.asStateFlow()
 
     init {
-        val seedToEdit = seedManagerBus.getAndConsumeSeedToEdit()
-        if (seedToEdit != null) {
-            editingSeedId = seedToEdit.id
-            _isEditMode.value = true
-            updateNameNotesTextFieldValue(
-                LabelDescriptionTextFieldValues.LABEL_KEY,
-                TextFieldValue(seedToEdit.name)
-            )
-            seedToEdit.notes?.let { notes ->
-                updateNameNotesTextFieldValue(
-                    LabelDescriptionTextFieldValues.DESCRIPTION_KEY,
-                    TextFieldValue(notes)
-                )
-            }
-            if (seedToEdit.links.size == 1) {
-                setNewEntryTextFieldValues(
-                    LinkEntryTextFieldValues(
-                        url = TextFieldValue(seedToEdit.links[0].uri.toString()),
-                        label = TextFieldValue(seedToEdit.links[0].label ?: ""),
-                        note = TextFieldValue(seedToEdit.links[0].note ?: "")
+        viewModelScope.launch {
+            try {
+                val seed = seedId?.let { seedRepository.getById(it).first() }
+                if (seed != null) {
+                    Timber.d("Loading seed with id: ${seed.id}")
+                    editingSeedId = seed.id
+                    _isEditMode.value = true
+                    updateNameNotesTextFieldValue(
+                        LabelDescriptionTextFieldValues.LABEL_KEY,
+                        TextFieldValue(seed.name)
                     )
-                )
+                    seed.notes?.let { notes ->
+                        updateNameNotesTextFieldValue(
+                            LabelDescriptionTextFieldValues.DESCRIPTION_KEY,
+                            TextFieldValue(notes)
+                        )
+                    }
+                    if (seed.links.size == 1) {
+                        setNewEntryTextFieldValues(
+                            LinkEntryTextFieldValues(
+                                url = TextFieldValue(seed.links[0].uri.toString()),
+                                label = TextFieldValue(seed.links[0].label ?: ""),
+                                note = TextFieldValue(seed.links[0].note ?: "")
+                            )
+                        )
+                    }
+                    else _entriesList.value = seed.links
+                }
+                else {
+                    Timber.d("No seed found with id: $seedId")
+                    _isEditMode.value = false
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Error loading seed")
             }
-            else _entriesList.value = seedToEdit.links
-        }
-        else {
-            _isEditMode.value = false
         }
     }
 
@@ -187,8 +199,11 @@ class PlantSeedViewModel @Inject constructor(
 
     private fun addEntry(entry: LinkEntry) {
         _entriesList.update { current ->
-            // LinkedHashSet preserva orden de inserción y evita duplicados
-            LinkedHashSet(current).apply { add(entry) }.toList()
+            if (current.any { it.uri == entry.uri }) {
+                val snackbarMessage = SnackbarMessage.Info(message = "URL already added")
+                sendSnackbarMessage(snackbarMessage)
+                current
+            } else current + entry
         }
     }
 
@@ -203,6 +218,12 @@ class PlantSeedViewModel @Inject constructor(
      */
     fun clear() {
         _entriesList.value = emptyList()
+    }
+
+    private fun sendSnackbarMessage(message: SnackbarMessage) {
+        viewModelScope.launch {
+            snackbarEventBus.postMessage(message)
+        }
     }
 
     val isValidSeed: StateFlow<Boolean> = combine(
@@ -246,7 +267,6 @@ class PlantSeedViewModel @Inject constructor(
             if (result.isSuccess) {
                 Timber.d("Seed saved/updated with id: ${result.getOrNull()?: seed.id}")
                 clearFields()
-                gardenRepository.clearCache(gardenId.value)
                 onSuccess()
             } else {
                 Timber.d("Seed not saved")

@@ -29,6 +29,7 @@ import jakarta.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
+
     @Provides
     @Singleton
     fun provideLinkSeedDataSource(linkSeedDao: LinkSeedEntityDao): LinkSeedDataSource {
@@ -39,13 +40,11 @@ object RepositoryModule {
     @Singleton
     fun provideLinkGardenRepository(
         db: AppDatabase,
-        linkGardenDataSource: LinkGardenDataSource,
-        linkSeedDataSource: LinkSeedDataSource,
-        linkEntryDataSource: LinkEntryDataSource,
-        linkTagDataSource: LinkTagDataSource
+        linkGardenDataSource: LinkGardenDataSource
     ): LinkGardenRepository {
         return LinkGardenRepositoryImpl(
-            db, linkGardenDataSource, linkSeedDataSource, linkEntryDataSource, linkTagDataSource
+            db,
+            linkGardenDataSource
         )
     }
 
@@ -91,8 +90,22 @@ object RepositoryModule {
 
     @Singleton
     @Provides
-    fun provideExportRepository(pdfGenerator: GardenPdfGenerator, gardenRepository: LinkGardenRepository): ExportRepository =
-        ExportRepositoryImpl(gardenRepository, pdfGenerator)
+    fun provideExportRepository(
+        db: AppDatabase,
+        pdfGenerator: GardenPdfGenerator,
+        gardenDataSource: LinkGardenDataSource,
+        seedDataSource: LinkSeedDataSource,
+        entryDataSource: LinkEntryDataSource,
+        tagDataSource: LinkTagDataSource
+    ): ExportRepository =
+        ExportRepositoryImpl(
+            db,
+            pdfGenerator,
+            gardenDataSource,
+            seedDataSource,
+            entryDataSource,
+            tagDataSource
+        )
 
 
 }

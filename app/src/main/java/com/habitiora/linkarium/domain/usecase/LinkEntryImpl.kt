@@ -9,4 +9,16 @@ data class LinkEntryImpl(
     override val uri: Uri,
     override val label: String? = null,
     override val note: String? = null
-): LinkEntry
+): LinkEntry{
+    override fun equals(other: Any?): Boolean {
+        return other is LinkEntryImpl &&
+                seedId == other.seedId &&
+                uri == other.uri
+    }
+
+    override fun hashCode(): Int {
+        var result = seedId.hashCode()
+        result = 31 * result + uri.hashCode()
+        return result
+    }
+}

@@ -8,35 +8,28 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryScrollableTabRow
-import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,17 +37,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import com.habitiora.linkarium.core.ProcessStatus
 import com.habitiora.linkarium.domain.model.LinkGarden
 import com.habitiora.linkarium.domain.model.LinkGardenWithSeeds
 import com.habitiora.linkarium.domain.model.LinkSeed
-import com.habitiora.linkarium.ui.components.EmptyMessage
 import com.habitiora.linkarium.ui.navigation.Screens
 import com.habitiora.linkarium.ui.screens.gardenManager.GardenManagerDialog
-import com.habitiora.linkarium.ui.utils.clipBoardHelper.rememberClipboardHelper
 import com.habitiora.linkarium.ui.utils.localNavigator.LocalNavigator
-import com.habitiora.linkarium.ui.utils.localNavigator.navigateSingleTopTo
-import com.habitiora.linkarium.ui.utils.localWindowSizeClass.LocalWindowSizeClass
-import com.habitiora.linkarium.ui.utils.uirHelper.rememberUriHelper
+import com.habitiora.linkarium.ui.utils.localNavigator.navigateToRoute
 import kotlin.math.absoluteValue
 
 @Composable
@@ -62,7 +54,8 @@ fun ShowGardenScreen(
     viewModel: ShowGardenViewModel = hiltViewModel()
 ) {
     val collections by viewModel.gardens.collectAsState()
-    val selectedCollection by viewModel.selectedGarden.collectAsState()
+    val garden by viewModel.garden.collectAsState()
+    val seeds = viewModel.seeds.collectAsLazyPagingItems()
     val openGardenDialog by viewModel.openGardenDialog.collectAsState()
     val navController: NavHostController = LocalNavigator.current
 
@@ -74,7 +67,8 @@ fun ShowGardenScreen(
 
     ContentScreen(
         modifier = Modifier.fillMaxWidth(),
-        selectedCollection = selectedCollection,
+        garden = garden,
+        seeds = seeds,
         collections = collections,
         onCollectionSelected = { garden ->
             viewModel.setSelectedGardenId(garden.id)
@@ -83,10 +77,10 @@ fun ShowGardenScreen(
             viewModel.setOpenGardenDialog(true)
         },
         onEdit = { seed ->
-            viewModel.onEditLinkSeed(seed)
-            navController.navigateSingleTopTo(Screens.PlantNew)
+            navController.navigateToRoute(Screens.PlantNew.createRoute(seed.id))
         },
         onDelete = {
+            viewModel.onDeleteLinkSeed(it)
         },
         onExport = { uri, context ->
             viewModel.exportGardens(uri, context)
@@ -97,7 +91,8 @@ fun ShowGardenScreen(
 @Composable
 private fun ContentScreen(
     modifier: Modifier = Modifier,
-    selectedCollection: LinkGardenWithSeeds,
+    garden: LinkGarden?,
+    seeds: LazyPagingItems<LinkSeed>,
     collections: List<LinkGarden>,
     onCollectionSelected: (LinkGarden) -> Unit,
     navigateToAddGarden: () -> Unit,
@@ -105,16 +100,16 @@ private fun ContentScreen(
     onDelete: (LinkSeed) -> Unit,
     onExport: (uri: Uri, context: Context) -> Unit
 ){
-    val selectedTabIndex = remember(selectedCollection, collections){
-        if (collections.isEmpty()) return@remember 0
-        collections.indexOfFirst { it.id == selectedCollection.garden.id }.coerceIn(collections.indices)
+    val selectedTabIndex = remember(garden, collections){
+        if (garden == null || collections.isEmpty()) return@remember 0
+        collections.indexOfFirst { it.id == garden.id }.coerceIn(collections.indices)
     }
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ){
-        if (collections.isEmpty()) {
+        if (collections.isEmpty() || garden == null) {
             EmptyGardensMessage(
                 navigateToAddGarden = navigateToAddGarden
             )
@@ -133,7 +128,7 @@ private fun ContentScreen(
             }
             GardenContent(
                 modifier = Modifier.weight(1f),
-                seeds = selectedCollection.seeds,
+                seeds = seeds,
                 indexSelected = selectedTabIndex,
                 pages = collections.size,
                 onPagedSelected = { index ->
@@ -149,79 +144,39 @@ private fun ContentScreen(
 @Composable
 private fun GardenContent(
     modifier: Modifier = Modifier,
-    seeds: List<LinkSeed>,
+    seeds: LazyPagingItems<LinkSeed>,
     indexSelected: Int,
     pages: Int,
     onPagedSelected: (Int) -> Unit,
     onEdit: (LinkSeed) -> Unit,
     onDelete: (LinkSeed) -> Unit
 ){
-    val clipboardHelper = rememberClipboardHelper()
-    val uriHelper = rememberUriHelper()
-    val windowSizeClass = LocalWindowSizeClass.current
-    val scope = rememberCoroutineScope()
-    var showSelector by remember { mutableStateOf(false) }
-    val callbacks = remember {
-        ItemSeedCallbacks(
-            onDoubleTap = {},
-            onLongPress = { showSelector = !showSelector },
-            onCheckedChange = {},
-            onEdit = onEdit,
-            onDelete = onDelete
-        )
-    }
 
     val pagerState = rememberPagerState { pages }
 
-    LaunchedEffect(pagerState.currentPage) {
-        showSelector = false
-        onPagedSelected(pagerState.currentPage)
+    // Solo actualiza cuando la página cambie realmente
+    LaunchedEffect(pagerState.settledPage) {
+        onPagedSelected(pagerState.settledPage)
     }
 
+    // Solo mueve el pager si el índice externo cambia
     LaunchedEffect(indexSelected) {
-        showSelector = false
-        pagerState.animateScrollToPage(indexSelected)
-    }
-
-    val showItems = remember(pagerState.isScrollInProgress, seeds.size) {
-        pagerState.currentPageOffsetFraction.absoluteValue < 0.1f && seeds.isNotEmpty()
+        if (pagerState.currentPage != indexSelected) {
+            pagerState.animateScrollToPage(indexSelected)
+        }
     }
 
     HorizontalPager(
         modifier = modifier,
         state = pagerState,
         userScrollEnabled = true
-    ) {
-        LazyColumn(
+    ) { _ ->
+        ShowSeedsScreen(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = 16.dp, bottom = 48.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            if (showItems)
-                items(seeds, key = { it.id }) { seed ->
-                    ItemSeed(
-                        seed = seed,
-                        clipboardHelper = clipboardHelper,
-                        urlHelper = uriHelper,
-                        scope = scope,
-                        callbacks = callbacks,
-                        showSelector = showSelector,
-                        checked = false,
-                        widthSizeClass = windowSizeClass.widthSizeClass
-                    )
-                }
-            else if (seeds.isEmpty())
-                item {
-                    EmptyMessage(
-                        modifier = Modifier.fillMaxSize(),
-                        message = "No Seeds"
-                    )
-                }
-            else
-                item {
-                    LoadingComponent()
-                }
-        }
+            seeds = seeds,
+            onEdit = onEdit,
+            onDelete = onDelete
+        )
     }
 }
 
@@ -309,20 +264,6 @@ private fun EmptyGardensMessage(
             }
             Text(text = "Add Garden")
         }
-    }
-}
-
-@Composable
-private fun LoadingComponent(){
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
-    ){
-        CircularProgressIndicator(
-            modifier = Modifier.size(48.dp)
-        )
     }
 }
 

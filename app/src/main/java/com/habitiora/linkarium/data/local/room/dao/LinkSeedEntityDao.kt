@@ -1,5 +1,6 @@
 package com.habitiora.linkarium.data.local.room.dao
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -38,5 +39,8 @@ interface LinkSeedEntityDao {
     @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_ID = :id")
     fun getById(id: Long): Flow<LinkSeedEntity?>
     @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_GARDEN_ID = :gardenId")
-    fun getSeedsByGarden(gardenId: Long): Flow<List<LinkSeedEntity>>
+    fun getSeedsByGarden(gardenId: Long): PagingSource<Int, LinkSeedEntity>
+
+    @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_GARDEN_ID = :gardenId")
+    suspend fun getSeedsForExport(gardenId: Long): List<LinkSeedEntity>
 }

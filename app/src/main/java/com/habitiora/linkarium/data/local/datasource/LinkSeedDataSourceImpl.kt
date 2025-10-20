@@ -1,5 +1,6 @@
 package com.habitiora.linkarium.data.local.datasource
 
+import androidx.paging.PagingSource
 import com.habitiora.linkarium.data.local.room.dao.LinkSeedEntityDao
 import com.habitiora.linkarium.data.local.room.entity.LinkSeedComplete
 import com.habitiora.linkarium.data.local.room.entity.LinkSeedEntity
@@ -33,6 +34,9 @@ class LinkSeedDataSourceImpl @Inject constructor(
     override fun getById(id: Long): Flow<LinkSeedEntity?> =
         dao.getById(id)
 
-    override fun getSeedsByGarden(gardenId: Long): Flow<List<LinkSeedEntity>> =
+    override fun getSeedsByGarden(gardenId: Long): PagingSource<Int, LinkSeedEntity> =
         dao.getSeedsByGarden(gardenId)
+
+    override suspend fun getSeedsForExport(gardenId: Long): List<LinkSeedEntity> =
+        dao.getSeedsForExport(gardenId)
 }

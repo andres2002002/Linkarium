@@ -1,26 +1,10 @@
 package com.habitiora.linkarium.ui.scaffold
 
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarColors
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.Dp
 import androidx.navigation.NavHostController
-import com.habitiora.linkarium.ui.navigation.Screens
-import com.habitiora.linkarium.ui.navigation.TypeScreen
-import com.habitiora.linkarium.ui.utils.localNavigator.navigateSingleTopTo
 
 class ScaffoldConfig private constructor(
     val gesturesEnabled: Boolean = true,

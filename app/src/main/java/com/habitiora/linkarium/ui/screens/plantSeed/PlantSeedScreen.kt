@@ -66,6 +66,7 @@ import com.habitiora.linkarium.domain.model.LinkEntry
 import com.habitiora.linkarium.domain.model.LinkGarden
 import com.habitiora.linkarium.ui.components.textField.ProTextFieldState
 import com.habitiora.linkarium.ui.components.textField.RoundedTextFieldPro
+import com.habitiora.linkarium.ui.utils.localNavigator.LocalNavigator
 import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LabelDescriptionTextFieldValues
 import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LinkEntryTextFieldValues
 
@@ -73,8 +74,7 @@ private val PaddingSmall = 4.dp
 
 @Composable
 fun PlantSeedScreen(
-    viewModel: PlantSeedViewModel = hiltViewModel(),
-    popBackStack: () -> Unit
+    viewModel: PlantSeedViewModel = hiltViewModel()
 ){
     val nameNotesTextFieldValue by viewModel.nameNotesTextFieldValue.collectAsState()
     val newEntryTextFieldValues by viewModel.newEntryTextFieldValues.collectAsState()
@@ -82,6 +82,8 @@ fun PlantSeedScreen(
     val collectionId by viewModel.gardenId.collectAsState()
     val gardens by viewModel.gardens.collectAsState()
     val isValidSeed by viewModel.isValidSeed.collectAsState()
+
+    val navController = LocalNavigator.current
 
     PlantSeedContent(
         gardenId = collectionId,
@@ -98,7 +100,7 @@ fun PlantSeedScreen(
         editLink = viewModel::editEntry,
         removeLink = viewModel::removeEntry,
         isValidSeed = isValidSeed,
-        onSave = { viewModel.saveSeed(onSuccess = popBackStack) }
+        onSave = { viewModel.saveSeed(onSuccess = {navController.popBackStack()}) }
     )
 }
 
