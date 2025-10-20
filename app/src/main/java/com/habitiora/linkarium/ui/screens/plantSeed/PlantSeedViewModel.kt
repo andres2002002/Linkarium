@@ -11,43 +11,85 @@ import kotlinx.coroutines.flow.asStateFlow
 import timber.log.Timber
 import javax.inject.Inject
 import androidx.core.net.toUri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.habitiora.linkarium.data.local.room.entity.LinkSeedEntity
+import androidx.sqlite.SQLiteException
+import com.habitiora.linkarium.core.SnackbarMessage
 import com.habitiora.linkarium.data.repository.LinkGardenRepository
 import com.habitiora.linkarium.data.repository.LinkSeedRepository
+import com.habitiora.linkarium.domain.model.LinkEntry
 import com.habitiora.linkarium.domain.model.LinkGarden
+import com.habitiora.linkarium.domain.usecase.LinkEntryImpl
+import com.habitiora.linkarium.domain.usecase.LinkSeedImpl
+import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LabelDescriptionTextFieldValues
+import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LinkEntryTextFieldValues
+import com.habitiora.linkarium.ui.utils.pubsAndSubs.GardenBus
+import com.habitiora.linkarium.ui.utils.pubsAndSubs.SnackbarEventBus
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 
 @HiltViewModel
 class PlantSeedViewModel @Inject constructor(
+    private val savedStateHandle: SavedStateHandle,
     private val seedRepository: LinkSeedRepository,
-    private val gardenRepository: LinkGardenRepository
+    private val gardenRepository: LinkGardenRepository,
+    private val gardenBus: GardenBus,
+    private val snackbarEventBus: SnackbarEventBus
 ) : ViewModel() {
+
+    val seedId: Long? = savedStateHandle["seedId"]
 
     val gardens: StateFlow<List<LinkGarden>> = gardenRepository.getAll()
         .distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
-    private val _collectionId = MutableStateFlow<Long>(0)
-    val collectionId: StateFlow<Long> = _collectionId.asStateFlow()
-    fun setCollectionId(id: Long) {
-        _collectionId.value = id
-    }
-    private val _nameTextFieldValue = MutableStateFlow(TextFieldValue(""))
-    val nameTextFieldValue: StateFlow<TextFieldValue> = _nameTextFieldValue.asStateFlow()
-    fun setNameTextFieldValue(value: TextFieldValue) {
-        _nameTextFieldValue.value = value
+    val gardenId: StateFlow<Long> = gardenBus.selectedGardenId
+    fun setGardenId(id: Long) = gardenBus.selectGarden(id)
+
+    private val _isEditMode = MutableStateFlow(false)
+    val isEditMode = _isEditMode.asStateFlow()
+
+    private var editingSeedId: Long? = null
+
+    private val _nameNotesTextFieldValue = MutableStateFlow(LabelDescriptionTextFieldValues())
+    val nameNotesTextFieldValue: StateFlow<LabelDescriptionTextFieldValues> = _nameNotesTextFieldValue.asStateFlow()
+    fun updateNameNotesTextFieldValue(key: String, value: TextFieldValue) {
+        _nameNotesTextFieldValue.update {
+            when (key) {
+                LabelDescriptionTextFieldValues.LABEL_KEY -> it.copy(label = value)
+                LabelDescriptionTextFieldValues.DESCRIPTION_KEY -> it.copy(description = value)
+                else -> it
+            }
+        }
     }
 
-    private val _newUrlTextFieldValue = MutableStateFlow(TextFieldValue(""))
-    val newUrlTextFieldValue: StateFlow<TextFieldValue> = _newUrlTextFieldValue.asStateFlow()
-    fun setNewUrlTextFieldValue(value: TextFieldValue) {
-        _newUrlTextFieldValue.value = value
+    fun clearNameNotesTextFieldValue() {
+        _nameNotesTextFieldValue.value = LabelDescriptionTextFieldValues()
+    }
+
+    private val _newEntryTextFieldValues = MutableStateFlow(LinkEntryTextFieldValues())
+    val newEntryTextFieldValues: StateFlow<LinkEntryTextFieldValues> = _newEntryTextFieldValues.asStateFlow()
+    fun setNewEntryTextFieldValues(values: LinkEntryTextFieldValues) {
+        _newEntryTextFieldValues.value = values
+    }
+    fun updateNewEntryTextFieldValues(key: String, value: TextFieldValue) {
+        _newEntryTextFieldValues.update {
+            when (key) {
+                LinkEntryTextFieldValues.NOTE_KEY -> it.copy(note = value)
+                LinkEntryTextFieldValues.URL_KEY -> it.copy(url = value)
+                LinkEntryTextFieldValues.LABEL_KEY -> it.copy(label = value)
+                else -> it
+            }
+        }
+    }
+    private fun clearEntryTextFields() {
+        _newEntryTextFieldValues.value = LinkEntryTextFieldValues()
     }
 
     private fun isLikelyValidWebUri(uri: Uri): Boolean {
@@ -56,42 +98,118 @@ class PlantSeedViewModel @Inject constructor(
         return Patterns.WEB_URL.matcher(s).matches() || uri.scheme in listOf("content", "file")
     }
 
-    private val _urlList = MutableStateFlow<List<Uri>>(emptyList())
-    val urlList: StateFlow<List<Uri>> = _urlList.asStateFlow()
-    /**
-     * Intenta añadir una URL representada como String.
-     * @return true si el string se convirtió en Uri y se añadió (o ya existía), false si el string no es una Uri válida.
-     */
-    fun addUrl(url: String): Boolean {
+    private fun isLikelyValidWebUri(url: String): Boolean {
         val uri = runCatching { url.trim().toUri() }.getOrNull() ?: return false
-        if (!isLikelyValidWebUri(uri)) return false
-        addUri(uri)
-        return true
+        return isLikelyValidWebUri(uri)
     }
 
-    /**
-     * Añade un Uri a la lista. La operación evita duplicados de forma atómica.
-     * No devuelve nada porque la operación se realiza atómicamente con `update`.
-     */
-    fun addUri(uri: Uri) {
-        _urlList.update { current ->
-            // LinkedHashSet preserva orden de inserción y evita duplicados
-            LinkedHashSet(current).apply { add(uri) }.toList()
+    private val _entriesList = MutableStateFlow<List<LinkEntry>>(emptyList())
+    val entries: StateFlow<List<LinkEntry>> = _entriesList.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            try {
+                val seed = seedId?.let { seedRepository.getById(it).first() }
+                if (seed != null) {
+                    Timber.d("Loading seed with id: ${seed.id}")
+                    editingSeedId = seed.id
+                    _isEditMode.value = true
+                    updateNameNotesTextFieldValue(
+                        LabelDescriptionTextFieldValues.LABEL_KEY,
+                        TextFieldValue(seed.name)
+                    )
+                    seed.notes?.let { notes ->
+                        updateNameNotesTextFieldValue(
+                            LabelDescriptionTextFieldValues.DESCRIPTION_KEY,
+                            TextFieldValue(notes)
+                        )
+                    }
+                    if (seed.links.size == 1) {
+                        setNewEntryTextFieldValues(
+                            LinkEntryTextFieldValues(
+                                url = TextFieldValue(seed.links[0].uri.toString()),
+                                label = TextFieldValue(seed.links[0].label ?: ""),
+                                note = TextFieldValue(seed.links[0].note ?: "")
+                            )
+                        )
+                    }
+                    else _entriesList.value = seed.links
+                }
+                else {
+                    Timber.d("No seed found with id: $seedId")
+                    _isEditMode.value = false
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Error loading seed")
+            }
         }
     }
 
-    fun removeUrl(url: String): Boolean {
-        val uri = runCatching { url.trim().toUri() }.getOrNull() ?: return false
-        removeUri(uri)
+    var cacheEntryId: Long = 0
+
+    fun editEntry(entry: LinkEntry) {
+        val index = _entriesList.value.indexOf(entry)
+        // validar que el índice sea válido
+        if (index != -1) {
+            cacheEntryId = entry.id
+            addEntryOfCurrent()
+            removeEntry(entry)
+            setNewEntryTextFieldValues(
+                LinkEntryTextFieldValues(
+                    url = TextFieldValue(entry.uri.toString()),
+                    label = TextFieldValue(entry.label ?: ""),
+                    note = TextFieldValue(entry.note ?: "")
+                )
+            )
+        }
+        else {
+            cacheEntryId = 0
+            Timber.d("Entry not found in list")
+        }
+    }
+
+    fun addEntryOfCurrent(): Boolean {
+        return if (addEntryOfCurrentInternal()) {
+            clearEntryTextFields()
+            true
+        } else {
+            val entry = _newEntryTextFieldValues.value
+            Timber.d("Url not added: $entry")
+            false
+        }
+    }
+
+    private fun addEntryOfCurrentInternal(): Boolean {
+        val urlString = _newEntryTextFieldValues.value.url.text
+        val uri = runCatching { urlString.trim().toUri() }.getOrNull() ?: return false
+        if (!isLikelyValidWebUri(uri)) return false
+        val label = _newEntryTextFieldValues.value.label.text.ifBlank { null }
+        val note = _newEntryTextFieldValues.value.note.text.ifBlank { null }
+        addEntry(
+            LinkEntryImpl(
+                id = cacheEntryId,
+                uri = uri,
+                label = label,
+                note = note
+            )
+        )
+        cacheEntryId = 0
         return true
     }
 
-    /**
-     * Elimina un Uri de la lista. Si no existe, no hace nada.
-     */
-    fun removeUri(uri: Uri) {
-        _urlList.update { current ->
-            if (current.contains(uri)) current - uri else current
+    private fun addEntry(entry: LinkEntry) {
+        _entriesList.update { current ->
+            if (current.any { it.uri == entry.uri }) {
+                val snackbarMessage = SnackbarMessage.Info(message = "URL already added")
+                sendSnackbarMessage(snackbarMessage)
+                current
+            } else current + entry
+        }
+    }
+
+    fun removeEntry(entry: LinkEntry) {
+        _entriesList.update { current ->
+            if (current.contains(entry)) current - entry else current
         }
     }
 
@@ -99,47 +217,64 @@ class PlantSeedViewModel @Inject constructor(
      * Vacía la lista.
      */
     fun clear() {
-        _urlList.value = emptyList()
+        _entriesList.value = emptyList()
     }
 
-    private val _notesTextFieldValue = MutableStateFlow(TextFieldValue(""))
-    val notesTextFieldValue: StateFlow<TextFieldValue> = _notesTextFieldValue.asStateFlow()
-    fun setNotesTextFieldValue(value: TextFieldValue) {
-        _notesTextFieldValue.value = value
+    private fun sendSnackbarMessage(message: SnackbarMessage) {
+        viewModelScope.launch {
+            snackbarEventBus.postMessage(message)
+        }
     }
 
     val isValidSeed: StateFlow<Boolean> = combine(
-        nameTextFieldValue,
-        urlList
-    ) { name, urls ->
-        name.text.isNotBlank() && name.text.length >= 3 && urls.isNotEmpty()
+        _nameNotesTextFieldValue,
+        entries,
+        _newEntryTextFieldValues
+    ) { nameNotes, entries, newEntry ->
+        val name = nameNotes.label
+        name.text.isNotBlank() && name.text.length >= 3 &&
+                (entries.isNotEmpty() || isLikelyValidWebUri(newEntry.url.text))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
     private fun clearFields() {
-        _nameTextFieldValue.value = TextFieldValue("")
-        _newUrlTextFieldValue.value = TextFieldValue("")
-        _notesTextFieldValue.value = TextFieldValue("")
+        clearNameNotesTextFieldValue()
+        clearEntryTextFields()
         clear()
-        _collectionId.value = 0
         Timber.d("Fields cleared")
     }
 
-    fun saveSeed( onSuccess: () -> Unit ) {
+    fun saveSeed(onSuccess: () -> Unit) {
         viewModelScope.launch {
-            try {
-                val newSeed = LinkSeedEntity(
-                    name = nameTextFieldValue.value.text,
-                    links = urlList.value,
-                    collection = _collectionId.value,
-                    notes = notesTextFieldValue.value.text
-                )
-                val newSeedId = seedRepository.insert(newSeed)
-                Timber.d("Seed saved with id: $newSeedId")
-                onSuccess()
+            if (addEntryOfCurrentInternal()) saveSeedInternal(onSuccess)
+            else saveSeedInternal(onSuccess)
+        }
+    }
+
+    private suspend fun saveSeedInternal(onSuccess: () -> Unit) {
+        try {
+            val seed = LinkSeedImpl(
+                id = editingSeedId ?: 0, // Usa el ID existente o 0 para una nueva entidad
+                name = _nameNotesTextFieldValue.value.label.text,
+                links = entries.value,
+                gardenId = gardenId.value,
+                notes = _nameNotesTextFieldValue.value.description.text,
+                tags = emptyList(),
+                modifiedAt = LocalDateTime.now()
+            )
+            val result = if (_isEditMode.value) seedRepository.update(seed)
+            else seedRepository.insert(seed)
+
+            if (result.isSuccess) {
+                Timber.d("Seed saved/updated with id: ${result.getOrNull()?: seed.id}")
                 clearFields()
-            } catch (e: Exception) {
-                Timber.e(e)
+                onSuccess()
+            } else {
+                Timber.d("Seed not saved")
             }
+        } catch (e: SQLiteException){
+            Timber.e(e, "Error with SQLite")
+        } catch (e: Exception) {
+            Timber.e(e, "Error saving seed")
         }
     }
 }

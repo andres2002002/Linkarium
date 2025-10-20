@@ -29,9 +29,6 @@ class LinkGardenDataSourceImpl @Inject constructor(
     override fun getById(id: Long): Flow<LinkGarden?> =
         dao.getById(id)
 
-    override fun getGardenWithSeeds(gardenId: Long): Flow<LinkGardenWithSeeds?> =
-        dao.getGardenWithSeeds(gardenId)
-
     override suspend fun deleteById(id: Long) =
         dao.deleteById(id)
 }
