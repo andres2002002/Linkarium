@@ -1,11 +1,11 @@
 package com.habitiora.linkarium.data.local.usecase
 
-import com.habitiora.linkarium.data.local.room.entity.GardenWithSeeds
+import com.habitiora.linkarium.domain.usecase.LinkGardenWithSeedsImpl
 import com.habitiora.linkarium.domain.model.LinkGardenWithSeeds
 
-fun LinkGardenWithSeeds.toEntity(): GardenWithSeeds =
-    GardenWithSeeds(
+fun LinkGardenWithSeeds.toEntity(): LinkGardenWithSeedsImpl =
+    LinkGardenWithSeedsImpl(
         garden = this.garden.toEntity(),
-        seeds = this.seeds.map { it.toEntity() }
+        seeds = this.seeds
     )
-fun GardenWithSeeds.toDomain(): LinkGardenWithSeeds = this
+fun LinkGardenWithSeedsImpl.toDomain(): LinkGardenWithSeeds = this

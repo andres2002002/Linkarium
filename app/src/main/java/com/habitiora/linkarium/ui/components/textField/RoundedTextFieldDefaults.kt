@@ -2,10 +2,12 @@ package com.habitiora.linkarium.ui.components.textField
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Shapes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 
-object RoundedTextFieldDefaults{
+object RoundedTextFieldDefaults {
     @Composable
     fun colors() = OutlinedTextFieldDefaults.colors(
         focusedContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
@@ -27,15 +29,25 @@ object RoundedTextFieldDefaults{
     )
 
     @Composable
-    fun dynamicColorsBg(backgroundColor: Color) = colors().copy(
-        unfocusedContainerColor = backgroundColor.copy(alpha = 0.7f),
-        unfocusedLeadingIconColor = Color.Unspecified,
-        unfocusedTrailingIconColor = Color.Unspecified,
+    fun backgroundColors(backgroundColor: Color) = colors().copy(
+        unfocusedContainerColor = backgroundColor.copy(alpha = 0.7f)
     )
 
     @Composable
-    fun shape() = MaterialTheme.shapes.large
+    fun shape(): Shape = OutlinedTextFieldDefaults.shape
+
+    @Composable
+    fun focusedBorderThickness() = OutlinedTextFieldDefaults.FocusedBorderThickness
+
+    @Composable
+    fun unfocusedBorderThickness() = OutlinedTextFieldDefaults.UnfocusedBorderThickness
 
     @Composable
     fun textStyle() = MaterialTheme.typography.bodyMedium
+
+    // Configuraciones predefinidas
+    val EmailConfig = TextFieldConfig.builder().email().build()
+    val PasswordConfig = TextFieldConfig.builder().password().build()
+    val NumberConfig = TextFieldConfig.builder().number().build()
+    val MultilineConfig = TextFieldConfig.builder().multiline().build()
 }

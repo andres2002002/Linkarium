@@ -1,105 +1,134 @@
 package com.habitiora.linkarium.data.repository
 
+import androidx.room.withTransaction
+import com.habitiora.linkarium.core.ProcessStatus
+import com.habitiora.linkarium.data.local.datasource.LinkEntryDataSource
 import com.habitiora.linkarium.data.local.datasource.LinkGardenDataSource
+import com.habitiora.linkarium.data.local.datasource.LinkSeedDataSource
+import com.habitiora.linkarium.data.local.datasource.LinkTagDataSource
+import com.habitiora.linkarium.data.local.room.AppDatabase
+import com.habitiora.linkarium.data.local.room.entity.LinkSeedComplete
+import com.habitiora.linkarium.data.local.usecase.toComplete
+import com.habitiora.linkarium.data.local.usecase.toDomain
+import com.habitiora.linkarium.data.local.usecase.toGardenWithSeeds
+import com.habitiora.linkarium.data.local.usecase.toListDomain
 import com.habitiora.linkarium.domain.model.LinkGarden
 import com.habitiora.linkarium.domain.model.LinkGardenWithSeeds
+import com.habitiora.linkarium.domain.model.LinkSeed
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.collections.map
+import kotlin.compareTo
 
 @Singleton
 class LinkGardenRepositoryImpl @Inject constructor(
+    private val db: AppDatabase,
     private val gardenDataSource: LinkGardenDataSource
 ): LinkGardenRepository {
-    // Caché en memoria
-    private val gardensCache = mutableMapOf<Long, LinkGarden>()
 
-    private val gardenWithSeedsCache = mutableMapOf<Long, LinkGardenWithSeeds>()
+    // ---------------------------------------------------------
+    // 📖 READ Operations - Cache-First Strategy
+    // ---------------------------------------------------------
 
     // Obtener todos los jardines con soporte de caché
     override fun getAll(): Flow<List<LinkGarden>> =
         gardenDataSource.getAll()
-            .map { gardens ->
-                // Actualiza caché en memoria
-                gardens.forEach { gardensCache[it.id] = it }
-                gardens
-            }
 
-    // Obtener uno por ID con preferencia por caché
-    override fun getById(id: Long): Flow<LinkGarden?> {
-        val cached = gardensCache[id]
-        return if (cached != null) {
-            flowOf(cached)
-        } else {
-            gardenDataSource.getById(id)
-                .map { garden ->
-                    garden?.also { gardensCache[it.id] = it }
-                }
-        }
-    }
+    override fun getById(id: Long): Flow<LinkGarden?> =
+        gardenDataSource.getById(id)
 
-    override fun getGardenWithSeeds(gardenId: Long): Flow<LinkGardenWithSeeds?> {
-        val cached = gardenWithSeedsCache[gardenId]
-        return if (cached != null) {
-            flowOf(cached)
-        } else {
-            gardenDataSource.getGardenWithSeeds(gardenId).map { gardenWithSeeds ->
-                gardenWithSeeds?.also { gardenWithSeedsCache[gardenId] = it }
+    /**
+     * Inserta un nuevo jardín con validaciones
+     */
+    override suspend fun insert(linkGarden: LinkGarden): Result<Long> =
+        db.withTransaction {
+            runCatching {
+                require(linkGarden.name.isNotBlank()) { "El nombre no puede estar vacío" }
+                require(linkGarden.id <= 0) { "El ID debe ser 0 o negativo para inserción" }
+                val id = gardenDataSource.insert(linkGarden)
+                id
+            }.onSuccess { id ->
+                Timber.d("Inserted garden with id: $id")
+            }.onFailure { e ->
+                Timber.e(e, "Error inserting garden")
             }
         }
-    }
 
-    // Insertar con validaciones
-    override suspend fun insert(linkGarden: LinkGarden): Result<Long> {
-        if (linkGarden.name.isBlank()) {
-            return Result.failure(IllegalArgumentException("El nombre no puede estar vacío"))
-        }
-        val id = gardenDataSource.insert(linkGarden)
-        gardensCache[id] = linkGarden.update(id = id)
-        return Result.success(id)
-    }
 
-    // Actualizar con validaciones
-    override suspend fun update(linkGarden: LinkGarden): Result<Unit> {
-        if (linkGarden.id <= 0) {
-            return Result.failure(IllegalArgumentException("El ID debe ser válido"))
+    /**
+     * Actualiza un jardín existente
+     * Invalida caché relacionado para mantener consistencia
+     */
+    override suspend fun update(linkGarden: LinkGarden): Result<Unit> =
+        db.withTransaction {
+            runCatching {
+                require(linkGarden.id > 0) { "El ID debe ser válido para actualización" }
+                require(linkGarden.name.isNotBlank()) { "El nombre no puede estar vacío" }
+                gardenDataSource.update(linkGarden)
+            }.onSuccess {
+                Timber.d("Updated garden with id: ${linkGarden.id}")
+            }.onFailure { e ->
+                Timber.e(e, "Error updating garden")
+            }
         }
-        if (linkGarden.name.isBlank()) {
-            return Result.failure(IllegalArgumentException("El nombre no puede estar vacío"))
-        }
-        gardenDataSource.update(linkGarden)
-        gardensCache[linkGarden.id] = linkGarden
-        gardenWithSeedsCache.remove(linkGarden.id)
-        return Result.success(Unit)
-    }
 
-    // Eliminar
-    override suspend fun delete(linkGarden: LinkGarden): Result<Unit> {
-        if (linkGarden.id <= 0) {
-            return Result.failure(IllegalArgumentException("El ID debe ser válido"))
-        }
-        gardenDataSource.delete(linkGarden)
-        gardensCache.remove(linkGarden.id)
-        gardenWithSeedsCache.remove(linkGarden.id)
-        return Result.success(Unit)
-    }
 
-    override suspend fun deleteById(id: Long): Result<Unit> {
-        if (id <= 0) {
-            return Result.failure(IllegalArgumentException("El ID debe ser válido"))
+    /**
+     * Elimina un jardín y todas sus seeds asociadas
+     * Limpieza atómica de caché y BD
+     */
+    override suspend fun delete(linkGarden: LinkGarden): Result<Unit> =
+        db.withTransaction {
+            runCatching {
+                require(linkGarden.id > 0) { "El ID debe ser válido" }
+                deleteById(linkGarden.id).getOrThrow()
+            }.onSuccess {
+                Timber.d("Deleted garden with id: ${linkGarden.id}")
+            }.onFailure { e ->
+                Timber.e(e, "Error deleting garden")
+            }
         }
-        gardenDataSource.deleteById(id)
-        gardensCache.remove(id)
-        gardenWithSeedsCache.remove(id)
-        return Result.success(Unit)
-    }
 
-    override suspend fun deleteAll(): Result<Unit> {
-        gardenDataSource.deleteAll()
-        gardensCache.clear()
-        gardenWithSeedsCache.clear()
-        return Result.success(Unit)
-    }
+
+    /**
+     * Elimina un jardín por ID con limpieza completa
+     */
+    override suspend fun deleteById(id: Long): Result<Unit> =
+        db.withTransaction {
+            runCatching {
+                require(id > 0) { "El ID debe ser válido" }
+                gardenDataSource.deleteById(id)
+            }.onSuccess {
+                Timber.d("Deleted garden with id: $id")
+            }.onFailure { e ->
+                Timber.e(e, "Error deleting garden")
+            }
+        }
+
+
+    /**
+     * Elimina todos los jardines y limpia todos los datos del caché
+     */
+    override suspend fun deleteAll(): Result<Unit> =
+        db.withTransaction {
+            runCatching {
+                gardenDataSource.deleteAll()
+            }.onSuccess {
+                Timber.d("Deleted all gardens")
+            }.onFailure { e ->
+                Timber.e(e, "Error deleting all gardens")
+            }
+        }
 }

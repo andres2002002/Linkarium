@@ -7,6 +7,7 @@ plugins {
 
     alias(libs.plugins.dagger.hilt)
     alias(libs.plugins.google.ksp)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -58,6 +59,10 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    sourceSets {
+        getByName("androidTest").assets.srcDirs("$projectDir/schemas")
+    }
 }
 
 dependencies {
@@ -75,29 +80,49 @@ dependencies {
     implementation(libs.androidx.foundation)
 
     implementation(libs.androidx.material3.windowSizeClass)
+    implementation(libs.androidx.compose.material.icons.extended)
 
     //navigation
     implementation(libs.androidx.navigation)
 
     //hilt
-    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
     //DataStore
     implementation(libs.androidx.datastore.preferences)
 
+    //kotlin serialization
+    implementation(libs.kotlinx.serialization.core)
+    implementation(libs.kotlinx.serialization.json)
+
     //room
     implementation(libs.room.runtime)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
     implementation(libs.room.pagin)
+    testImplementation(libs.room.testing)
+    androidTestImplementation(libs.room.testing)
 
     //gson
     implementation(libs.google.gson)
 
     //test
+    // androidTestImplementation is required for UI tests
+    // testImplementation is required for local tests
     testImplementation(libs.junit.jupiter)
+
+    androidTestImplementation(libs.androidx.junit.ktx)
+    testImplementation(libs.androidx.junit.ktx)
+    androidTestImplementation(libs.androidx.runner)
+    testImplementation(libs.androidx.runner)
+    androidTestImplementation(libs.androidx.rules)
+    testImplementation(libs.androidx.rules)
+    androidTestImplementation(libs.androidx.test.core)
+    testImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.core.ktx)
+    testImplementation(libs.androidx.test.core.ktx)
 
     // Timber
     implementation(libs.timber)
@@ -106,6 +131,13 @@ dependencies {
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)
 
+    //paging
+    implementation(libs.androidx.paging.runtime.ktx)
+    implementation(libs.androidx.paging.compose)
+
+    //PDFBox
+    implementation(libs.apache.pdfbox)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -113,4 +145,8 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
