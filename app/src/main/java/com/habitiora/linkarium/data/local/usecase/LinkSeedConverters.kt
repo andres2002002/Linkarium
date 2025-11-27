@@ -13,6 +13,7 @@ fun LinkSeed.toEntity(): LinkSeedEntity = LinkSeedEntity(
     id = this.id,
     name = this.name,
     gardenId = this.gardenId,
+    order = this.order,
     isFavorite = this.isFavorite,
     notes = this.notes,
     modifiedAt = this.modifiedAt
@@ -36,6 +37,7 @@ fun LinkSeedEntity.toDomain(
     id = this.id,
     name = this.name,
     gardenId = this.gardenId,
+    order = this.order,
     isFavorite = this.isFavorite,
     notes = this.notes,
     modifiedAt = this.modifiedAt,
@@ -64,7 +66,8 @@ fun LinkEntry.toEntity(newSeed: Long? = null): LinkEntryEntity = LinkEntryEntity
     seedId = newSeed ?: this.seedId,
     uri = this.uri,
     label = this.label,
-    note = this.note
+    note = this.note,
+    order = this.order
 )
 
 fun LinkEntry.note(): String? = this.note?.ifBlank { null }

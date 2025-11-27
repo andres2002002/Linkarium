@@ -22,7 +22,8 @@ import com.habitiora.linkarium.domain.model.LinkEntry
     ],
     indices = [
         Index(value = [DatabaseContract.LinkEntry.COLUMN_SEED_ID]),
-        Index(value = [DatabaseContract.LinkEntry.COLUMN_LABEL])
+        Index(value = [DatabaseContract.LinkEntry.COLUMN_LABEL]),
+        Index(value = [DatabaseContract.LinkEntry.COLUMN_ORDER])
     ]
 )
 data class LinkEntryEntity(
@@ -31,6 +32,8 @@ data class LinkEntryEntity(
     override val id: Long = 0,
     @ColumnInfo(name = DatabaseContract.LinkEntry.COLUMN_SEED_ID)
     override val seedId: Long = 0,
+    @ColumnInfo(name = DatabaseContract.LinkEntry.COLUMN_ORDER)
+    override val order: Int = 0,
     @ColumnInfo(name = DatabaseContract.LinkEntry.COLUMN_URI)
     override val uri: Uri,
     @ColumnInfo(name = DatabaseContract.LinkEntry.COLUMN_LABEL)

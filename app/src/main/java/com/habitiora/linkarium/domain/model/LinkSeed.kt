@@ -7,6 +7,7 @@ interface LinkSeed{
     val name: String
     val links: List<LinkEntry>
     val gardenId: Long
+    val order: Int
     val isFavorite: Boolean
     val notes: String?
     val tags: List<LinkTag>

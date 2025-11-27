@@ -16,6 +16,7 @@ object DatabaseContract {
         const val COLUMN_NAME = "name"
         const val COLUMN_GARDEN_ID = "gardenId"
         const val COLUMN_IS_FAVORITE = "isFavorite"
+        const val COLUMN_ORDER = "sort_order"
         const val COLUMN_NOTES = "notes"
         const val COLUMN_DATE_TIME = "date_time"
 
@@ -26,6 +27,7 @@ object DatabaseContract {
         const val COLUMN_ID = "id"
         const val COLUMN_NAME = "name"
         const val COLUMN_DESCRIPTION = "description"
+        const val COLUMN_ORDER = "sort_order"
         val Empty = LinkGardenEntity(
             name = "",
             description = ""
@@ -36,6 +38,7 @@ object DatabaseContract {
         const val TABLE_NAME = "link_entry"
         const val COLUMN_ID = "id"
         const val COLUMN_SEED_ID = "seed_id"
+        const val COLUMN_ORDER = "sort_order"
         const val COLUMN_URI = "uri"
         const val COLUMN_LABEL = "label"
         const val COLUMN_NOTE = "note"

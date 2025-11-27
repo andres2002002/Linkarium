@@ -4,6 +4,7 @@ interface LinkGarden {
     val id: Long
     val name: String
     val description: String
+    val order: Int
 
     fun update(
         id: Long = this.id,
