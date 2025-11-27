@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
@@ -29,6 +30,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.akari.uicomponents.reorderableComponents.AkariReorderableItem
+import com.akari.uicomponents.reorderableComponents.AkariReorderableLazyColumn
+import com.akari.uicomponents.reorderableComponents.DragActivation
+import com.akari.uicomponents.reorderableComponents.rememberAkariReorderableLazyState
 import com.habitiora.linkarium.domain.model.LinkGarden
 import com.habitiora.linkarium.ui.navigation.Screens
 import com.habitiora.linkarium.ui.utils.localNavigator.LocalNavigator
@@ -42,6 +47,7 @@ fun GardensScreen(
     val navController: NavHostController = LocalNavigator.current
 
     GardensContent(
+        modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp).fillMaxSize(),
         gardens = gardens,
         onClick = { id ->
             navController.navigateToRoute(Screens.ShowSeeds.createRoute(id))
@@ -51,14 +57,31 @@ fun GardensScreen(
 
 @Composable
 private fun GardensContent(
+    modifier: Modifier = Modifier,
     gardens: List<LinkGarden>,
     onClick: (Long) -> Unit
 ){
-    LazyColumn(
+    val state = rememberAkariReorderableLazyState<LinkGarden> { from, to ->
+
+    }
+    Column(
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(gardens, key = { item -> item.id }) { item ->
+        AddNewGarden(
+            modifier = Modifier,
+            onClick = {}
+        )
+        AkariReorderableLazyColumn(
+            modifier = Modifier.weight(1f),
+            items = gardens,
+            state = state,
+            key = { item -> item.id },
+            dragActivation = DragActivation.LongPress
+        ) { item, isDragging ->
             GardenItem(
+                modifier = Modifier.akariDragHandle(),
+                isDragging = isDragging,
                 garden = item,
                 onClick = onClick
             )
@@ -69,6 +92,7 @@ private fun GardensContent(
 @Composable
 private fun GardenItem(
     modifier: Modifier = Modifier,
+    isDragging: Boolean = false,
     garden: LinkGarden,
     onClick: (Long) -> Unit
 ){
@@ -77,7 +101,8 @@ private fun GardenItem(
         onClick = { onClick(garden.id) },
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors().copy(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            containerColor = if (isDragging) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         )
     ) {
         Row(
@@ -161,3 +186,34 @@ private fun TrailingIcon(
     }
 }
 
+@Composable
+private fun AddNewGarden(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+){
+    Card(
+        modifier = modifier,
+        onClick = { onClick() },
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(vertical = 8.dp, horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                modifier = Modifier.size(40.dp),
+                imageVector = Icons.Default.Add,
+                contentDescription = "Add new garden"
+            )
+            Text(
+                text = "Add new garden",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}

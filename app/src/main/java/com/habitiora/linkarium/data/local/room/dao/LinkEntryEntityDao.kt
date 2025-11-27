@@ -21,14 +21,21 @@ interface LinkEntryEntityDao {
     suspend fun insertAll(linkEntries: List<LinkEntryEntity>): List<Long>
     @Update
     suspend fun update(linkEntry: LinkEntryEntity)
+    @Update
+    suspend fun updateAll(linkEntries: List<LinkEntryEntity>)
     @Delete
     suspend fun delete(linkEntry: LinkEntryEntity)
+    @Delete
+    suspend fun deleteAll(linkEntries: List<LinkEntryEntity>)
     @Query("DELETE FROM $TABLE_NAME")
     suspend fun deleteAll()
     @Query("SELECT * FROM $TABLE_NAME")
     fun getAll(): Flow<List<LinkEntryEntity>>
     @Query("SELECT * FROM $TABLE_NAME WHERE id = :id")
     fun getById(id: Long): Flow<LinkEntryEntity?>
+
+    @Query("SELECT * FROM $TABLE_NAME WHERE seed_id = :seedId AND uri = :url")
+    fun getBySeedUrl(seedId: Long, url: String): Flow<LinkEntryEntity?>
     @Query("DELETE FROM $TABLE_NAME WHERE id = :id")
     suspend fun deleteById(id: Long)
     @Query("SELECT * FROM $TABLE_NAME WHERE seed_id = :seedId")

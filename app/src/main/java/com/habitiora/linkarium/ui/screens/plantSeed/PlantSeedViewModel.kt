@@ -56,6 +56,7 @@ class PlantSeedViewModel @Inject constructor(
     val isEditMode = _isEditMode.asStateFlow()
 
     private var editingSeedId: Long? = null
+    private var cacheEntryId: Long = 0
 
     private val _nameNotesTextFieldValue = MutableStateFlow(LabelDescriptionTextFieldValues())
     val nameNotesTextFieldValue: StateFlow<LabelDescriptionTextFieldValues> = _nameNotesTextFieldValue.asStateFlow()
@@ -109,11 +110,15 @@ class PlantSeedViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             try {
+                // Obtenemos la semilla a editar o una nueva si no hay semilla
                 val seed = seedId?.let { seedRepository.getById(it).first() }
+                // si hay semilla, la cargamos y actualizamos los campos
                 if (seed != null) {
                     Timber.d("Loading seed with id: ${seed.id}")
+                    // damos el id a la semilla a editar y edit mode on
                     editingSeedId = seed.id
                     _isEditMode.value = true
+                    // actualizamos los campos de name y notes
                     updateNameNotesTextFieldValue(
                         LabelDescriptionTextFieldValues.LABEL_KEY,
                         TextFieldValue(seed.name)
@@ -124,7 +129,10 @@ class PlantSeedViewModel @Inject constructor(
                             TextFieldValue(notes)
                         )
                     }
+                    // si hay exactamente una entrada, la cargamos en el primer campo
                     if (seed.links.size == 1) {
+                        Timber.d("Loading single entry")
+                        cacheEntryId = seed.links[0].id
                         setNewEntryTextFieldValues(
                             LinkEntryTextFieldValues(
                                 url = TextFieldValue(seed.links[0].uri.toString()),
@@ -133,8 +141,13 @@ class PlantSeedViewModel @Inject constructor(
                             )
                         )
                     }
-                    else _entriesList.value = seed.links
+                    // si hay más de una entrada, cargamos todas en la lista si cargar ninguna en el campo de entrada
+                    else {
+                        Timber.d("Loading ${seed.links.size} entries")
+                        _entriesList.value = seed.links
+                    }
                 }
+                // si no hay semilla, se quedan los campos vacíos
                 else {
                     Timber.d("No seed found with id: $seedId")
                     _isEditMode.value = false
@@ -144,8 +157,6 @@ class PlantSeedViewModel @Inject constructor(
             }
         }
     }
-
-    var cacheEntryId: Long = 0
 
     fun editEntry(entry: LinkEntry) {
         val index = _entriesList.value.indexOf(entry)
@@ -165,6 +176,16 @@ class PlantSeedViewModel @Inject constructor(
         else {
             cacheEntryId = 0
             Timber.d("Entry not found in list")
+        }
+    }
+
+    fun moveEntry(from: Int, to: Int){
+        _entriesList.update { current ->
+            val moved = current[from]
+            current.toMutableList().apply {
+                removeAt(from)
+                add(to, moved)
+            }
         }
     }
 
@@ -245,8 +266,14 @@ class PlantSeedViewModel @Inject constructor(
 
     fun saveSeed(onSuccess: () -> Unit) {
         viewModelScope.launch {
-            if (addEntryOfCurrentInternal()) saveSeedInternal(onSuccess)
-            else saveSeedInternal(onSuccess)
+            if (addEntryOfCurrentInternal()) {
+                Timber.d("Url added")
+                saveSeedInternal(onSuccess)
+            }
+            else {
+                Timber.d("Not Url added")
+                saveSeedInternal(onSuccess)
+            }
         }
     }
 
@@ -261,6 +288,7 @@ class PlantSeedViewModel @Inject constructor(
                 tags = emptyList(),
                 modifiedAt = LocalDateTime.now()
             )
+            Timber.d("Saving seed: $seed")
             val result = if (_isEditMode.value) seedRepository.update(seed)
             else seedRepository.insert(seed)
 

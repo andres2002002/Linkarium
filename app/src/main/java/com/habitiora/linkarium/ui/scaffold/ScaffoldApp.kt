@@ -1,6 +1,15 @@
 package com.habitiora.linkarium.ui.scaffold
 
+import android.view.animation.OvershootInterpolator
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddLink
@@ -8,7 +17,6 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -33,9 +41,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.akari.uicomponents.buttons.AkariButtonVariant
+import com.akari.uicomponents.buttons.AkariFabVariant
+import com.akari.uicomponents.buttons.tooltipButtons.AkariTooltipButton
+import com.akari.uicomponents.buttons.tooltipButtons.AkariTooltipFab
 import com.habitiora.linkarium.R
-import com.habitiora.linkarium.ui.components.buttons.PlainTooltipFAB
-import com.habitiora.linkarium.ui.components.buttons.PlainTooltipIconButton
 import com.habitiora.linkarium.ui.navigation.NavigationHost
 import com.habitiora.linkarium.ui.navigation.Screens
 import com.habitiora.linkarium.ui.navigation.TypeScreen
@@ -106,11 +116,26 @@ private fun scaffoldConfig(
                 title = { Text(text = stringResource(id = currentScreen?.normalTitle ?: Screens.ShowGarden.normalTitle)) },
                 navigationIcon = {
                     AnimatedVisibility(
-                        visible = currentScreen?.typeScreen != TypeScreen.Primary
+                        visible = currentScreen?.typeScreen != TypeScreen.Primary,
+                        enter = fadeIn(animationSpec = tween(250, easing = LinearOutSlowInEasing)) +
+                                slideInHorizontally(
+                                    initialOffsetX = { -it / 2 },
+                                    animationSpec = tween(300, easing = {
+                                        OvershootInterpolator(1.1f).getInterpolation(it)
+                                    })
+                                ),
+                        exit = fadeOut(animationSpec = tween(200, easing = FastOutLinearInEasing)) +
+                                slideOutHorizontally(
+                                    targetOffsetX = { -it / 3 },
+                                    animationSpec = tween(250, easing = FastOutSlowInEasing)
+                                )
                     ) {
-                        PlainTooltipIconButton(
-                            tooltipText = "Back",
-                            onClick = { navController.popBackStack() }
+                        AkariTooltipButton(
+                            variant = AkariButtonVariant.Icon,
+                            onClick = { navController.popBackStack() },
+                            tooltipContent = {
+                                Text(text = "Back")
+                            }
                         ) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
@@ -120,10 +145,13 @@ private fun scaffoldConfig(
                     AnimatedVisibility(
                         visible = currentScreen?.typeScreen == TypeScreen.Primary
                     ) {
-                        PlainTooltipIconButton(
-                            tooltipText = "Settings",
-                            onClick = { navController.navigateToScreen(Screens.Settings) }
-                        ) {
+                        AkariTooltipButton(
+                            variant = AkariButtonVariant.Icon,
+                            onClick = { navController.navigateToScreen(Screens.Settings) },
+                            tooltipContent = {
+                                Text(text = "Settings")
+                            }
+                        ){
                             Icon(Icons.Filled.Settings, contentDescription = "Settings")
                         }
                     }
@@ -150,8 +178,12 @@ private fun scaffoldConfig(
         }
         .floatingActionButton(WindowWidthSizeClass.Compact) {
             if (currentScreen?.typeScreen == TypeScreen.Primary) {
-                FloatingActionButton(
+                AkariTooltipFab(
+                    variant = AkariFabVariant.Normal,
                     onClick = { navController.navigateToRoute(Screens.PlantNew.createRoute()) },
+                    tooltipContent = {
+                        Text(text = "Add New Seed")
+                    }
                 ) {
                     Icon(Icons.Filled.AddLink, contentDescription = "add link")
                 }
@@ -166,9 +198,12 @@ private fun scaffoldConfig(
                     AnimatedVisibility(
                         visible = currentScreen?.typeScreen == TypeScreen.Primary
                     ) {
-                        PlainTooltipFAB(
-                            tooltipText = "Add New Seed",
-                            onClick = { navController.navigateToRoute(Screens.PlantNew.createRoute()) }
+                        AkariTooltipFab(
+                            variant = AkariFabVariant.Normal,
+                            onClick = { navController.navigateToRoute(Screens.PlantNew.createRoute()) },
+                            tooltipContent = {
+                                Text(text = "Add New Seed")
+                            }
                         ) {
                             Icon(Icons.Filled.AddLink, contentDescription = "add link")
                         }
@@ -176,10 +211,13 @@ private fun scaffoldConfig(
                     AnimatedVisibility(
                         visible = currentScreen?.typeScreen == TypeScreen.Tertiary
                     ){
-                        PlainTooltipIconButton(
-                            tooltipText = "Back",
-                            onClick = { navController.popBackStack() }
-                        ) {
+                        AkariTooltipButton(
+                            variant = AkariButtonVariant.Icon,
+                            onClick = { navController.popBackStack() },
+                            tooltipContent = {
+                                Text(text = "Back")
+                            }
+                        ){
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     }

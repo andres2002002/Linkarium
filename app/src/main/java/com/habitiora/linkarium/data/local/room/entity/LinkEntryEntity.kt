@@ -37,4 +37,12 @@ data class LinkEntryEntity(
     override val label: String? = null,
     @ColumnInfo(name = DatabaseContract.LinkEntry.COLUMN_NOTE)
     override val note: String? = null
-): LinkEntry
+): LinkEntry{
+    override fun hashCode(): Int {
+        return super.hashCode()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return super.equals(other)
+    }
+}

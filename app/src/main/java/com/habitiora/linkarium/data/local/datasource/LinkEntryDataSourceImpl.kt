@@ -18,8 +18,12 @@ class LinkEntryDataSourceImpl @Inject constructor(
         dao.insertAll(linkEntries.map { it.toEntity() })
     override suspend fun update(linkEntry: LinkEntry) =
         dao.update(linkEntry.toEntity())
+    override suspend fun updateAll(linkEntries: List<LinkEntry>) =
+        dao.updateAll(linkEntries.map { it.toEntity() })
     override suspend fun delete(linkEntry: LinkEntry) =
         dao.delete(linkEntry.toEntity())
+    override suspend fun deleteAll(linkEntries: List<LinkEntry>) =
+        dao.deleteAll(linkEntries.map { it.toEntity() })
 
     override suspend fun deleteById(id: Long) =
         dao.deleteById(id)
@@ -29,6 +33,9 @@ class LinkEntryDataSourceImpl @Inject constructor(
         dao.getAll()
     override fun getById(id: Long): Flow<LinkEntryEntity?> =
         dao.getById(id)
+
+    override fun getBySeedUrl(seedId: Long, url: String): Flow<LinkEntryEntity?> =
+        dao.getBySeedUrl(seedId, url)
 
     override fun getLinksBySeed(seedId: Long): Flow<List<LinkEntryEntity>> =
         dao.getBySeedId(seedId)
