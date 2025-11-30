@@ -43,7 +43,7 @@ apachePdfBox = "2.0.27.0"
 
 kspVersion = "2.2.21-2.0.4"
 
-uicomponents = "1.1.25"
+uicomponents = "1.1.28"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

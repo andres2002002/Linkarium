@@ -74,8 +74,9 @@ class LinkSeedRepositoryImpl @Inject constructor(
                 validateSeedData(linkSeed)
                 require(validateGarden(linkSeed.gardenId)) { "Garden not found" }
 
+                val maxOrder = linkSeedDataSource.getMaxOrder(linkSeed.gardenId)
                 // Insert seed
-                val id = linkSeedDataSource.insert(linkSeed)
+                val id = linkSeedDataSource.insert(linkSeed.copy(order = maxOrder + 1))
                 require(validateSeed(id)) { "Seed not found after insert" }
 
                 // Insert related entities

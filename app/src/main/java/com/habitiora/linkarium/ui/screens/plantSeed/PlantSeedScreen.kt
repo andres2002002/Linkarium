@@ -81,18 +81,16 @@ fun PlantSeedScreen(
     val nameNotesTextFieldValue by viewModel.nameNotesTextFieldValue.collectAsState()
     val newEntryTextFieldValues by viewModel.newEntryTextFieldValues.collectAsState()
     val entries: List<LinkEntry> by viewModel.entries.collectAsState()
-    val collectionId by viewModel.gardenId.collectAsState()
+    val garden by viewModel.garden.collectAsState()
     val gardens by viewModel.gardens.collectAsState()
     val isValidSeed by viewModel.isValidSeed.collectAsState()
 
     val navController = LocalNavigator.current
 
     PlantSeedContent(
-        gardenId = collectionId,
+        garden = garden,
         gardens = gardens,
-        onGardenChange = { garden ->
-            viewModel.setGardenId(garden.id)
-        },
+        onGardenChange = viewModel::setGardenIndex,
         nameNotesTextFieldValue = nameNotesTextFieldValue,
         updateNameNotesTextFieldValue = viewModel::updateNameNotesTextFieldValue,
         newEntryTextFieldValues = newEntryTextFieldValues,
@@ -109,9 +107,9 @@ fun PlantSeedScreen(
 
 @Composable
 private fun PlantSeedContent(
-    gardenId: Long,
+    garden: LinkGarden,
     gardens: List<LinkGarden>,
-    onGardenChange: (LinkGarden) -> Unit,
+    onGardenChange: (Int) -> Unit,
     nameNotesTextFieldValue: LabelDescriptionTextFieldValues,
     updateNameNotesTextFieldValue: (String, TextFieldValue) -> Unit,
     newEntryTextFieldValues: LinkEntryTextFieldValues,
@@ -135,7 +133,7 @@ private fun PlantSeedContent(
     ) {
         item {
             GardenDropDown(
-                currentGardenId = gardenId,
+                garden = garden,
                 gardens = gardens,
                 onClick = onGardenChange
             )
@@ -188,15 +186,12 @@ private fun PlantSeedContent(
 
 @Composable
 private fun GardenDropDown(
-    currentGardenId: Long,
+    garden: LinkGarden,
     gardens: List<LinkGarden>,
-    onClick: (LinkGarden) -> Unit
+    onClick: (Int) -> Unit
 ){
-    val currentGarden = remember(currentGardenId, gardens.size) {
-        gardens.find { it.id == currentGardenId } ?: DatabaseContract.LinkGarden.Empty
-    }
     GardenSelector(
-        currentGarden = currentGarden,
+        currentGarden = garden,
         gardens = gardens,
         onClick = onClick
     )
@@ -509,7 +504,7 @@ private fun GardenSelector(
     modifier: Modifier = Modifier,
     currentGarden: LinkGarden,
     gardens: List<LinkGarden>,
-    onClick: (LinkGarden) -> Unit
+    onClick: (Int) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     val accountValid = gardens.any { it.id == currentGarden.id }
@@ -575,7 +570,7 @@ private fun GardenSelector(
             onDismissRequest = { expanded = false },
             shape = MaterialTheme.shapes.medium
         ) {
-            gardens.filter { it.id != currentGarden.id }.forEach { item ->
+            gardens.filter { it.id != currentGarden.id }.forEachIndexed { index, item ->
                 DropdownMenuItem(
                     leadingIcon = {
                         Icon(
@@ -602,7 +597,7 @@ private fun GardenSelector(
                         }
                     },
                     onClick = {
-                        onClick(item)
+                        onClick(index)
                         expanded = false
                     }
                 )

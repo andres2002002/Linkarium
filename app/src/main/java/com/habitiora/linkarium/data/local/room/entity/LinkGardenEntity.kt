@@ -28,10 +28,12 @@ data class LinkGardenEntity(
     override fun update(
         id: Long,
         name: String,
-        description: String
+        description: String,
+        order: Int
     ): LinkGarden = LinkGardenEntity(
         id = id,
         name = name,
-        description = description
+        description = description,
+        order = order
     )
 }

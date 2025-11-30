@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 interface LinkEntryEntityDao {
     companion object {
         const val TABLE_NAME = DatabaseContract.LinkEntry.TABLE_NAME
+        const val COLUMN_SEED_ID = DatabaseContract.LinkEntry.COLUMN_SEED_ID
     }
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(linkEntry: LinkEntryEntity): Long
@@ -38,6 +39,9 @@ interface LinkEntryEntityDao {
     fun getBySeedUrl(seedId: Long, url: String): Flow<LinkEntryEntity?>
     @Query("DELETE FROM $TABLE_NAME WHERE id = :id")
     suspend fun deleteById(id: Long)
-    @Query("SELECT * FROM $TABLE_NAME WHERE seed_id = :seedId")
+    @Query("SELECT * FROM $TABLE_NAME WHERE seed_id = :seedId ORDER BY sort_order ASC")
     fun getBySeedId(seedId: Long): Flow<List<LinkEntryEntity>>
+
+    @Query("SELECT COALESCE(MAX(sort_order), -1) FROM $TABLE_NAME WHERE $COLUMN_SEED_ID = :seedId")
+    suspend fun getMaxOrder(seedId: Long): Int
 }

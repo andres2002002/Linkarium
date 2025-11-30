@@ -17,4 +17,5 @@ interface LinkEntryDataSource {
     fun getById(id: Long): Flow<LinkEntryEntity?>
     fun getBySeedUrl(seedId: Long, url: String): Flow<LinkEntryEntity?>
     fun getLinksBySeed(seedId: Long): Flow<List<LinkEntryEntity>>
+    suspend fun getMaxOrder(seedId: Long): Int
 }

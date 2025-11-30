@@ -39,4 +39,6 @@ class LinkEntryDataSourceImpl @Inject constructor(
 
     override fun getLinksBySeed(seedId: Long): Flow<List<LinkEntryEntity>> =
         dao.getBySeedId(seedId)
+    override suspend fun getMaxOrder(seedId: Long): Int =
+        dao.getMaxOrder(seedId)
 }

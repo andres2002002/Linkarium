@@ -16,6 +16,8 @@ class LinkGardenDataSourceImpl @Inject constructor(
 
     override suspend fun update(linkGarden: LinkGarden) =
         dao.update(linkGarden.toEntity())
+    override suspend fun update(linkGardens: List<LinkGarden>) =
+        dao.update(linkGardens.map { it.toEntity() })
 
     override suspend fun delete(linkGarden: LinkGarden) =
         dao.delete(linkGarden.toEntity())
@@ -31,4 +33,7 @@ class LinkGardenDataSourceImpl @Inject constructor(
 
     override suspend fun deleteById(id: Long) =
         dao.deleteById(id)
+
+    override suspend fun getMaxOrder(): Int =
+        dao.getMaxOrder()
 }

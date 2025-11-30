@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -51,7 +52,10 @@ fun GardensScreen(
         gardens = gardens,
         onClick = { id ->
             navController.navigateToRoute(Screens.ShowSeeds.createRoute(id))
-        }
+        },
+        onMove = viewModel::moveGarden,
+        onDragStart = viewModel::onDragStart,
+        onDragEnd = viewModel::onDragEnd
     )
 }
 
@@ -59,17 +63,25 @@ fun GardensScreen(
 private fun GardensContent(
     modifier: Modifier = Modifier,
     gardens: List<LinkGarden>,
-    onClick: (Long) -> Unit
+    onClick: (Long) -> Unit,
+    onMove: (Int, Int) -> Unit,
+    onDragStart: () -> Unit,
+    onDragEnd: () -> Unit
 ){
-    val state = rememberAkariReorderableLazyState<LinkGarden> { from, to ->
+    val state = rememberAkariReorderableLazyState<LinkGarden>(
+        onMove = { from, to ->
+            onMove(from, to)
+        },
+        onDragEnd = onDragEnd,
+        onDragStart = onDragStart
+    )
 
-    }
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         AddNewGarden(
-            modifier = Modifier,
+            modifier = Modifier.fillMaxWidth(),
             onClick = {}
         )
         AkariReorderableLazyColumn(

@@ -39,4 +39,6 @@ class LinkSeedDataSourceImpl @Inject constructor(
 
     override suspend fun getSeedsForExport(gardenId: Long): List<LinkSeedEntity> =
         dao.getSeedsForExport(gardenId)
+    override suspend fun getMaxOrder(gardenId: Long): Int =
+        dao.getMaxOrder(gardenId)
 }
