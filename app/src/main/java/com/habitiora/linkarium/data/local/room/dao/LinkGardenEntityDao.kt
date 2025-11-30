@@ -21,12 +21,14 @@ interface LinkGardenEntityDao {
     suspend fun insert(linkGarden: LinkGardenEntity): Long
     @Update
     suspend fun update(linkGarden: LinkGardenEntity)
+    @Update
+    suspend fun update(linkGardens: List<LinkGardenEntity>)
     @Delete
     suspend fun delete(linkGarden: LinkGardenEntity)
 
     @Query("DELETE FROM $TABLE_NAME")
     suspend fun deleteAll()
-    @Query("SELECT * FROM $TABLE_NAME")
+    @Query("SELECT * FROM $TABLE_NAME ORDER BY sort_order ASC")
     fun getAll(): Flow<List<LinkGardenEntity>>
 
     @Query("SELECT * FROM $TABLE_NAME WHERE id = :id")
@@ -34,4 +36,6 @@ interface LinkGardenEntityDao {
     @Query("DELETE FROM $TABLE_NAME WHERE id = :id")
     suspend fun deleteById(id: Long)
 
+    @Query("SELECT COALESCE(MAX(sort_order), -1) FROM $TABLE_NAME")
+    suspend fun getMaxOrder(): Int
 }

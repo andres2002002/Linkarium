@@ -10,11 +10,12 @@ import javax.inject.Singleton
 
 @Singleton
 class GardenBus @Inject constructor() {
-    private val _selectedGardenId = MutableStateFlow<Long>(1)
-    val selectedGardenId = _selectedGardenId.asStateFlow()
+    private val _selectedGardenIndex = MutableStateFlow(0)
+    val selectedGardenIndex = _selectedGardenIndex.asStateFlow()
 
-    fun selectGarden(id: Long) {
-        _selectedGardenId.value = id
-        Timber.d("Jardín seleccionado: $id")
+    fun selectGarden(index: Int) {
+        if (index < 0 || index == selectedGardenIndex.value) return
+        _selectedGardenIndex.value = index
+        Timber.d("Jardín seleccionado: $index")
     }
 }

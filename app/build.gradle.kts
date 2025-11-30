@@ -12,7 +12,9 @@ plugins {
 
 android {
     namespace = "com.habitiora.linkarium"
-    compileSdk = 36
+    compileSdk {
+        version = release(36)
+    }
 
     defaultConfig {
         applicationId = "com.habitiora.linkarium"
@@ -126,6 +128,9 @@ dependencies {
 
     // Timber
     implementation(libs.timber)
+
+    // AkariUi Maven Local
+    implementation(libs.uicomponents)
 
     // Mockito
     testImplementation(libs.mockito.core)

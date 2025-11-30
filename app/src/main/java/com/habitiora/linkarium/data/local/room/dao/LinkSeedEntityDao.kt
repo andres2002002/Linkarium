@@ -38,9 +38,12 @@ interface LinkSeedEntityDao {
     fun getAll(): Flow<List<LinkSeedEntity>>
     @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_ID = :id")
     fun getById(id: Long): Flow<LinkSeedEntity?>
-    @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_GARDEN_ID = :gardenId")
+    @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_GARDEN_ID = :gardenId ORDER BY id DESC")
     fun getSeedsByGarden(gardenId: Long): PagingSource<Int, LinkSeedEntity>
 
     @Query("SELECT * FROM $TABLE_NAME WHERE $COLUMN_GARDEN_ID = :gardenId")
     suspend fun getSeedsForExport(gardenId: Long): List<LinkSeedEntity>
+
+    @Query("SELECT COALESCE(MAX(sort_order), -1) FROM $TABLE_NAME WHERE $COLUMN_GARDEN_ID = :gardenId")
+    suspend fun getMaxOrder(gardenId: Long): Int
 }

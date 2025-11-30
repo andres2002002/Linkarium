@@ -26,6 +26,7 @@ data class LinkSeedComplete(
             name = seed.name,
             links = links,
             gardenId = seed.gardenId,
+            order = seed.order,
             isFavorite = seed.isFavorite,
             notes = seed.notes,
             tags = tags,

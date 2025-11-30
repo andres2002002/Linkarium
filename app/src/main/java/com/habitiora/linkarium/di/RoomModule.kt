@@ -6,6 +6,7 @@ import androidx.room.RoomDatabase
 import com.habitiora.linkarium.data.local.room.AppDatabase
 import com.habitiora.linkarium.data.local.room.DatabaseContract
 import com.habitiora.linkarium.data.local.room.migrations.MIGRATION_1_2
+import com.habitiora.linkarium.data.local.room.migrations.MIGRATION_2_3
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,7 +27,7 @@ object RoomModule {
                 Timber.d("SQL: $sqlQuery args: $bindArgs")
             }, Executors.newSingleThreadExecutor())*/
             .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
-            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
             .build()
     }
 

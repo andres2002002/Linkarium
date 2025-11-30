@@ -19,4 +19,5 @@ interface LinkSeedDataSource {
     fun getById(id: Long): Flow<LinkSeedEntity?>
     fun getSeedsByGarden(gardenId: Long): PagingSource<Int, LinkSeedEntity>
     suspend fun getSeedsForExport(gardenId: Long): List<LinkSeedEntity>
+    suspend fun getMaxOrder(gardenId: Long): Int
 }

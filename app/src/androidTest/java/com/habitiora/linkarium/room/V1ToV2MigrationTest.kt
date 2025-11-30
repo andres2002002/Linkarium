@@ -2,7 +2,6 @@ package com.habitiora.linkarium.room
 
 import androidx.room.testing.MigrationTestHelper
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner
 import androidx.test.platform.app.InstrumentationRegistry
 import com.habitiora.linkarium.data.local.room.AppDatabase
@@ -16,7 +15,7 @@ import org.junit.runner.RunWith
 import java.io.IOException
 
 @RunWith(AndroidJUnit4ClassRunner::class)
-class MigrationTest {
+class V1ToV2MigrationTest {
 
     @get:Rule
     val helper = MigrationTestHelper(

@@ -59,13 +59,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.akari.uicomponents.reorderableComponents.AkariReorderableColumn
+import com.akari.uicomponents.reorderableComponents.rememberAkariReorderableColumnState
+import com.akari.uicomponents.textFields.AkariTextField
+import com.akari.uicomponents.textFields.rememberAkariOutlinedTextFieldState
 import com.habitiora.linkarium.R
 import com.habitiora.linkarium.core.DataValidator
 import com.habitiora.linkarium.data.local.room.DatabaseContract
 import com.habitiora.linkarium.domain.model.LinkEntry
 import com.habitiora.linkarium.domain.model.LinkGarden
-import com.habitiora.linkarium.ui.components.textField.ProTextFieldState
-import com.habitiora.linkarium.ui.components.textField.RoundedTextFieldPro
 import com.habitiora.linkarium.ui.utils.localNavigator.LocalNavigator
 import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LabelDescriptionTextFieldValues
 import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LinkEntryTextFieldValues
@@ -79,18 +81,16 @@ fun PlantSeedScreen(
     val nameNotesTextFieldValue by viewModel.nameNotesTextFieldValue.collectAsState()
     val newEntryTextFieldValues by viewModel.newEntryTextFieldValues.collectAsState()
     val entries: List<LinkEntry> by viewModel.entries.collectAsState()
-    val collectionId by viewModel.gardenId.collectAsState()
+    val garden by viewModel.garden.collectAsState()
     val gardens by viewModel.gardens.collectAsState()
     val isValidSeed by viewModel.isValidSeed.collectAsState()
 
     val navController = LocalNavigator.current
 
     PlantSeedContent(
-        gardenId = collectionId,
+        garden = garden,
         gardens = gardens,
-        onGardenChange = { garden ->
-            viewModel.setGardenId(garden.id)
-        },
+        onGardenChange = viewModel::setGardenIndex,
         nameNotesTextFieldValue = nameNotesTextFieldValue,
         updateNameNotesTextFieldValue = viewModel::updateNameNotesTextFieldValue,
         newEntryTextFieldValues = newEntryTextFieldValues,
@@ -99,6 +99,7 @@ fun PlantSeedScreen(
         addLink = viewModel::addEntryOfCurrent,
         editLink = viewModel::editEntry,
         removeLink = viewModel::removeEntry,
+        onMove = viewModel::moveEntry,
         isValidSeed = isValidSeed,
         onSave = { viewModel.saveSeed(onSuccess = {navController.popBackStack()}) }
     )
@@ -106,9 +107,9 @@ fun PlantSeedScreen(
 
 @Composable
 private fun PlantSeedContent(
-    gardenId: Long,
+    garden: LinkGarden,
     gardens: List<LinkGarden>,
-    onGardenChange: (LinkGarden) -> Unit,
+    onGardenChange: (Int) -> Unit,
     nameNotesTextFieldValue: LabelDescriptionTextFieldValues,
     updateNameNotesTextFieldValue: (String, TextFieldValue) -> Unit,
     newEntryTextFieldValues: LinkEntryTextFieldValues,
@@ -117,6 +118,7 @@ private fun PlantSeedContent(
     addLink: () -> Unit,
     editLink: (LinkEntry) -> Unit,
     removeLink: (LinkEntry) -> Unit,
+    onMove: (Int, Int) -> Unit,
     isValidSeed: Boolean,
     onSave: () -> Unit
 ){
@@ -131,7 +133,7 @@ private fun PlantSeedContent(
     ) {
         item {
             GardenDropDown(
-                currentGardenId = gardenId,
+                garden = garden,
                 gardens = gardens,
                 onClick = onGardenChange
             )
@@ -156,7 +158,8 @@ private fun PlantSeedContent(
                 entries = entries,
                 addLink = addLink,
                 editLink = editLink,
-                removeLink = removeLink
+                removeLink = removeLink,
+                onMove = onMove
             )
         }
         item {
@@ -183,15 +186,12 @@ private fun PlantSeedContent(
 
 @Composable
 private fun GardenDropDown(
-    currentGardenId: Long,
+    garden: LinkGarden,
     gardens: List<LinkGarden>,
-    onClick: (LinkGarden) -> Unit
+    onClick: (Int) -> Unit
 ){
-    val currentGarden = remember(currentGardenId, gardens.size) {
-        gardens.find { it.id == currentGardenId } ?: DatabaseContract.LinkGarden.Empty
-    }
     GardenSelector(
-        currentGarden = currentGarden,
+        currentGarden = garden,
         gardens = gardens,
         onClick = onClick
     )
@@ -203,16 +203,15 @@ private fun NameFieldAndFavorites(
     focusRequester: FocusRequester,
     onNameTextFieldValueChange: (TextFieldValue) -> Unit
 ){
-    val nameState = remember(nameTextFieldValue) {
-        ProTextFieldState(
-            value = nameTextFieldValue,
-            onValueChange = onNameTextFieldValueChange,
-            focusRequester = focusRequester
-        )
-    }
-    Text("Name")
-    Spacer(modifier = Modifier.height(PaddingSmall))
-    RoundedTextFieldPro(state = nameState)
+    val nameState = rememberAkariOutlinedTextFieldState(
+        value = nameTextFieldValue,
+        onValueChange = onNameTextFieldValueChange,
+        builder = {
+            label = { Text("Name") }
+            this.focusRequester = focusRequester
+        }
+    )
+    AkariTextField(state = nameState)
 }
 
 @Composable
@@ -223,7 +222,8 @@ private fun LinksComponent(
     entries: List<LinkEntry>,
     addLink: () -> Unit,
     editLink: (LinkEntry) -> Unit,
-    removeLink: (LinkEntry) -> Unit
+    removeLink: (LinkEntry) -> Unit,
+    onMove: (Int, Int) -> Unit
 ){
     val isUrlValid = remember(entryTextFieldValues.url.text) {
         DataValidator.validateUrl(entryTextFieldValues.url.text).isValid && entryTextFieldValues.url.text.isNotBlank()
@@ -267,7 +267,8 @@ private fun LinksComponent(
     LinksList(
         entries = entries,
         editLink = editLink,
-        removeLink = removeLink
+        removeLink = removeLink,
+        onMove = onMove
     )
 }
 
@@ -282,20 +283,23 @@ private fun LinksMetaData(
     onNotesTextFieldValueChange: (TextFieldValue) -> Unit
 ){
 
-    val labelState = remember(labelTextFieldValue, labelFocusRequester) {
-        ProTextFieldState(
-            value = labelTextFieldValue,
-            onValueChange = onLabelTextFieldValueChange,
-            focusRequester = labelFocusRequester
-        )
-    }
-    val notesState = remember(notesTextFieldValue, notesFocusRequester) {
-        ProTextFieldState(
-            value = notesTextFieldValue,
-            onValueChange = onNotesTextFieldValueChange,
-            focusRequester = notesFocusRequester
-        )
-    }
+    val labelState = rememberAkariOutlinedTextFieldState(
+        value = labelTextFieldValue,
+        onValueChange = onLabelTextFieldValueChange,
+        builder = {
+            label = { Text("Label") }
+            this.focusRequester = labelFocusRequester
+        }
+    )
+
+    val notesState = rememberAkariOutlinedTextFieldState(
+        value = notesTextFieldValue,
+        onValueChange = onNotesTextFieldValueChange,
+        builder = {
+            label = { Text("Notes") }
+            this.focusRequester = notesFocusRequester
+        }
+    )
 
     var isAddMetadata by rememberSaveable { mutableStateOf(false) }
 
@@ -329,17 +333,15 @@ private fun LinksMetaData(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Label")
                 Row {
-                    RoundedTextFieldPro(
+                    AkariTextField(
                         state = labelState,
                         modifier = Modifier.weight(1f)
                     )
                 }
                 Spacer(modifier = Modifier.height(PaddingSmall))
-                Text("Notes")
                 Row {
-                    RoundedTextFieldPro(
+                    AkariTextField(
                         state = notesState,
                         modifier = Modifier.weight(1f)
                     )
@@ -355,17 +357,19 @@ private fun LinksTextField(
     newUrlTextFieldValue: TextFieldValue = TextFieldValue(""),
     focusRequester: FocusRequester,
     onNewUrlTextFieldValueChange: (TextFieldValue) -> Unit = {}
-){
-    val newUrlState = remember(newUrlTextFieldValue, focusRequester) {
-        ProTextFieldState(
-            value = newUrlTextFieldValue,
-            onValueChange = onNewUrlTextFieldValueChange,
-            focusRequester = focusRequester
-        )
-    }
-    RoundedTextFieldPro(
-        modifier = modifier,
-        state = newUrlState
+) {
+    val newUrlState = rememberAkariOutlinedTextFieldState(
+        value = newUrlTextFieldValue,
+        onValueChange = onNewUrlTextFieldValueChange,
+        builder = {
+            label = { Text("URL") }
+            this.focusRequester = focusRequester
+        }
+    )
+
+    AkariTextField(
+        state = newUrlState,
+        modifier = modifier
     )
 }
 
@@ -387,29 +391,36 @@ private fun LinksButton(
 @Composable
 private fun LinksList(
     entries: List<LinkEntry>,
+    onMove: (Int, Int) -> Unit,
     editLink: (LinkEntry) -> Unit,
     removeLink: (LinkEntry) -> Unit
 ){
-    Column(
+    val state = rememberAkariReorderableColumnState<LinkEntry> { from, to ->
+        onMove(from, to)
+    }
+    AkariReorderableColumn(
+        items = entries,
+        state = state,
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        entries.forEach { entry ->
-            LinkItem(
-                modifier = Modifier
-                    .clip(MaterialTheme.shapes.medium),
-                entry = entry,
-                onEdit = { editLink(entry) },
-                onClear = { removeLink(entry) }
-            )
-        }
+    ) { entry, isDragging ->
+        LinkItem(
+            modifier = Modifier
+                .clip(MaterialTheme.shapes.medium)
+                .akariDragHandle(),
+            isDragging = isDragging,
+            entry = entry,
+            onEdit = { editLink(entry) },
+            onClear = { removeLink(entry) }
+        )
     }
 }
 
 @Composable
 private fun LinkItem(
     modifier: Modifier = Modifier,
+    isDragging: Boolean,
     entry: LinkEntry,
     onClear: () -> Unit,
     onEdit: () -> Unit,
@@ -417,8 +428,8 @@ private fun LinkItem(
     ListItem(
         modifier = modifier,
         colors = ListItemDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f)
-
+            containerColor = if (isDragging) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f)
         ),
         overlineContent = entry.label?.let { label ->
             {
@@ -465,19 +476,16 @@ private fun NotesComponent(
     focusRequester: FocusRequester,
     onNotesTextFieldValueChange: (TextFieldValue) -> Unit = {}
 ){
-    val notesState = remember(notesTextFieldValue, focusRequester) {
-        ProTextFieldState(
-            value = notesTextFieldValue,
-            onValueChange = onNotesTextFieldValueChange,
-            focusRequester = focusRequester
-        )
-    }
-    Text("Notes")
-    Spacer(modifier = Modifier.height(PaddingSmall))
-    RoundedTextFieldPro(
-        state = notesState,
-        modifier = modifier
+    val notesState = rememberAkariOutlinedTextFieldState(
+        value = notesTextFieldValue,
+        onValueChange = onNotesTextFieldValueChange,
+        builder = {
+            label = { Text("Notes") }
+            this.focusRequester = focusRequester
+        }
     )
+
+    AkariTextField(modifier = modifier, state = notesState)
 }
 
 @Composable
@@ -496,7 +504,7 @@ private fun GardenSelector(
     modifier: Modifier = Modifier,
     currentGarden: LinkGarden,
     gardens: List<LinkGarden>,
-    onClick: (LinkGarden) -> Unit
+    onClick: (Int) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     val accountValid = gardens.any { it.id == currentGarden.id }
@@ -562,7 +570,7 @@ private fun GardenSelector(
             onDismissRequest = { expanded = false },
             shape = MaterialTheme.shapes.medium
         ) {
-            gardens.filter { it.id != currentGarden.id }.forEach { item ->
+            gardens.filter { it.id != currentGarden.id }.forEachIndexed { index, item ->
                 DropdownMenuItem(
                     leadingIcon = {
                         Icon(
@@ -589,7 +597,7 @@ private fun GardenSelector(
                         }
                     },
                     onClick = {
-                        onClick(item)
+                        onClick(index)
                         expanded = false
                     }
                 )

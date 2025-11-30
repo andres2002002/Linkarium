@@ -56,11 +56,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.akari.uicomponents.buttons.AkariButtonVariant
+import com.akari.uicomponents.buttons.tooltipButtons.AkariTooltipButton
+import com.akari.uicomponents.checkbox.AkariCheckBox
 import com.habitiora.linkarium.R
 import com.habitiora.linkarium.domain.model.LinkEntry
 import com.habitiora.linkarium.domain.model.LinkSeed
-import com.habitiora.linkarium.ui.components.buttons.PlainTooltipIconButton
-import com.habitiora.linkarium.ui.components.checkBox.CheckBoxComponent
 import com.habitiora.linkarium.ui.utils.clipBoardHelper.ClipboardHelper
 import com.habitiora.linkarium.ui.utils.uirHelper.UriHelper
 import kotlinx.coroutines.CoroutineScope
@@ -236,18 +237,17 @@ private fun LeadingSection(
             enter = fadeIn(animationSpec = tween(ItemSeedDefaults.AnimationDuration)),
             exit = fadeOut(animationSpec = tween(ItemSeedDefaults.AnimationDuration))
         ) {
-            CheckBoxComponent(
+            AkariCheckBox(
                 modifier = Modifier.padding(end = 8.dp),
                 checked = checked,
-                onCheckedChange = onCheckedChange,
-                iconSelected = {
-                    Icon(
-                        modifier = Modifier.size(ItemSeedDefaults.IconSizeLarge),
-                        imageVector = Icons.Default.Check,
-                        contentDescription = null
-                    )
-                }
-            )
+                onCheckedChange = onCheckedChange
+            ) {
+                Icon(
+                    modifier = Modifier.size(ItemSeedDefaults.IconSizeLarge),
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null
+                )
+            }
         }
 
         AnimatedVisibility(
@@ -307,6 +307,7 @@ private fun SeedInfo(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TrailButtons(
     modifier: Modifier = Modifier,
@@ -347,10 +348,13 @@ private fun TrailButtons(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        PlainTooltipIconButton(
+        AkariTooltipButton(
             modifier = Modifier.size(buttonSize),
-            tooltipText = contentDescription,
-            onClick = onClick
+            variant = AkariButtonVariant.Icon,
+            onClick = onClick,
+            tooltipContent = {
+                Text(text = contentDescription)
+            }
         ) {
             Icon(
                 modifier = Modifier
@@ -360,6 +364,7 @@ private fun TrailButtons(
                 contentDescription = contentDescription
             )
         }
+
         MoreOptions(
             widthSizeClass = widthSizeClass,
             buttonSize = buttonSize,
@@ -385,10 +390,13 @@ private fun MoreOptions(
         Box(
             modifier = Modifier.wrapContentSize()
         ) {
-            PlainTooltipIconButton(
+            AkariTooltipButton(
                 modifier = Modifier.size(buttonSize),
-                tooltipText = "Options",
-                onClick = { showMenu = !showMenu }
+                variant = AkariButtonVariant.Icon,
+                onClick = { showMenu = !showMenu },
+                tooltipContent = {
+                    Text(text = "Options")
+                }
             ) {
                 Icon(
                     modifier = Modifier.size(iconSize),
@@ -417,10 +425,13 @@ private fun MoreOptions(
             }
         }
     } else {
-        PlainTooltipIconButton(
+        AkariTooltipButton(
             modifier = Modifier.size(buttonSize),
-            tooltipText = "Edit",
-            onClick = onEdit
+            variant = AkariButtonVariant.Icon,
+            onClick = onEdit,
+            tooltipContent = {
+                Text(text = "Edit")
+            }
         ) {
             Icon(
                 modifier = Modifier.size(iconSize),
@@ -428,10 +439,13 @@ private fun MoreOptions(
                 contentDescription = "Edit"
             )
         }
-        PlainTooltipIconButton(
+        AkariTooltipButton(
             modifier = Modifier.size(buttonSize),
-            tooltipText = "Delete",
-            onClick = onDelete
+            variant = AkariButtonVariant.Icon,
+            onClick = onDelete,
+            tooltipContent = {
+                Text(text = "Delete")
+            }
         ) {
             Icon(
                 modifier = Modifier.size(iconSize),

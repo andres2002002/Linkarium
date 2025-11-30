@@ -24,7 +24,8 @@ import java.time.LocalDateTime
         Index(value = [DatabaseContract.LinkSeed.COLUMN_NAME]),
         Index(value = [DatabaseContract.LinkSeed.COLUMN_GARDEN_ID]),
         Index(value = [DatabaseContract.LinkSeed.COLUMN_IS_FAVORITE]),
-        Index(value = [DatabaseContract.LinkSeed.COLUMN_DATE_TIME])
+        Index(value = [DatabaseContract.LinkSeed.COLUMN_DATE_TIME]),
+        Index(value = [DatabaseContract.LinkSeed.COLUMN_ORDER])
     ]
 )
 data class LinkSeedEntity(
@@ -32,6 +33,7 @@ data class LinkSeedEntity(
     @ColumnInfo(name = DatabaseContract.LinkSeed.COLUMN_ID) val id: Long = 0,
     @ColumnInfo(name = DatabaseContract.LinkSeed.COLUMN_NAME) val name: String,
     @ColumnInfo(name = DatabaseContract.LinkSeed.COLUMN_GARDEN_ID) val gardenId: Long = 0,
+    @ColumnInfo(name = DatabaseContract.LinkSeed.COLUMN_ORDER) val order: Int = 0,
     @ColumnInfo(name = DatabaseContract.LinkSeed.COLUMN_IS_FAVORITE) val isFavorite: Boolean = false,
     @ColumnInfo(name = DatabaseContract.LinkSeed.COLUMN_NOTES) val notes: String? = null,
     @ColumnInfo(name = DatabaseContract.LinkSeed.COLUMN_DATE_TIME) val modifiedAt: LocalDateTime = LocalDateTime.now()
