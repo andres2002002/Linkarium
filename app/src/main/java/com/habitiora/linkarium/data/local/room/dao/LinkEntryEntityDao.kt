@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 interface LinkEntryEntityDao {
     companion object {
         const val TABLE_NAME = DatabaseContract.LinkEntry.TABLE_NAME
+        const val COLUMN_SEED_ID = DatabaseContract.LinkEntry.COLUMN_SEED_ID
     }
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(linkEntry: LinkEntryEntity): Long
@@ -21,16 +22,26 @@ interface LinkEntryEntityDao {
     suspend fun insertAll(linkEntries: List<LinkEntryEntity>): List<Long>
     @Update
     suspend fun update(linkEntry: LinkEntryEntity)
+    @Update
+    suspend fun updateAll(linkEntries: List<LinkEntryEntity>)
     @Delete
     suspend fun delete(linkEntry: LinkEntryEntity)
+    @Delete
+    suspend fun deleteAll(linkEntries: List<LinkEntryEntity>)
     @Query("DELETE FROM $TABLE_NAME")
     suspend fun deleteAll()
     @Query("SELECT * FROM $TABLE_NAME")
     fun getAll(): Flow<List<LinkEntryEntity>>
     @Query("SELECT * FROM $TABLE_NAME WHERE id = :id")
     fun getById(id: Long): Flow<LinkEntryEntity?>
+
+    @Query("SELECT * FROM $TABLE_NAME WHERE seed_id = :seedId AND uri = :url")
+    fun getBySeedUrl(seedId: Long, url: String): Flow<LinkEntryEntity?>
     @Query("DELETE FROM $TABLE_NAME WHERE id = :id")
     suspend fun deleteById(id: Long)
-    @Query("SELECT * FROM $TABLE_NAME WHERE seed_id = :seedId")
+    @Query("SELECT * FROM $TABLE_NAME WHERE seed_id = :seedId ORDER BY sort_order ASC")
     fun getBySeedId(seedId: Long): Flow<List<LinkEntryEntity>>
+
+    @Query("SELECT COALESCE(MAX(sort_order), -1) FROM $TABLE_NAME WHERE $COLUMN_SEED_ID = :seedId")
+    suspend fun getMaxOrder(seedId: Long): Int
 }

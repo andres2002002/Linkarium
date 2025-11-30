@@ -9,7 +9,8 @@ import com.habitiora.linkarium.domain.usecase.LinkGardenWithSeedsImpl
 fun LinkGarden.toEntity(): LinkGardenEntity = LinkGardenEntity(
     id = this.id,
     name = this.name,
-    description = this.description
+    description = this.description,
+    order = this.order
 )
 
 fun LinkGardenEntity.toDomain(): LinkGarden = this

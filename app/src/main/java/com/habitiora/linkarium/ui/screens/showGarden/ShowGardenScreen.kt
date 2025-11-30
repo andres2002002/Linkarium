@@ -54,7 +54,7 @@ fun ShowGardenScreen(
     viewModel: ShowGardenViewModel = hiltViewModel()
 ) {
     val collections by viewModel.gardens.collectAsState()
-    val garden by viewModel.garden.collectAsState()
+    val selectedPageIndex by viewModel.selectedPageIndex.collectAsState()
     val seeds = viewModel.seeds.collectAsLazyPagingItems()
     val openGardenDialog by viewModel.openGardenDialog.collectAsState()
     val navController: NavHostController = LocalNavigator.current
@@ -67,11 +67,11 @@ fun ShowGardenScreen(
 
     ContentScreen(
         modifier = Modifier.fillMaxWidth(),
-        garden = garden,
+        selectedPageIndex = selectedPageIndex,
         seeds = seeds,
         collections = collections,
-        onCollectionSelected = { garden ->
-            viewModel.setSelectedGardenId(garden.id)
+        onCollectionSelected = { index ->
+            viewModel.onPagedSelected(index)
         },
         navigateToAddGarden = {
             viewModel.setOpenGardenDialog(true)
@@ -81,9 +81,6 @@ fun ShowGardenScreen(
         },
         onDelete = {
             viewModel.onDeleteLinkSeed(it)
-        },
-        onExport = { uri, context ->
-            viewModel.exportGardens(uri, context)
         }
     )
 }
@@ -91,49 +88,38 @@ fun ShowGardenScreen(
 @Composable
 private fun ContentScreen(
     modifier: Modifier = Modifier,
-    garden: LinkGarden?,
+    selectedPageIndex: Int,
     seeds: LazyPagingItems<LinkSeed>,
     collections: List<LinkGarden>,
-    onCollectionSelected: (LinkGarden) -> Unit,
+    onCollectionSelected: (Int) -> Unit,
     navigateToAddGarden: () -> Unit,
     onEdit: (LinkSeed) -> Unit,
     onDelete: (LinkSeed) -> Unit,
-    onExport: (uri: Uri, context: Context) -> Unit
 ){
-    val selectedTabIndex = remember(garden, collections){
-        if (garden == null || collections.isEmpty()) return@remember 0
-        collections.indexOfFirst { it.id == garden.id }.coerceIn(collections.indices)
-    }
+
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ){
-        if (collections.isEmpty() || garden == null) {
+        if (collections.isEmpty()) {
             EmptyGardensMessage(
                 navigateToAddGarden = navigateToAddGarden
             )
         }
         else {
             TabRowGardens(
-                selectedTabIndex = selectedTabIndex,
+                selectedTabIndex = selectedPageIndex,
                 collections = collections,
-                onCollectionSelected = { index ->
-                    onCollectionSelected(collections[index.coerceIn(collections.indices)])
-                },
+                onCollectionSelected = onCollectionSelected,
                 navigateToAddGarden = navigateToAddGarden
             )
-            ExportTest{ uri, context ->
-                onExport(uri, context)
-            }
             GardenContent(
                 modifier = Modifier.weight(1f),
                 seeds = seeds,
-                indexSelected = selectedTabIndex,
+                indexSelected = selectedPageIndex,
                 pages = collections.size,
-                onPagedSelected = { index ->
-                    onCollectionSelected(collections[index.coerceIn(collections.indices)])
-                },
+                onPagedSelected = onCollectionSelected,
                 onEdit = onEdit,
                 onDelete = onDelete
             )

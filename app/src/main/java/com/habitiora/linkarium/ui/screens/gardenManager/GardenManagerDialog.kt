@@ -1,10 +1,16 @@
 package com.habitiora.linkarium.ui.screens.gardenManager
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -18,8 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.habitiora.linkarium.ui.components.textField.ProTextFieldState
-import com.habitiora.linkarium.ui.components.textField.RoundedTextFieldPro
+import com.akari.uicomponents.textFields.AkariTextField
+import com.akari.uicomponents.textFields.rememberAkariOutlinedTextFieldState
 
 @Composable
 fun GardenManagerDialog(
@@ -86,8 +92,15 @@ private fun ContentDialog(
 ){
     Card {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            Text(
+                text = "New Garden",
+                style = MaterialTheme.typography.titleMedium
+            )
             NameSection(
                 nameTextFieldValue = nameTextFieldValue,
                 focusRequester = nameFocusRequester,
@@ -112,18 +125,18 @@ private fun NameSection(
     focusRequester: FocusRequester,
     onNameChange: (TextFieldValue) -> Unit = {}
 ){
-    val nameState = remember(nameTextFieldValue, focusRequester) {
-        ProTextFieldState(
-            value = nameTextFieldValue,
-            onValueChange = onNameChange,
-            focusRequester = focusRequester,
-            placeholder = { Text("Insert a name") }
-        )
-    }
-    Column {
-        Text("Name")
-        RoundedTextFieldPro(state = nameState)
+    val nameState = rememberAkariOutlinedTextFieldState(
+        value = nameTextFieldValue,
+        onValueChange = onNameChange,
+        builder = {
+            label = { Text("Name") }
+            placeholder = "Insert a name"
+            this.focusRequester = focusRequester
+        }
+    )
 
+    Column {
+        AkariTextField(state = nameState)
     }
 }
 
@@ -133,17 +146,18 @@ private fun DescriptionSection(
     focusRequester: FocusRequester,
     onDescriptionChange: (TextFieldValue) -> Unit = {}
 ){
-    val descriptionState = remember(descriptionTextFieldValue, focusRequester) {
-        ProTextFieldState(
-            value = descriptionTextFieldValue,
-            onValueChange = onDescriptionChange,
-            focusRequester = focusRequester,
-            placeholder = { Text("Insert a description") }
-        )
-    }
+    val descriptionState = rememberAkariOutlinedTextFieldState(
+        value = descriptionTextFieldValue,
+        onValueChange = onDescriptionChange,
+        builder = {
+            label = { Text("Description") }
+            this.focusRequester = focusRequester
+            placeholder = "Insert a description"
+        }
+    )
+
     Column {
-        Text("Description")
-        RoundedTextFieldPro(state = descriptionState)
+        AkariTextField(state = descriptionState)
     }
 }
 
@@ -152,10 +166,16 @@ private fun SaveButton(
     enabled: Boolean,
     onSave: () -> Unit
 ){
-    Button(
-        onClick = onSave,
-        enabled = enabled
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End
     ) {
-        Text("Save")
+        TextButton(
+            onClick = onSave,
+            enabled = enabled
+        ) {
+            Text("Save")
+        }
     }
+
 }

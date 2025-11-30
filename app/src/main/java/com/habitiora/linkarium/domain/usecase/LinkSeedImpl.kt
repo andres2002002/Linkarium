@@ -21,6 +21,7 @@ data class LinkSeedImpl(
     override val name: String = "",
     override val links: List<LinkEntry> = emptyList(),
     override val gardenId: Long = 0,
+    override val order: Int = 0,
     override val isFavorite: Boolean = false,
     override val notes: String? = null,
     override val tags: List<LinkTag> = emptyList(),

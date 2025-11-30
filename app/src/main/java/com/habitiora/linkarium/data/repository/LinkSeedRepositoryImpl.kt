@@ -3,7 +3,6 @@ package com.habitiora.linkarium.data.repository
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
-import androidx.paging.PagingSource
 import androidx.paging.map
 import androidx.room.withTransaction
 import com.habitiora.linkarium.data.local.datasource.LinkEntryDataSource
@@ -22,10 +21,7 @@ import com.habitiora.linkarium.domain.model.LinkSeed
 import com.habitiora.linkarium.domain.model.LinkTag
 import com.habitiora.linkarium.domain.usecase.LinkSeedImpl
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import javax.inject.Inject
@@ -78,8 +74,9 @@ class LinkSeedRepositoryImpl @Inject constructor(
                 validateSeedData(linkSeed)
                 require(validateGarden(linkSeed.gardenId)) { "Garden not found" }
 
+                val maxOrder = linkSeedDataSource.getMaxOrder(linkSeed.gardenId)
                 // Insert seed
-                val id = linkSeedDataSource.insert(linkSeed)
+                val id = linkSeedDataSource.insert(linkSeed.copy(order = maxOrder + 1))
                 require(validateSeed(id)) { "Seed not found after insert" }
 
                 // Insert related entities
@@ -207,19 +204,59 @@ class LinkSeedRepositoryImpl @Inject constructor(
 
     private suspend fun handleLinks(links: List<LinkEntry>, seedId: Long): List<LinkEntryEntity> {
         val errorLinks = mutableListOf<LinkEntryEntity>()
-        links.toListEntryEntity(seedId).forEach { link ->
-            try {
-                val linkValid = linkEntryDataSource.getById(link.id).first()
-                if (linkValid != null) {
-                    linkEntryDataSource.update(link)
-                } else {
-                    linkEntryDataSource.insert(link)
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "❌ Error handling link: $link")
-                errorLinks.add(link)
+        val newLinks = links.toListEntryEntity(seedId)
+
+
+        //cargamos la lista de links en la BD de la semilla
+        val oldLinks = linkEntryDataSource.getLinksBySeed(seedId).first()
+
+        // Sets y maps para eficiencia O(1)
+        val oldMap = oldLinks.associateBy { it.id }
+        val newMap = newLinks.associateBy { it.id }
+
+        val inserts = mutableListOf<LinkEntryEntity>()
+        val updates = mutableListOf<LinkEntryEntity>()
+        val deletes = mutableListOf<LinkEntryEntity>()
+
+        // verificamos que los links sean válidos o si no existen los insertamos
+        newLinks.forEach { newEntry ->
+            val oldEntry = oldMap[newEntry.id]
+
+            if (oldEntry == null) {
+                inserts.add(newEntry)
+            } else if (oldEntry != newEntry) {
+                updates.add(newEntry)
             }
         }
+
+        // encontramos los links que no están en la nueva lista y los eliminamos
+        oldLinks.forEach { oldEntry ->
+            if (!newMap.containsKey(oldEntry.id)) {
+                deletes.add(oldEntry)
+            }
+        }
+
+        try {
+            linkEntryDataSource.insertAll(inserts)
+        } catch (e: Exception) {
+            Timber.e(e)
+            errorLinks.addAll(inserts)
+        }
+
+        try {
+            linkEntryDataSource.updateAll(updates)
+        } catch (e: Exception) {
+            Timber.e(e)
+            errorLinks.addAll(updates)
+        }
+
+        try {
+            linkEntryDataSource.deleteAll(deletes)
+        } catch (e: Exception) {
+            Timber.e(e)
+            errorLinks.addAll(deletes)
+        }
+
         if (errorLinks.isNotEmpty()) {
             Timber.w("⚠️ Failed to handle ${errorLinks.size} links")
         }

@@ -7,10 +7,11 @@ import kotlinx.coroutines.flow.Flow
 interface LinkGardenDataSource {
     suspend fun insert(linkGarden: LinkGarden): Long
     suspend fun update(linkGarden: LinkGarden)
+    suspend fun update(linkGardens: List<LinkGarden>)
     suspend fun delete(linkGarden: LinkGarden)
     suspend fun deleteAll()
     fun getAll(): Flow<List<LinkGarden>>
     fun getById(id: Long): Flow<LinkGarden?>
     suspend fun deleteById(id: Long)
-
+    suspend fun getMaxOrder(): Int
 }
