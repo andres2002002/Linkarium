@@ -27,9 +27,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.key
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,15 +39,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.habitiora.linkarium.core.ProcessStatus
 import com.habitiora.linkarium.domain.model.LinkGarden
-import com.habitiora.linkarium.domain.model.LinkGardenWithSeeds
 import com.habitiora.linkarium.domain.model.LinkSeed
 import com.habitiora.linkarium.ui.navigation.Screens
 import com.habitiora.linkarium.ui.screens.gardenManager.GardenManagerDialog
 import com.habitiora.linkarium.ui.utils.localNavigator.LocalNavigator
 import com.habitiora.linkarium.ui.utils.localNavigator.navigateToRoute
-import kotlin.math.absoluteValue
 
 @Composable
 fun ShowGardenScreen(
@@ -57,6 +54,7 @@ fun ShowGardenScreen(
     val selectedPageIndex by viewModel.selectedPageIndex.collectAsState()
     val seeds = viewModel.seeds.collectAsLazyPagingItems()
     val openGardenDialog by viewModel.openGardenDialog.collectAsState()
+
     val navController: NavHostController = LocalNavigator.current
 
     if (openGardenDialog) {
@@ -70,18 +68,14 @@ fun ShowGardenScreen(
         selectedPageIndex = selectedPageIndex,
         seeds = seeds,
         collections = collections,
-        onCollectionSelected = { index ->
-            viewModel.onPagedSelected(index)
-        },
+        onUserSwipedToPage = viewModel::onUserSwipedToPage,
         navigateToAddGarden = {
             viewModel.setOpenGardenDialog(true)
         },
         onEdit = { seed ->
             navController.navigateToRoute(Screens.PlantNew.createRoute(seed.id))
         },
-        onDelete = {
-            viewModel.onDeleteLinkSeed(it)
-        }
+        onDelete = viewModel::onDeleteLinkSeed
     )
 }
 
@@ -91,7 +85,7 @@ private fun ContentScreen(
     selectedPageIndex: Int,
     seeds: LazyPagingItems<LinkSeed>,
     collections: List<LinkGarden>,
-    onCollectionSelected: (Int) -> Unit,
+    onUserSwipedToPage: (Int) -> Unit,
     navigateToAddGarden: () -> Unit,
     onEdit: (LinkSeed) -> Unit,
     onDelete: (LinkSeed) -> Unit,
@@ -111,7 +105,7 @@ private fun ContentScreen(
             TabRowGardens(
                 selectedTabIndex = selectedPageIndex,
                 collections = collections,
-                onCollectionSelected = onCollectionSelected,
+                onCollectionSelected = onUserSwipedToPage,
                 navigateToAddGarden = navigateToAddGarden
             )
             GardenContent(
@@ -119,7 +113,7 @@ private fun ContentScreen(
                 seeds = seeds,
                 indexSelected = selectedPageIndex,
                 pages = collections.size,
-                onPagedSelected = onCollectionSelected,
+                onUserSwipedToPage = onUserSwipedToPage,
                 onEdit = onEdit,
                 onDelete = onDelete
             )
@@ -133,36 +127,44 @@ private fun GardenContent(
     seeds: LazyPagingItems<LinkSeed>,
     indexSelected: Int,
     pages: Int,
-    onPagedSelected: (Int) -> Unit,
+    onUserSwipedToPage: (Int) -> Unit,
     onEdit: (LinkSeed) -> Unit,
     onDelete: (LinkSeed) -> Unit
 ){
 
     val pagerState = rememberPagerState { pages }
 
-    // Solo actualiza cuando la página cambie realmente
-    LaunchedEffect(pagerState.settledPage) {
-        onPagedSelected(pagerState.settledPage)
-    }
-
-    // Solo mueve el pager si el índice externo cambia
+    // Sincronizar: ViewModel -> PagerState
     LaunchedEffect(indexSelected) {
         if (pagerState.currentPage != indexSelected) {
             pagerState.animateScrollToPage(indexSelected)
         }
     }
 
+    // Sincronizar: PagerState -> ViewModel (gestos del usuario)
+    LaunchedEffect(pagerState.currentPage, pagerState.isScrollInProgress) {
+        snapshotFlow { pagerState.currentPage to pagerState.isScrollInProgress }
+            .collect { (page, isScrolling) ->
+                if (!isScrolling && page != indexSelected) {
+                    onUserSwipedToPage(page)
+                }
+            }
+    }
+
     HorizontalPager(
         modifier = modifier,
         state = pagerState,
+        pageSpacing = 32.dp,
         userScrollEnabled = true
-    ) { _ ->
-        ShowSeedsScreen(
-            modifier = Modifier.fillMaxSize(),
-            seeds = seeds,
-            onEdit = onEdit,
-            onDelete = onDelete
-        )
+    ) { page ->
+        key(page) {
+            ShowSeedsScreen(
+                modifier = Modifier.fillMaxSize(),
+                seeds = seeds,
+                onEdit = onEdit,
+                onDelete = onDelete
+            )
+        }
     }
 }
 
@@ -251,23 +253,4 @@ private fun EmptyGardensMessage(
             Text(text = "Add Garden")
         }
     }
-}
-
-@Composable
-private fun ExportTest(
-    onExport: (uri: Uri, context: Context) -> Unit
-){
-    val context = LocalContext.current
-
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/octet-stream")
-    ) { uri: Uri? ->
-        if (uri != null) {
-            onExport(uri, context)
-        }
-    }
-
-    Button(onClick = {
-        launcher.launch("links_export.pdf")
-    }) { Text("Exportar JSON") }
 }

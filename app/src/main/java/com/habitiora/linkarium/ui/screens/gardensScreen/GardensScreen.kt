@@ -3,6 +3,7 @@ package com.habitiora.linkarium.ui.screens.gardensScreen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -89,6 +90,8 @@ private fun GardensContent(
             items = gardens,
             state = state,
             key = { item -> item.id },
+            contentPadding = PaddingValues(bottom = 64.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             dragActivation = DragActivation.LongPress
         ) { item, isDragging ->
             GardenItem(
