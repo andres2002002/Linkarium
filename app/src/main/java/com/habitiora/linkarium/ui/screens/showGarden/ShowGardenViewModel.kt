@@ -1,9 +1,12 @@
 package com.habitiora.linkarium.ui.screens.showGarden
 
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.habitiora.linkarium.core.ProcessStatus
 import com.habitiora.linkarium.data.repository.LinkGardenRepository
 import com.habitiora.linkarium.data.repository.LinkSeedRepository
 import com.habitiora.linkarium.domain.model.LinkGarden
@@ -15,9 +18,11 @@ import com.habitiora.linkarium.ui.utils.pubsAndSubs.MessageBus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -25,6 +30,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -35,6 +41,8 @@ class ShowGardenViewModel @Inject constructor(
     private val gardenBus: GardenBus,
     private val messageBus: MessageBus
 ): ViewModel() {
+
+    // region State Properties
     val gardens: StateFlow<List<LinkGarden>> = gardenRepository.getAll()
         .distinctUntilChanged()
         .stateIn(
@@ -61,11 +69,11 @@ class ShowGardenViewModel @Inject constructor(
             seedRepository.getSeedsByGarden(garden?.id?:0)
         }.cachedIn(viewModelScope)
 
-    private val _totalPages = MutableStateFlow(0)
-    val totalPages: StateFlow<Int> = _totalPages.asStateFlow()
-
     private val _openGardenDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val openGardenDialog: StateFlow<Boolean> = _openGardenDialog.asStateFlow()
+
+    // endregion
+
     fun setOpenGardenDialog(value: Boolean) {
         _openGardenDialog.value = value
     }
@@ -92,5 +100,8 @@ class ShowGardenViewModel @Inject constructor(
         Timber.d("Message published for LinkSeed: ${linkSeed.name}, with id: ${linkSeed.id}")
     }
 
-    fun onPagedSelected(index: Int) = gardenBus.selectGarden(index)
+    /** Llamar cuando el pager settle cambie (desde UI) */
+    fun onUserSwipedToPage(page: Int) {
+        gardenBus.selectGarden(page)
+    }
 }
