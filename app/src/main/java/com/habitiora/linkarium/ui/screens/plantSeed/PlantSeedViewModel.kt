@@ -25,13 +25,12 @@ import com.habitiora.linkarium.domain.usecase.LinkEntryImpl
 import com.habitiora.linkarium.domain.usecase.LinkSeedImpl
 import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LabelDescriptionTextFieldValues
 import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LinkEntryTextFieldValues
-import com.habitiora.linkarium.ui.utils.pubsAndSubs.GardenBus
+import com.habitiora.linkarium.ui.utils.pubsAndSubs.GardenSelectionManager
 import com.habitiora.linkarium.ui.utils.pubsAndSubs.SnackbarEventBus
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -42,7 +41,7 @@ class PlantSeedViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val seedRepository: LinkSeedRepository,
     private val gardenRepository: LinkGardenRepository,
-    private val gardenBus: GardenBus,
+    private val gardenSelectionManager: GardenSelectionManager,
     private val snackbarEventBus: SnackbarEventBus
 ) : ViewModel() {
 
@@ -57,7 +56,7 @@ class PlantSeedViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
-    private val _selectedGardenIndex = gardenBus.selectedGardenIndex
+    private val _selectedGardenIndex = gardenSelectionManager.selectedGardenIndex
 
     val garden: StateFlow<LinkGarden> = combine(_selectedGardenIndex, gardens) { index, gardens ->
         gardens.getOrNull(index) ?: DatabaseContract.LinkGarden.Empty
@@ -178,7 +177,7 @@ class PlantSeedViewModel @Inject constructor(
 
     // region Public Actions
 
-    fun setGardenIndex(index: Int) = gardenBus.selectGarden(index)
+    fun setGardenIndex(index: Int) = gardenSelectionManager.selectGarden(index)
 
     fun updateNameNotesTextFieldValue(key: String, value: TextFieldValue) {
         _nameNotesTextFieldValue.update {

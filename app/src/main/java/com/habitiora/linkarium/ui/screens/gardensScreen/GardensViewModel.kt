@@ -2,8 +2,10 @@ package com.habitiora.linkarium.ui.screens.gardensScreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.habitiora.linkarium.data.local.room.DatabaseContract
 import com.habitiora.linkarium.data.repository.LinkGardenRepository
 import com.habitiora.linkarium.domain.model.LinkGarden
+import com.habitiora.linkarium.ui.utils.pubsAndSubs.GardenUpdateManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +23,7 @@ import javax.inject.Inject
 @HiltViewModel
 class GardensViewModel  @Inject constructor(
     private val gardenRepository: LinkGardenRepository,
+    private val gardenUpdateManager: GardenUpdateManager
 ) : ViewModel() {
     private val _gardens = MutableStateFlow<List<LinkGarden>>(emptyList())
     val gardens: StateFlow<List<LinkGarden>> = _gardens.asStateFlow()
@@ -75,5 +78,13 @@ class GardensViewModel  @Inject constructor(
             // Llamada a tu DAO
             gardenRepository.update(updatedList)
         }
+    }
+
+    fun onAddGarden(){
+        gardenUpdateManager.setGardenUpdate(DatabaseContract.LinkGarden.Empty)
+    }
+
+    fun onEditGarden(garden: LinkGarden){
+        gardenUpdateManager.setGardenUpdate(garden)
     }
 }

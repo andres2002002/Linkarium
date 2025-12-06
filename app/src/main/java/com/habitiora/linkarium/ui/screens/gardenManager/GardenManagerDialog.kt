@@ -1,13 +1,30 @@
 package com.habitiora.linkarium.ui.screens.gardenManager
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -15,10 +32,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -43,7 +63,7 @@ fun GardenManagerDialog(
         onDescriptionChange = viewModel::setDescriptionTextFieldValue,
         onDismissRequest = onDismiss,
         enabledButton = enabledButton,
-        onSave = { viewModel.saveGarden(onSuccess = onDismiss) }
+        onSave = { viewModel.saveGarden() }
     )
 }
 
@@ -63,19 +83,32 @@ private fun ContentScreen(
         properties = DialogProperties(
             dismissOnBackPress = true,
             dismissOnClickOutside = true,
-            usePlatformDefaultWidth = true
+            usePlatformDefaultWidth = false
         )
     ) {
-        ContentDialog(
-            nameTextFieldValue = nameTextFieldValue,
-            nameFocusRequester = nameFocusRequester,
-            onNameChange = onNameChange,
-            descriptionTextFieldValue = descriptionTextFieldValue,
-            descriptionFocusRequester = descriptionFocusRequester,
-            onDescriptionChange = onDescriptionChange,
-            enabledButton = enabledButton,
-            onSave = onSave
-        )
+        AnimatedVisibility(
+            visible = true,
+            enter = fadeIn(tween(250)) + scaleIn(
+                initialScale = 0.9f,
+                animationSpec = tween(250)
+            ),
+            exit = fadeOut(tween(200)) + scaleOut(
+                targetScale = 0.9f,
+                animationSpec = tween(200)
+            )
+        ) {
+            ContentDialog(
+                nameTextFieldValue = nameTextFieldValue,
+                nameFocusRequester = nameFocusRequester,
+                onNameChange = onNameChange,
+                descriptionTextFieldValue = descriptionTextFieldValue,
+                descriptionFocusRequester = descriptionFocusRequester,
+                onDescriptionChange = onDescriptionChange,
+                enabledButton = enabledButton,
+                onDismiss = onDismissRequest,
+                onSave = onSave
+            )
+        }
     }
 }
 
@@ -88,32 +121,75 @@ private fun ContentDialog(
     descriptionFocusRequester: FocusRequester,
     onDescriptionChange: (TextFieldValue) -> Unit = {},
     enabledButton: Boolean,
+    onDismiss: () -> Unit,
     onSave: () -> Unit
 ){
-    Card {
+    Card (
+        modifier = Modifier
+            .padding(24.dp)
+            .sizeIn(
+                minWidth = 320.dp,
+                maxWidth = 560.dp
+            ),
+        shape = MaterialTheme.shapes.extraLarge,
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+    ){
         Column(
             modifier = Modifier
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .fillMaxWidth()
+                .padding(24.dp)
         ) {
-            Text(
-                text = "New Garden",
-                style = MaterialTheme.typography.titleMedium
-            )
-            NameSection(
-                nameTextFieldValue = nameTextFieldValue,
-                focusRequester = nameFocusRequester,
-                onNameChange = onNameChange
-            )
-            DescriptionSection(
-                descriptionTextFieldValue = descriptionTextFieldValue,
-                focusRequester = descriptionFocusRequester,
-                onDescriptionChange = onDescriptionChange
-            )
-            SaveButton(
+            // Header con título y botón cerrar
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "New Garden",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.padding(0.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close dialog",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Contenido scrolleable
+            Column(
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                NameSection(
+                    nameTextFieldValue = nameTextFieldValue,
+                    focusRequester = nameFocusRequester,
+                    onNameChange = onNameChange
+                )
+                DescriptionSection(
+                    descriptionTextFieldValue = descriptionTextFieldValue,
+                    focusRequester = descriptionFocusRequester,
+                    onDescriptionChange = onDescriptionChange
+                )
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Botones de acción
+            ActionButtons(
                 enabled = enabledButton,
-                onSave = onSave
+                onSave = onSave,
+                onCancel = onDismiss
             )
         }
     }
@@ -129,15 +205,19 @@ private fun NameSection(
         value = nameTextFieldValue,
         onValueChange = onNameChange,
         builder = {
-            label = { Text("Name") }
-            placeholder = "Insert a name"
+            label = { Text("Garden Name") }
+            placeholder = "ex. My Favorite Links"
             this.focusRequester = focusRequester
+            behavior {
+                singleLine = true
+                maxLines = 1
+                minLines = 1
+            }
         }
     )
 
-    Column {
-        AkariTextField(state = nameState)
-    }
+    AkariTextField(state = nameState)
+
 }
 
 @Composable
@@ -150,32 +230,53 @@ private fun DescriptionSection(
         value = descriptionTextFieldValue,
         onValueChange = onDescriptionChange,
         builder = {
-            label = { Text("Description") }
+            label = { Text("Description (Optional)") }
+            placeholder = "Add a description for this garden..."
             this.focusRequester = focusRequester
-            placeholder = "Insert a description"
+            behavior {
+                singleLine = false
+                maxLines = 5
+                minLines = 2
+            }
         }
     )
 
-    Column {
-        AkariTextField(state = descriptionState)
-    }
+    AkariTextField(state = descriptionState)
+
 }
 
 @Composable
-private fun SaveButton(
+private fun ActionButtons(
     enabled: Boolean,
-    onSave: () -> Unit
-){
+    onSave: () -> Unit,
+    onCancel: () -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.End
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         TextButton(
-            onClick = onSave,
-            enabled = enabled
+            onClick = onCancel,
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
         ) {
-            Text("Save")
+            Text(
+                text = "Cancel",
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        FilledTonalButton(
+            onClick = onSave,
+            enabled = enabled,
+            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp)
+        ) {
+            Text(
+                text = "Create",
+                style = MaterialTheme.typography.labelLarge
+            )
         }
     }
-
 }

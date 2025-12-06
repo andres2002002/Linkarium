@@ -29,8 +29,7 @@ object DatabaseContract {
         const val COLUMN_DESCRIPTION = "description"
         const val COLUMN_ORDER = "sort_order"
         val Empty = LinkGardenEntity(
-            name = "",
-            description = ""
+            name = ""
         )
     }
 
@@ -58,13 +57,6 @@ object DatabaseContract {
         val Empty = LinkTagEntity(
             seedId = 0,
             tag = ""
-        )
-    }
-
-    object LinkGardenWithSeeds {
-        val Empty = LinkGardenWithSeedsImpl(
-            garden = LinkGardenEntity(0, "", ""),
-            seeds = emptyList()
         )
     }
 }
