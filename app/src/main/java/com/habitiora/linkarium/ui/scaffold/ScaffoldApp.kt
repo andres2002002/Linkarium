@@ -50,6 +50,7 @@ import com.habitiora.linkarium.ui.navigation.NavigationHost
 import com.habitiora.linkarium.ui.navigation.Screens
 import com.habitiora.linkarium.ui.navigation.TypeScreen
 import com.habitiora.linkarium.ui.scaffold.dialogs.DialogApp
+import com.habitiora.linkarium.ui.screens.gardenManager.GardenManagerDialog
 import com.habitiora.linkarium.ui.utils.localNavigator.navigateToRoute
 import com.habitiora.linkarium.ui.utils.localNavigator.navigateToScreen
 
@@ -60,6 +61,7 @@ fun ScaffoldApp(
     viewModel: ScaffoldViewModel = hiltViewModel()
 ){
     val message by viewModel.message.collectAsState()
+    val gardenUpdate by viewModel.gardenUpdate.collectAsState()
 
     val navController = rememberNavController()
     val currentBackStack by navController.currentBackStackEntryAsState()
@@ -86,6 +88,9 @@ fun ScaffoldApp(
     val linkariumScaffoldConfig = scaffoldConfig(navController, snackbarHostState, currentScreen, menuItems)
 
     message?.let { value -> DialogApp(value, viewModel::dismissDialog) }
+    gardenUpdate?.let { _ -> GardenManagerDialog(onDismiss = viewModel::consumeGarden)}
+
+
 
     LinkariumScaffold(
         windowSizeClass = windowSizeClass,

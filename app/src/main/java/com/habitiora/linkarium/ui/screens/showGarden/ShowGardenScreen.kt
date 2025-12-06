@@ -53,15 +53,8 @@ fun ShowGardenScreen(
     val collections by viewModel.gardens.collectAsState()
     val selectedPageIndex by viewModel.selectedPageIndex.collectAsState()
     val seeds = viewModel.seeds.collectAsLazyPagingItems()
-    val openGardenDialog by viewModel.openGardenDialog.collectAsState()
 
     val navController: NavHostController = LocalNavigator.current
-
-    if (openGardenDialog) {
-        GardenManagerDialog(
-            onDismiss = { viewModel.setOpenGardenDialog(false) }
-        )
-    }
 
     ContentScreen(
         modifier = Modifier.fillMaxWidth(),
@@ -69,9 +62,7 @@ fun ShowGardenScreen(
         seeds = seeds,
         collections = collections,
         onUserSwipedToPage = viewModel::onUserSwipedToPage,
-        navigateToAddGarden = {
-            viewModel.setOpenGardenDialog(true)
-        },
+        navigateToAddGarden = viewModel::onAddGarden,
         onEdit = { seed ->
             navController.navigateToRoute(Screens.PlantNew.createRoute(seed.id))
         },

@@ -1,36 +1,31 @@
 package com.habitiora.linkarium.ui.screens.showGarden
 
-import androidx.compose.foundation.pager.PagerState
-import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.habitiora.linkarium.core.ProcessStatus
+import com.habitiora.linkarium.data.local.room.DatabaseContract
 import com.habitiora.linkarium.data.repository.LinkGardenRepository
 import com.habitiora.linkarium.data.repository.LinkSeedRepository
 import com.habitiora.linkarium.domain.model.LinkGarden
 import com.habitiora.linkarium.domain.model.LinkSeed
 import com.habitiora.linkarium.ui.scaffold.dialogs.DialogType
 import com.habitiora.linkarium.ui.scaffold.dialogs.MessageValues
-import com.habitiora.linkarium.ui.utils.pubsAndSubs.GardenBus
+import com.habitiora.linkarium.ui.utils.pubsAndSubs.GardenSelectionManager
+import com.habitiora.linkarium.ui.utils.pubsAndSubs.GardenUpdateManager
 import com.habitiora.linkarium.ui.utils.pubsAndSubs.MessageBus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -38,8 +33,9 @@ import javax.inject.Inject
 class ShowGardenViewModel @Inject constructor(
     private val gardenRepository: LinkGardenRepository,
     private val seedRepository: LinkSeedRepository,
-    private val gardenBus: GardenBus,
-    private val messageBus: MessageBus
+    private val gardenSelectionManager: GardenSelectionManager,
+    private val messageBus: MessageBus,
+    private val gardenUpdateManager: GardenUpdateManager
 ): ViewModel() {
 
     // region State Properties
@@ -51,7 +47,7 @@ class ShowGardenViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    private val _selectedPageIndex = gardenBus.selectedGardenIndex
+    private val _selectedPageIndex = gardenSelectionManager.selectedGardenIndex
     val selectedPageIndex: StateFlow<Int> = combine(_selectedPageIndex, gardens) { index, gardens ->
         if (gardens.isEmpty()) return@combine 0
         index.coerceIn(gardens.indices)
@@ -69,13 +65,9 @@ class ShowGardenViewModel @Inject constructor(
             seedRepository.getSeedsByGarden(garden?.id?:0)
         }.cachedIn(viewModelScope)
 
-    private val _openGardenDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val openGardenDialog: StateFlow<Boolean> = _openGardenDialog.asStateFlow()
-
     // endregion
-
-    fun setOpenGardenDialog(value: Boolean) {
-        _openGardenDialog.value = value
+    fun onAddGarden(){
+        gardenUpdateManager.setGardenUpdate(DatabaseContract.LinkGarden.Empty)
     }
     fun onDeleteLinkSeed(linkSeed: LinkSeed) {
         val message = MessageValues(
@@ -102,6 +94,6 @@ class ShowGardenViewModel @Inject constructor(
 
     /** Llamar cuando el pager settle cambie (desde UI) */
     fun onUserSwipedToPage(page: Int) {
-        gardenBus.selectGarden(page)
+        gardenSelectionManager.selectGarden(page)
     }
 }

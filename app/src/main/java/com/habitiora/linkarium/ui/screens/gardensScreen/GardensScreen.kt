@@ -56,7 +56,9 @@ fun GardensScreen(
         },
         onMove = viewModel::moveGarden,
         onDragStart = viewModel::onDragStart,
-        onDragEnd = viewModel::onDragEnd
+        onDragEnd = viewModel::onDragEnd,
+        onEdit = viewModel::onEditGarden,
+        onAddGarden = viewModel::onAddGarden
     )
 }
 
@@ -67,7 +69,9 @@ private fun GardensContent(
     onClick: (Long) -> Unit,
     onMove: (Int, Int) -> Unit,
     onDragStart: () -> Unit,
-    onDragEnd: () -> Unit
+    onDragEnd: () -> Unit,
+    onEdit: (LinkGarden) -> Unit,
+    onAddGarden: () -> Unit
 ){
     val state = rememberAkariReorderableLazyState<LinkGarden>(
         onMove = { from, to ->
@@ -83,7 +87,7 @@ private fun GardensContent(
     ) {
         AddNewGarden(
             modifier = Modifier.fillMaxWidth(),
-            onClick = {}
+            onClick = onAddGarden
         )
         AkariReorderableLazyColumn(
             modifier = Modifier.weight(1f),
@@ -98,7 +102,8 @@ private fun GardensContent(
                 modifier = Modifier.akariDragHandle(),
                 isDragging = isDragging,
                 garden = item,
-                onClick = onClick
+                onClick = onClick,
+                onEdit = { onEdit(item) }
             )
         }
     }
@@ -109,7 +114,8 @@ private fun GardenItem(
     modifier: Modifier = Modifier,
     isDragging: Boolean = false,
     garden: LinkGarden,
-    onClick: (Long) -> Unit
+    onClick: (Long) -> Unit,
+    onEdit: () -> Unit
 ){
     Card(
         modifier = modifier,
@@ -134,7 +140,7 @@ private fun GardenItem(
                 garden = garden
             )
             TrailingIcon(
-                onMoreClick = {}
+                onMoreClick = onEdit
             )
         }
     }
