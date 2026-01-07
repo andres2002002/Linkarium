@@ -46,7 +46,6 @@ class PlantSeedViewModel @Inject constructor(
 ) : ViewModel() {
 
     // region State Properties
-
     private val seedId: Long? = savedStateHandle["seedId"]
 
     val gardens: StateFlow<List<LinkGarden>> = gardenRepository.getAll()

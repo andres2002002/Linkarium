@@ -17,7 +17,9 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -41,10 +43,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.akari.uicomponents.buttons.AkariButtonVariant
-import com.akari.uicomponents.buttons.AkariFabVariant
-import com.akari.uicomponents.buttons.tooltipButtons.AkariTooltipButton
-import com.akari.uicomponents.buttons.tooltipButtons.AkariTooltipFab
+import com.akari.uicomponents.tooltip.AkariTooltip
 import com.habitiora.linkarium.R
 import com.habitiora.linkarium.ui.navigation.NavigationHost
 import com.habitiora.linkarium.ui.navigation.Screens
@@ -135,14 +134,14 @@ private fun scaffoldConfig(
                                     animationSpec = tween(250, easing = FastOutSlowInEasing)
                                 )
                     ) {
-                        AkariTooltipButton(
-                            variant = AkariButtonVariant.Icon,
-                            onClick = { navController.popBackStack() },
-                            tooltipContent = {
-                                Text(text = "Back")
-                            }
+                        AkariTooltip(
+                            text = "Back",
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            IconButton(
+                                onClick = { navController.popBackStack() }
+                            ) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            }
                         }
                     }
                 },
@@ -150,14 +149,14 @@ private fun scaffoldConfig(
                     AnimatedVisibility(
                         visible = currentScreen?.typeScreen == TypeScreen.Primary
                     ) {
-                        AkariTooltipButton(
-                            variant = AkariButtonVariant.Icon,
-                            onClick = { navController.navigateToScreen(Screens.Settings) },
-                            tooltipContent = {
-                                Text(text = "Settings")
+                        AkariTooltip(
+                            text = "Settings",
+                        ) {
+                            IconButton(
+                                onClick = { navController.navigateToScreen(Screens.Settings) }
+                            ) {
+                                Icon(Icons.Filled.Settings, contentDescription = "Settings")
                             }
-                        ){
-                            Icon(Icons.Filled.Settings, contentDescription = "Settings")
                         }
                     }
                 }
@@ -183,14 +182,14 @@ private fun scaffoldConfig(
         }
         .floatingActionButton(WindowWidthSizeClass.Compact) {
             if (currentScreen?.typeScreen == TypeScreen.Primary) {
-                AkariTooltipFab(
-                    variant = AkariFabVariant.Normal,
-                    onClick = { navController.navigateToRoute(Screens.PlantNew.createRoute()) },
-                    tooltipContent = {
-                        Text(text = "Add New Seed")
-                    }
+                AkariTooltip(
+                    text = "Add New Seed",
                 ) {
-                    Icon(Icons.Filled.AddLink, contentDescription = "add link")
+                    FloatingActionButton(
+                        onClick = { navController.navigateToRoute(Screens.PlantNew.createRoute()) }
+                    ) {
+                        Icon(Icons.Filled.AddLink, contentDescription = "add link")
+                    }
                 }
             }
         }
@@ -203,27 +202,27 @@ private fun scaffoldConfig(
                     AnimatedVisibility(
                         visible = currentScreen?.typeScreen == TypeScreen.Primary
                     ) {
-                        AkariTooltipFab(
-                            variant = AkariFabVariant.Normal,
-                            onClick = { navController.navigateToRoute(Screens.PlantNew.createRoute()) },
-                            tooltipContent = {
-                                Text(text = "Add New Seed")
-                            }
+                        AkariTooltip(
+                            text = "Add New Seed",
                         ) {
-                            Icon(Icons.Filled.AddLink, contentDescription = "add link")
+                            IconButton(
+                                onClick = { navController.navigateToRoute(Screens.PlantNew.createRoute()) }
+                            ) {
+                                Icon(Icons.Filled.AddLink, contentDescription = "add link")
+                            }
                         }
                     }
                     AnimatedVisibility(
                         visible = currentScreen?.typeScreen == TypeScreen.Tertiary
                     ){
-                        AkariTooltipButton(
-                            variant = AkariButtonVariant.Icon,
-                            onClick = { navController.popBackStack() },
-                            tooltipContent = {
-                                Text(text = "Back")
+                        AkariTooltip(
+                            text = "Back",
+                        ) {
+                            IconButton(
+                                onClick = { navController.popBackStack() }
+                            ) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                             }
-                        ){
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     }
                 }
