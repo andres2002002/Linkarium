@@ -5,6 +5,7 @@ import androidx.room.withTransaction
 import com.google.gson.GsonBuilder
 import com.habitiora.linkarium.core.GardenPdfGenerator
 import com.habitiora.linkarium.core.UriTypeAdapter
+import com.habitiora.linkarium.core.exporters.ExportRequest
 import com.habitiora.linkarium.data.local.datasource.LinkEntryDataSource
 import com.habitiora.linkarium.data.local.datasource.LinkGardenDataSource
 import com.habitiora.linkarium.data.local.datasource.LinkSeedDataSource
@@ -12,6 +13,7 @@ import com.habitiora.linkarium.data.local.datasource.LinkTagDataSource
 import com.habitiora.linkarium.data.local.room.AppDatabase
 import com.habitiora.linkarium.data.local.room.entity.LinkSeedEntity
 import com.habitiora.linkarium.data.local.usecase.toDomain
+import com.habitiora.linkarium.domain.model.Exporter
 import com.habitiora.linkarium.domain.model.LinkGarden
 import com.habitiora.linkarium.domain.model.LinkSeed
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +28,7 @@ import javax.inject.Singleton
 @Singleton
 class ExportRepositoryImpl @Inject constructor(
     private val db: AppDatabase,
-    private val pdfGenerator: GardenPdfGenerator,
+    private val exporters: Set<@JvmSuppressWildcards Exporter>,
     private val gardenDataSource: LinkGardenDataSource,
     private val seedDataSource: LinkSeedDataSource,
     private val entryDataSource: LinkEntryDataSource,
@@ -43,6 +45,12 @@ class ExportRepositoryImpl @Inject constructor(
         }.onFailure { Timber.e(it, "Export failed") }
     }
 
+    override suspend fun export(request: ExportRequest) {
+        val exporter = exporters.firstOrNull { it.canHandle(request.format) }
+            ?: error("No exporter for format ${request.format}")
+
+        exporter.export(request)
+    }
     override suspend fun exportGardensJson(output: OutputStream): Result<Unit> = safeExport {
         val gardens = getAllGardensWithSeeds()
         output.use { it.write(gson.toJson(gardens).toByteArray(Charsets.UTF_8)) }

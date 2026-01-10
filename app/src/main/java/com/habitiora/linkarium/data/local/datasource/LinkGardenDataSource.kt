@@ -11,6 +11,8 @@ interface LinkGardenDataSource {
     suspend fun delete(linkGarden: LinkGarden)
     suspend fun deleteAll()
     fun getAll(): Flow<List<LinkGarden>>
+    suspend fun getAllForExport(): List<LinkGarden>
+    suspend fun getForList(ids: List<Long>): List<LinkGarden>
     fun getById(id: Long): Flow<LinkGarden?>
     suspend fun deleteById(id: Long)
     suspend fun getMaxOrder(): Int

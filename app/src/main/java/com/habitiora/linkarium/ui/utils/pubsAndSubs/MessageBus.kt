@@ -8,16 +8,7 @@ import javax.inject.Singleton
 
 /**
  * A central communication bus implemented as a Singleton for publishing and subscribing to message events,
- * primarily used for triggering UI dialogs or global notifications.
- *
- * This class utilizes [MutableStateFlow] to hold the current message state. Observers can subscribe to
- * the [message] flow to receive updates whenever a new message is published via [pubMessage].
- *
- * Typical usage involves pushing a [MessageValues] object (containing dialog content like title, description,
- * and button actions) to trigger a global overlay or dialog within the UI scaffold.
- *
- * @property message A hot [StateFlow][kotlinx.coroutines.flow.StateFlow] that emits the current [MessageValues] or null.
- *                   UI components should collect this flow to react to new messages.
+ * primarily used for triggering UI dialogs.
  */
 @Singleton
 class MessageBus @Inject constructor() {
