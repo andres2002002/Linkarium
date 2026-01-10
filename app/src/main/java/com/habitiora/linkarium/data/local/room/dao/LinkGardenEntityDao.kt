@@ -30,7 +30,10 @@ interface LinkGardenEntityDao {
     suspend fun deleteAll()
     @Query("SELECT * FROM $TABLE_NAME ORDER BY sort_order ASC")
     fun getAll(): Flow<List<LinkGardenEntity>>
-
+    @Query("SELECT * FROM $TABLE_NAME ORDER BY sort_order ASC")
+    suspend fun getAllForExport(): List<LinkGardenEntity>
+    @Query("SELECT * FROM $TABLE_NAME WHERE id IN (:ids)")
+    suspend fun getForList(ids: List<Long>): List<LinkGardenEntity>
     @Query("SELECT * FROM $TABLE_NAME WHERE id = :id")
     fun getById(id: Long): Flow<LinkGardenEntity?>
     @Query("DELETE FROM $TABLE_NAME WHERE id = :id")

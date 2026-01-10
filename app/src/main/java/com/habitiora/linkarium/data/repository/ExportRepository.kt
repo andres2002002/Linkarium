@@ -1,8 +1,10 @@
 package com.habitiora.linkarium.data.repository
 
+import com.habitiora.linkarium.core.exporters.ExportRequest
 import java.io.OutputStream
 
 interface ExportRepository {
+    suspend fun export(request: ExportRequest)
     suspend fun exportGardensJson(output: OutputStream): Result<Unit>
     suspend fun exportGardensTxt(output: OutputStream): Result<Unit>
     suspend fun exportGardensPdf(output: OutputStream): Result<Unit>

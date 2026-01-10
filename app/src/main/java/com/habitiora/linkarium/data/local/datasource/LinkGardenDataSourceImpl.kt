@@ -28,6 +28,12 @@ class LinkGardenDataSourceImpl @Inject constructor(
     override fun getAll(): Flow<List<LinkGarden>> =
         dao.getAll()
 
+    override suspend fun getAllForExport(): List<LinkGarden> =
+        dao.getAllForExport()
+
+    override suspend fun getForList(ids: List<Long>): List<LinkGarden> =
+        dao.getForList(ids)
+
     override fun getById(id: Long): Flow<LinkGarden?> =
         dao.getById(id)
 

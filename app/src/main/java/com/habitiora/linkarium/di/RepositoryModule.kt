@@ -20,6 +20,7 @@ import com.habitiora.linkarium.data.repository.LinkGardenRepository
 import com.habitiora.linkarium.data.repository.LinkGardenRepositoryImpl
 import com.habitiora.linkarium.data.repository.LinkSeedRepository
 import com.habitiora.linkarium.data.repository.LinkSeedRepositoryImpl
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,84 +29,50 @@ import jakarta.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object RepositoryModule {
-
-    @Provides
+abstract class RepositoryModule {
+    // region DataSources
     @Singleton
-    fun provideLinkSeedDataSource(linkSeedDao: LinkSeedEntityDao): LinkSeedDataSource {
-        return LinkSeedDataSourceImpl(linkSeedDao)
-    }
-
-    @Provides
-    @Singleton
-    fun provideLinkGardenRepository(
-        db: AppDatabase,
-        linkGardenDataSource: LinkGardenDataSource
-    ): LinkGardenRepository {
-        return LinkGardenRepositoryImpl(
-            db,
-            linkGardenDataSource
-        )
-    }
-
-    @Provides
-    @Singleton
-    fun provideLinkGardenDataSource(linkGardenDao: LinkGardenEntityDao): LinkGardenDataSource {
-        return LinkGardenDataSourceImpl(linkGardenDao)
-    }
-
-    @Provides
-    @Singleton
-    fun provideLinkSeedRepository(
-        db: AppDatabase,
-        linkSeedDataSource: LinkSeedDataSource,
-        linkEntryDataSource: LinkEntryDataSource,
-        linkTagDataSource: LinkTagDataSource,
-        linkGardenDataSource: LinkGardenDataSource
-    ): LinkSeedRepository =
-        LinkSeedRepositoryImpl(
-            db,
-            linkSeedDataSource,
-            linkEntryDataSource,
-            linkTagDataSource,
-            linkGardenDataSource
-        )
-
-
-    @Provides
-    @Singleton
-    fun provideLinkEntryDataSource(linkEntryDao: LinkEntryEntityDao): LinkEntryDataSource =
-        LinkEntryDataSourceImpl(linkEntryDao)
-
-    @Provides
-    @Singleton
-    fun provideLinkTagDataSource(linkTagDao: LinkTagEntityDao): LinkTagDataSource =
-        LinkTagDataSourceImpl(linkTagDao)
+    @Binds
+    abstract fun bindLinkGardenDataSource(
+        impl: LinkGardenDataSourceImpl
+    ): LinkGardenDataSource
 
     @Singleton
-    @Provides
-    fun provideGardenPdfGenerator(): GardenPdfGenerator {
-        return GardenPdfGenerator()
-    }
+    @Binds
+    abstract fun bindLinkSeedDataSource(
+        impl: LinkSeedDataSourceImpl
+    ): LinkSeedDataSource
 
     @Singleton
-    @Provides
-    fun provideExportRepository(
-        db: AppDatabase,
-        pdfGenerator: GardenPdfGenerator,
-        gardenDataSource: LinkGardenDataSource,
-        seedDataSource: LinkSeedDataSource,
-        entryDataSource: LinkEntryDataSource,
-        tagDataSource: LinkTagDataSource
-    ): ExportRepository =
-        ExportRepositoryImpl(
-            db,
-            pdfGenerator,
-            gardenDataSource,
-            seedDataSource,
-            entryDataSource,
-            tagDataSource
-        )
+    @Binds
+    abstract fun bindLinkEntryDataSource(
+        impl: LinkEntryDataSourceImpl
+    ): LinkEntryDataSource
 
+    @Singleton
+    @Binds
+    abstract fun bindLinkTagDataSource(
+        impl: LinkTagDataSourceImpl
+    ): LinkTagDataSource
+    // endregion
 
+    // region Repositories
+    @Singleton
+    @Binds
+    abstract fun bindLinkGardenRepository(
+        impl: LinkGardenRepositoryImpl
+    ): LinkGardenRepository
+
+    @Singleton
+    @Binds
+    abstract fun bindLinkSeedRepository(
+        impl: LinkSeedRepositoryImpl
+    ): LinkSeedRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindExportRepository(
+        impl: ExportRepositoryImpl
+    ): ExportRepository
+    // endregion
 }
