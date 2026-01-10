@@ -1,9 +1,5 @@
 package com.habitiora.linkarium.ui.screens.showGarden
 
-import android.content.Context
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +13,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,18 +28,12 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.navigation.NavHostController
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.habitiora.linkarium.domain.model.LinkGarden
 import com.habitiora.linkarium.domain.model.LinkSeed
-import com.habitiora.linkarium.ui.navigation.Screens
-import com.habitiora.linkarium.ui.screens.gardenManager.GardenManagerDialog
-import com.habitiora.linkarium.ui.utils.localNavigator.LocalNavigator
-import com.habitiora.linkarium.ui.utils.localNavigator.navigateToRoute
 
 @Composable
 fun ShowGardenScreen(
@@ -54,8 +43,6 @@ fun ShowGardenScreen(
     val selectedPageIndex by viewModel.selectedPageIndex.collectAsState()
     val seeds = viewModel.seeds.collectAsLazyPagingItems()
 
-    val navController: NavHostController = LocalNavigator.current
-
     ContentScreen(
         modifier = Modifier.fillMaxWidth(),
         selectedPageIndex = selectedPageIndex,
@@ -64,7 +51,7 @@ fun ShowGardenScreen(
         onUserSwipedToPage = viewModel::onUserSwipedToPage,
         navigateToAddGarden = viewModel::onAddGarden,
         onEdit = { seed ->
-            navController.navigateToRoute(Screens.PlantNew.createRoute(seed.id))
+            viewModel.navigateToPlantNew(seed.id)
         },
         onDelete = viewModel::onDeleteLinkSeed
     )

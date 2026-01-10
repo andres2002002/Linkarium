@@ -1,87 +1,87 @@
 # 🌱 Linkarium
 
-**Linkarium** es una aplicación Android desarrollada con **Jetpack Compose** y **Kotlin**, cuyo objetivo es ofrecer un espacio organizado y visualmente atractivo para gestionar colecciones de ideas, enlaces o contenidos relacionados con proyectos personales. Su diseño modular y su arquitectura moderna permiten una experiencia fluida, adaptable y fácilmente escalable.
+**Linkarium** is an Android application developed with **Jetpack Compose** and **Kotlin**, aimed at offering an organized and visually appealing space to manage collections of ideas, links, or content related to personal projects. Its modular design and modern architecture allow for a fluid, adaptable, and easily scalable experience.
 
 ---
 
-## 🚀 Características principales
+## 🚀 Main Features
 
-* **Gestión del estado con ViewModel y Flow**, garantizando actualizaciones reactivas y eficientes.
-* **Interfaz moderna en Jetpack Compose**, con animaciones fluidas y componentes reutilizables.
-* **Persistencia local con Room**, respaldada por un sistema de exportación e importación de datos.
+* **State management with ViewModel and Flow**, ensuring reactive and efficient updates.
+* **Modern interface in Jetpack Compose**, with fluid animations and reusable components.
+* **Local persistence with Room**, supported by a data export and import system.
 
 ---
 
-## 🧩 Arquitectura
+## 🧩 Architecture
 
-El proyecto sigue el enfoque **MVVM (Model-View-ViewModel)**, complementado con principios de Clean Architecture:
+The project follows the **MVVM (Model-View-ViewModel)** approach, complemented by Clean Architecture principles:
 
 ```
 app/
- ├─ ui/                # Pantallas y componentes Jetpack Compose
- ├─ domain/            # Casos de uso y modelos de negocio
- ├─ data/              # Repositorios, fuentes de datos locales y remotas
- ├─ di/                # Configuración de Hilt (inyección de dependencias)
- ├─ utils/             # Utilidades y extensiones
- └─ core/              # Configuraciones base y lógica compartida
+ ├─ ui/                # Jetpack Compose screens and components
+ ├─ domain/            # Use cases and business models
+ ├─ data/              # Repositories, local and remote data sources
+ ├─ di/                # Hilt configuration (Dependency Injection)
+ └─ core/              # Base configurations and shared logic
 ```
 
 ---
 
-## 🧠 Tecnologías utilizadas
+## 🧠 Technologies Used
 
-* **Kotlin** — Lenguaje principal.
-* **Jetpack Compose** — UI declarativa.
-* **Room** — Base de datos local.
-* **Hilt** — Inyección de dependencias.
-* **Paging 3** — Manejo eficiente de listas grandes.
-* **Gson** — Serialización y deserialización de datos.
-* **Coroutines + Flow** — Programación asíncrona y reactiva.
+* **Kotlin** — Main language.
+* **Jetpack Compose** — Declarative UI.
+* **Room** — Local database.
+* **Hilt** — Dependency Injection.
+* **Paging 3** — Efficient large list handling.
+* **Gson** — Data serialization and deserialization.
+* **Coroutines + Flow** — Asynchronous and reactive programming.
+* **PDFBox** — PDF generation.
 
-> Consulta las librerias utilizadas en el archivo [DEPENDENCIES](DEPENDENCIES.md) o en [`libs.versions.toml`](libs.versions.toml).
+> Check the libraries used in the [DEPENDENCIES](DEPENDENCIES.md) file or in [`libs.versions.toml`](gradle/libs.versions.toml).
 
 ---
 
-## ⚙️ Configuración del proyecto
+## ⚙️ Project Setup
 
-1. Clona el repositorio:
+1. Clone the repository:
 
    ```bash
    git clone https://github.com/andres2002002/Linkarium
    ```
-2. Abre el proyecto en **Android Studio (Narwal o superior)**.
-3. Sincroniza las dependencias de Gradle.
-5. Ejecuta la aplicación en un emulador o dispositivo físico.
+2. Open the project in **Android Studio (Latest version)**.
+3. Sync Gradle dependencies.
+4. Run the application on an emulator or physical device.
 
 ---
 
-## 🌤️ Exportación y respaldo
+## 🌤️ Export and Backup
 
-Linkarium permite **exportar tus datos en formato PDF o JSON**.
-
----
-
-## 🧪 Pruebas y desarrollo
-
-* Las funciones críticas están cubiertas con **tests unitarios y de integración**.
-* Se utiliza **MockK** para simular dependencias.
-* Las vistas pueden probarse de forma aislada gracias a la arquitectura modular.
+Linkarium allows you to **export your data in PDF or JSON format**.
 
 ---
 
-## 📄 Licencia
+## 🧪 Testing and Development
 
-Este proyecto está licenciado bajo la **MIT License**. Consulta el archivo [`LICENSE`](LICENSE) para más detalles.
-
----
-
-## 💬 Contribuciones
-
-¡Las contribuciones son bienvenidas! Si tienes una idea o mejora, abre un *issue* o envía un *pull request*.
+* Critical functions are covered with **unit and integration tests**.
+* **Mockito** is used for simulating dependencies.
+* Views can be tested in isolation thanks to the modular architecture.
 
 ---
 
-## ✨ Autor
+## 📄 License
 
-**Desarrollado por andres2002002**
-Proyecto en evolución constante como parte de **Desarrollo Linkarium** 🌿
+This project is licensed under the **MIT License**. See the [`LICENSE`](LICENSE) file for more details.
+
+---
+
+## 💬 Contributions
+
+Contributions are welcome! If you have an idea or improvement, open an *issue* or submit a *pull request*.
+
+---
+
+## ✨ Author
+
+**Developed by andres2002002**
+Project in constant evolution as part of **Linkarium Development** 🌿

@@ -117,7 +117,7 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
                         INSERT INTO ${DatabaseContract.LinkEntry.TABLE_NAME} 
                         (${DatabaseContract.LinkEntry.COLUMN_SEED_ID}, ${DatabaseContract.LinkEntry.COLUMN_URI}, ${DatabaseContract.LinkEntry.COLUMN_LABEL}, ${DatabaseContract.LinkEntry.COLUMN_NOTE}) 
                         VALUES (?, ?, ?, ?)
-                    """, arrayOf(id, uri, null, null))
+                    """, arrayOf<Any?>(id, uri, null, null))
                 }
             }
 
@@ -129,7 +129,7 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
                         INSERT INTO ${DatabaseContract.LinkTag.TABLE_NAME} 
                         (${DatabaseContract.LinkTag.COLUMN_SEED_ID}, ${DatabaseContract.LinkTag.COLUMN_TAG}) 
                         VALUES (?, ?)
-                    """, arrayOf(id, tag))
+                    """, arrayOf<Any?>(id, tag))
                 }
             }
         }

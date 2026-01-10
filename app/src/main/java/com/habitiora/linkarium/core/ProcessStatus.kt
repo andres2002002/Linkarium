@@ -1,6 +1,13 @@
 package com.habitiora.linkarium.core
 
 sealed class ProcessStatus<out T> {
+
+    fun isSuccess() = this is Success
+    fun isError() = this is Error
+    fun isLoading() = this is Loading
+    fun isWaiting() = this is Waiting
+    fun isEmpty() = this is Empty
+
     // 1. Estado inicial o de espera.
     // No contiene datos ni errores, simplemente la operación aún no se ha iniciado
     // o está en cola. Es similar a un 'Idle'.

@@ -56,9 +56,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.akari.uicomponents.buttons.AkariButtonVariant
-import com.akari.uicomponents.buttons.tooltipButtons.AkariTooltipButton
 import com.akari.uicomponents.checkbox.AkariCheckBox
+import com.akari.uicomponents.tooltip.AkariTooltip
 import com.habitiora.linkarium.R
 import com.habitiora.linkarium.domain.model.LinkEntry
 import com.habitiora.linkarium.domain.model.LinkSeed
@@ -348,21 +347,19 @@ private fun TrailButtons(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AkariTooltipButton(
-            modifier = Modifier.size(buttonSize),
-            variant = AkariButtonVariant.Icon,
-            onClick = onClick,
-            tooltipContent = {
-                Text(text = contentDescription)
-            }
+        AkariTooltip(
+            text = contentDescription,
         ) {
-            Icon(
-                modifier = Modifier
-                    .size(iconSize)
-                    .rotate(iconRotation),
-                imageVector = ImageVector.vectorResource(iconRes),
-                contentDescription = contentDescription
-            )
+            IconButton(
+                modifier = Modifier.size(buttonSize),
+                onClick = onClick
+            ) {
+                Icon(
+                    modifier = Modifier.size(iconSize).rotate(iconRotation),
+                    imageVector = ImageVector.vectorResource(iconRes),
+                    contentDescription = contentDescription
+                )
+            }
         }
 
         MoreOptions(
@@ -390,19 +387,19 @@ private fun MoreOptions(
         Box(
             modifier = Modifier.wrapContentSize()
         ) {
-            AkariTooltipButton(
-                modifier = Modifier.size(buttonSize),
-                variant = AkariButtonVariant.Icon,
-                onClick = { showMenu = !showMenu },
-                tooltipContent = {
-                    Text(text = "Options")
-                }
+            AkariTooltip(
+                text = "Options",
             ) {
-                Icon(
-                    modifier = Modifier.size(iconSize),
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "More options"
-                )
+                IconButton(
+                    modifier = Modifier.size(buttonSize),
+                    onClick = { showMenu = !showMenu }
+                ){
+                    Icon(
+                        modifier = Modifier.size(iconSize),
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "More options"
+                    )
+                }
             }
             DropdownMenu(
                 expanded = showMenu,
@@ -425,27 +422,23 @@ private fun MoreOptions(
             }
         }
     } else {
-        AkariTooltipButton(
-            modifier = Modifier.size(buttonSize),
-            variant = AkariButtonVariant.Icon,
-            onClick = onEdit,
-            tooltipContent = {
-                Text(text = "Edit")
-            }
+        AkariTooltip(
+            text = "Edit"
         ) {
-            Icon(
-                modifier = Modifier.size(iconSize),
-                imageVector = Icons.Default.Edit,
-                contentDescription = "Edit"
-            )
-        }
-        AkariTooltipButton(
-            modifier = Modifier.size(buttonSize),
-            variant = AkariButtonVariant.Icon,
-            onClick = onDelete,
-            tooltipContent = {
-                Text(text = "Delete")
+            IconButton(
+                modifier = Modifier.size(buttonSize),
+                onClick = onEdit
+            ){
+                Icon(
+                    modifier = Modifier.size(iconSize),
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit"
+                )
             }
+        }
+
+        AkariTooltip(
+            text = "Delete"
         ) {
             Icon(
                 modifier = Modifier.size(iconSize),
