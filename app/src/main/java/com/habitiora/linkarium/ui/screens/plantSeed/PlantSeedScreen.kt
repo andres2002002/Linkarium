@@ -1,12 +1,15 @@
 package com.habitiora.linkarium.ui.screens.plantSeed
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,31 +18,33 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.LocalFlorist
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,42 +55,70 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
-import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
-import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component3
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.times
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.akari.uicomponents.reorderableComponents.AkariReorderableColumn
 import com.akari.uicomponents.reorderableComponents.rememberAkariReorderableColumnState
 import com.akari.uicomponents.textFields.AkariTextField
-import com.akari.uicomponents.textFields.rememberAkariOutlinedTextFieldState
-import com.habitiora.linkarium.R
+import com.akari.uicomponents.textFields.internalConfig.AkariTextFieldDefaults
+import com.akari.uicomponents.textFields.rememberAkariTextFieldConfig
 import com.habitiora.linkarium.core.DataValidator
-import com.habitiora.linkarium.data.local.room.DatabaseContract
 import com.habitiora.linkarium.domain.model.LinkEntry
 import com.habitiora.linkarium.domain.model.LinkGarden
-import com.habitiora.linkarium.ui.utils.localNavigator.LocalNavigator
 import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LabelDescriptionTextFieldValues
 import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LinkEntryTextFieldValues
 
 private val PaddingSmall = 4.dp
 
+// Constantes de diseño centralizadas
+private object DesignTokens {
+    object Padding {
+        val ExtraSmall = 4.dp
+        val Small = 8.dp
+        val Medium = 16.dp
+        val Large = 24.dp
+        val ExtraLarge = 32.dp
+    }
+
+    val ContentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+    val BottomPadding = PaddingValues(bottom = 80.dp)
+
+    val CardElevation = 2.dp
+    val CornerRadius = 16.dp
+
+    val containerColor: Color
+        @Composable
+        get() = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+}
+
+@Composable
+private fun getAkariTextFieldColors() = AkariTextFieldDefaults.colors().copy(
+    focusedLabelColor = DesignTokens.containerColor,
+    unfocusedLabelColor = DesignTokens.containerColor,
+    disabledLabelColor = DesignTokens.containerColor
+)
+
 @Composable
 fun PlantSeedScreen(
     viewModel: PlantSeedViewModel = hiltViewModel()
-){
+) {
     val nameNotesTextFieldValue by viewModel.nameNotesTextFieldValue.collectAsState()
     val newEntryTextFieldValues by viewModel.newEntryTextFieldValues.collectAsState()
     val entries: List<LinkEntry> by viewModel.entries.collectAsState()
     val garden by viewModel.garden.collectAsState()
     val gardens by viewModel.gardens.collectAsState()
-    val isValidSeed by viewModel.isValidSeed.collectAsState()
 
-    val navController = LocalNavigator.current
+    val addSeedStatus by viewModel.addSeedStatus.collectAsState()
+
+    LaunchedEffect(addSeedStatus) {
+        if (addSeedStatus.isSuccess()) {
+            viewModel.consumeStatusAndBackStack()
+        }
+    }
 
     PlantSeedContent(
         garden = garden,
@@ -100,8 +133,6 @@ fun PlantSeedScreen(
         editLink = viewModel::editEntry,
         removeLink = viewModel::removeEntry,
         onMove = viewModel::moveEntry,
-        isValidSeed = isValidSeed,
-        onSave = { viewModel.saveSeed(onSuccess = {navController.popBackStack()}) }
     )
 }
 
@@ -118,100 +149,199 @@ private fun PlantSeedContent(
     addLink: () -> Unit,
     editLink: (LinkEntry) -> Unit,
     removeLink: (LinkEntry) -> Unit,
-    onMove: (Int, Int) -> Unit,
-    isValidSeed: Boolean,
-    onSave: () -> Unit
-){
-    val (entryUrlFocusRequester, entryLabelFocusRequester, entryNotesFocusRequester) = remember { FocusRequester.createRefs() }
-    val (nameFocusRequester, notesFocusRequester) = remember { FocusRequester.createRefs() }
+    onMove: (Int, Int) -> Unit
+) {
+    val focusRequesters = remember {
+        List(5) { FocusRequester() }
+    }
+
+    val colorsTxtFld = getAkariTextFieldColors()
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        contentPadding = PaddingValues(bottom = 64.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(DesignTokens.ContentPadding),
+        contentPadding = DesignTokens.BottomPadding,
+        verticalArrangement = Arrangement.spacedBy(DesignTokens.Padding.Medium)
     ) {
         item {
-            GardenDropDown(
-                garden = garden,
-                gardens = gardens,
-                onClick = onGardenChange
-            )
+            SectionCard(
+                title = "Jardín",
+                subtitle = "Selecciona el jardín al que deseas agregar esta semilla"
+            ) {
+                GardenSelector(
+                    currentGarden = garden,
+                    gardens = gardens,
+                    onClick = onGardenChange
+                )
+            }
         }
+
+        // Nombre de la Semilla
         item {
-            NameFieldAndFavorites(
-                nameTextFieldValue = nameNotesTextFieldValue.label,
-                focusRequester = nameFocusRequester,
-                onNameTextFieldValueChange = {
-                    updateNameNotesTextFieldValue(
-                        LabelDescriptionTextFieldValues.LABEL_KEY,
-                        it
-                    )
-                }
-            )
+            SectionCard(
+                title = "Información Básica",
+                subtitle = "Dale un nombre identificable a tu semilla"
+            ) {
+                NameField(
+                    nameTextFieldValue = nameNotesTextFieldValue.label,
+                    focusRequester = focusRequesters[0],
+                    colorsTxtFld = colorsTxtFld,
+                    onNameTextFieldValueChange = {
+                        updateNameNotesTextFieldValue(
+                            LabelDescriptionTextFieldValues.LABEL_KEY,
+                            it
+                        )
+                    }
+                )
+            }
         }
+
+        // Enlaces
         item {
-            LinksComponent(
-                entryTextFieldValues = newEntryTextFieldValues,
-                updateNewEntryTextFieldValues = updateNewEntryTextFieldValues,
-                focusRequesters = Triple(entryUrlFocusRequester, entryLabelFocusRequester, entryNotesFocusRequester),
-                entries = entries,
-                addLink = addLink,
-                editLink = editLink,
-                removeLink = removeLink,
-                onMove = onMove
-            )
+            SectionCard(
+                title = "Enlaces",
+                subtitle = "${entries.size} enlace(s) agregado(s)"
+            ) {
+                LinksComponent(
+                    entryTextFieldValues = newEntryTextFieldValues,
+                    updateNewEntryTextFieldValues = updateNewEntryTextFieldValues,
+                    focusRequesters = Triple(
+                        focusRequesters[1],
+                        focusRequesters[2],
+                        focusRequesters[3]
+                    ),
+                    colorsTxtFld = colorsTxtFld,
+                    entries = entries,
+                    addLink = addLink,
+                    editLink = editLink,
+                    removeLink = removeLink,
+                    onMove = onMove
+                )
+            }
         }
+
+        // Notas
         item {
-            NotesComponent(
-                notesTextFieldValue = nameNotesTextFieldValue.description,
-                focusRequester = notesFocusRequester,
-                onNotesTextFieldValueChange = {
-                    updateNameNotesTextFieldValue(
-                        LabelDescriptionTextFieldValues.DESCRIPTION_KEY,
-                        it
-                    )
-                }
-            )
+            SectionCard(
+                title = "Notas",
+                subtitle = "Información adicional sobre esta semilla"
+            ) {
+                NotesField(
+                    notesTextFieldValue = nameNotesTextFieldValue.description,
+                    focusRequester = focusRequesters[4],
+                    colorsTxtFld = colorsTxtFld,
+                    onNotesTextFieldValueChange = {
+                        updateNameNotesTextFieldValue(
+                            LabelDescriptionTextFieldValues.DESCRIPTION_KEY,
+                            it
+                        )
+                    }
+                )
+            }
         }
         item { TagsComponent() }
-        item {
-            SaveButton(
-                onSave = onSave,
-                enabled = isValidSeed
-            )
-        }
     }
 }
 
 @Composable
-private fun GardenDropDown(
-    garden: LinkGarden,
-    gardens: List<LinkGarden>,
-    onClick: (Int) -> Unit
-){
-    GardenSelector(
-        currentGarden = garden,
-        gardens = gardens,
-        onClick = onClick
+private fun SectionCard(
+    title: String,
+    subtitle: String? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(DesignTokens.Padding.Small)
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = DesignTokens.containerColor
+            ),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(DesignTokens.Padding.Small),
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                subtitle?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(DesignTokens.Padding.ExtraSmall),
+            content = content
+        )
+    }
+}
+
+@Composable
+private fun NameField(
+    nameTextFieldValue: TextFieldValue,
+    focusRequester: FocusRequester,
+    colorsTxtFld: TextFieldColors,
+    onNameTextFieldValueChange: (TextFieldValue) -> Unit
+) {
+    val config = rememberAkariTextFieldConfig {
+        slots {
+            label = { Text("Nombre de la semilla") }
+            placeholder = { Text("Ej: Recursos de aprendizaje") }
+        }
+        behavior {
+            singleLine = true
+        }
+        style {
+            colors = colorsTxtFld
+        }
+    }
+    AkariTextField(
+        value = nameTextFieldValue,
+        onValueChange = onNameTextFieldValueChange,
+        config = config,
+        focusRequester = focusRequester
     )
 }
 
 @Composable
-private fun NameFieldAndFavorites(
-    nameTextFieldValue: TextFieldValue,
+private fun NotesField(
+    notesTextFieldValue: TextFieldValue,
     focusRequester: FocusRequester,
-    onNameTextFieldValueChange: (TextFieldValue) -> Unit
-){
-    val nameState = rememberAkariOutlinedTextFieldState(
-        value = nameTextFieldValue,
-        onValueChange = onNameTextFieldValueChange,
-        builder = {
-            label = { Text("Name") }
-            this.focusRequester = focusRequester
+    colorsTxtFld: TextFieldColors,
+    onNotesTextFieldValueChange: (TextFieldValue) -> Unit
+) {
+    val config = rememberAkariTextFieldConfig {
+        slots {
+            label = { Text("Notas generales") }
+            placeholder = { Text("Añade contexto o recordatorios...") }
         }
+        behavior {
+            minLines = 2
+        }
+        style {
+            colors = colorsTxtFld
+        }
+    }
+
+    AkariTextField(
+        value = notesTextFieldValue,
+        onValueChange = onNotesTextFieldValueChange,
+        config = config,
+        focusRequester = focusRequester
     )
-    AkariTextField(state = nameState)
 }
 
 @Composable
@@ -219,133 +349,212 @@ private fun LinksComponent(
     entryTextFieldValues: LinkEntryTextFieldValues,
     updateNewEntryTextFieldValues: (String, TextFieldValue) -> Unit,
     focusRequesters: Triple<FocusRequester, FocusRequester, FocusRequester>,
+    colorsTxtFld: TextFieldColors,
     entries: List<LinkEntry>,
     addLink: () -> Unit,
     editLink: (LinkEntry) -> Unit,
     removeLink: (LinkEntry) -> Unit,
     onMove: (Int, Int) -> Unit
-){
-    val isUrlValid = remember(entryTextFieldValues.url.text) {
-        DataValidator.validateUrl(entryTextFieldValues.url.text).isValid && entryTextFieldValues.url.text.isNotBlank()
+) {
+    var showSuccessAnimation by remember { mutableStateOf(false) }
+    val urlValidation = remember(entryTextFieldValues.url.text) {
+        DataValidator.validateUrl(entryTextFieldValues.url.text)
     }
-    val (urlFocusRequester, labelFocusRequester, notesFocusRequester) = focusRequesters
-    Text("Add link")
-    Spacer(modifier = Modifier.height(PaddingSmall))
-    LinksMetaData(
-        labelTextFieldValue = entryTextFieldValues.label,
-        notesTextFieldValue = entryTextFieldValues.note,
-        labelFocusRequester = labelFocusRequester,
-        notesFocusRequester = notesFocusRequester,
-        onLabelTextFieldValueChange = {
-            updateNewEntryTextFieldValues(LinkEntryTextFieldValues.LABEL_KEY, it)
-        },
-        onNotesTextFieldValueChange = {
-            updateNewEntryTextFieldValues(LinkEntryTextFieldValues.NOTE_KEY, it)
-        }
-    )
-    Spacer(modifier = Modifier.height(2 * PaddingSmall))
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+    val isUrlValid = urlValidation.isValid && entryTextFieldValues.url.text.isNotBlank()
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(DesignTokens.Padding.Small)
     ) {
-        LinksTextField(
-            modifier = Modifier.weight(1f),
-            newUrlTextFieldValue = entryTextFieldValues.url,
-            focusRequester = urlFocusRequester,
-            onNewUrlTextFieldValueChange = {
-                updateNewEntryTextFieldValues(LinkEntryTextFieldValues.URL_KEY, it)
+        // Metadata toggle
+        LinksMetaData(
+            labelTextFieldValue = entryTextFieldValues.label,
+            notesTextFieldValue = entryTextFieldValues.note,
+            labelFocusRequester = focusRequesters.second,
+            notesFocusRequester = focusRequesters.third,
+            colorsTxtFld = colorsTxtFld,
+            onLabelTextFieldValueChange = {
+                updateNewEntryTextFieldValues(LinkEntryTextFieldValues.LABEL_KEY, it)
+            },
+            onNotesTextFieldValueChange = {
+                updateNewEntryTextFieldValues(LinkEntryTextFieldValues.NOTE_KEY, it)
             }
         )
-        LinksButton(
-            modifier = Modifier,
-            addLink = addLink,
-            enabled = isUrlValid
-        )
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                LinksTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    newUrlTextFieldValue = entryTextFieldValues.url,
+                    focusRequester = focusRequesters.first,
+                    colorsTxtFld = colorsTxtFld,
+                    onNewUrlTextFieldValueChange = {
+                        updateNewEntryTextFieldValues(LinkEntryTextFieldValues.URL_KEY, it)
+                    },
+                    enabledAddIcon = isUrlValid,
+                    onAddLink = {
+                        addLink()
+                        showSuccessAnimation = true
+                    }
+                )
+            }
+
+            // Mensaje de error
+            AnimatedVisibility(
+                visible = !urlValidation.isValid && entryTextFieldValues.url.text.isNotBlank()
+            ) {
+                Text(
+                    text = urlValidation.errorMessageRes?.let { stringResource(id = it) }
+                        ?: "URL inválida",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(
+                        start = DesignTokens.Padding.Medium,
+                        top = DesignTokens.Padding.ExtraSmall
+                    )
+                )
+            }
+        }
+
+        // Lista de enlaces
+        AnimatedVisibility(
+            visible = entries.isNotEmpty(),
+            enter = fadeIn() + expandVertically()
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(DesignTokens.Padding.Small)) {
+                HorizontalDivider(modifier = Modifier.padding(bottom = DesignTokens.Padding.Small))
+                LinksList(
+                    entries = entries,
+                    editLink = editLink,
+                    removeLink = removeLink,
+                    onMove = onMove
+                )
+            }
+        }
+
+        // Mensaje cuando no hay enlaces
+        AnimatedVisibility(visible = entries.isEmpty()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = DesignTokens.Padding.Large),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "No hay enlaces agregados",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
-    Spacer(modifier = Modifier.height(PaddingSmall))
-    LinksList(
-        entries = entries,
-        editLink = editLink,
-        removeLink = removeLink,
-        onMove = onMove
-    )
+
+    // Animación de éxito
+    LaunchedEffect(showSuccessAnimation) {
+        if (showSuccessAnimation) {
+            kotlinx.coroutines.delay(1500)
+            showSuccessAnimation = false
+        }
+    }
 }
 
 @Composable
 private fun LinksMetaData(
-    modifier: Modifier = Modifier,
     labelTextFieldValue: TextFieldValue,
     notesTextFieldValue: TextFieldValue,
     labelFocusRequester: FocusRequester,
     notesFocusRequester: FocusRequester,
+    colorsTxtFld: TextFieldColors,
     onLabelTextFieldValueChange: (TextFieldValue) -> Unit,
     onNotesTextFieldValueChange: (TextFieldValue) -> Unit
-){
-
-    val labelState = rememberAkariOutlinedTextFieldState(
-        value = labelTextFieldValue,
-        onValueChange = onLabelTextFieldValueChange,
-        builder = {
-            label = { Text("Label") }
-            this.focusRequester = labelFocusRequester
-        }
-    )
-
-    val notesState = rememberAkariOutlinedTextFieldState(
-        value = notesTextFieldValue,
-        onValueChange = onNotesTextFieldValueChange,
-        builder = {
-            label = { Text("Notes") }
-            this.focusRequester = notesFocusRequester
-        }
-    )
+) {
 
     var isAddMetadata by rememberSaveable { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier,
-            horizontalArrangement = Arrangement.spacedBy(PaddingSmall),
-            verticalAlignment = Alignment.CenterVertically
+    Column(verticalArrangement = Arrangement.spacedBy(DesignTokens.Padding.Small)) {
+        OutlinedCard(
+            onClick = { isAddMetadata = !isAddMetadata },
+            colors = CardDefaults.outlinedCardColors(
+                containerColor = if (isAddMetadata) {
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
+                } else {
+                    Color.Transparent
+                }
+            )
         ) {
-            Switch(
-                checked = isAddMetadata,
-                onCheckedChange = { isAddMetadata = it }
-            )
-            Text(
-                text = "Add Metadata",
-                style = MaterialTheme.typography.bodyLarge
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(DesignTokens.Padding.Medium),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Metadatos del enlace",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    Text(
+                        text = "Etiqueta y notas opcionales",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(
+                    imageVector = if (isAddMetadata) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = if (isAddMetadata) "Ocultar" else "Mostrar",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
         }
-        Text(
-            text = "Only visible for multiple links",
-            style = MaterialTheme.typography.labelMedium
-        )
+
         AnimatedVisibility(
             visible = isAddMetadata,
-            enter = fadeIn(),
-            exit = fadeOut()
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Row {
-                    AkariTextField(
-                        state = labelState,
-                        modifier = Modifier.weight(1f)
-                    )
+            Column(verticalArrangement = Arrangement.spacedBy(DesignTokens.Padding.Small)) {
+
+                val labelConfig = rememberAkariTextFieldConfig {
+                    slots {
+                        label = { Text("Etiqueta") }
+                        placeholder = { Text("Ej: Documentación oficial") }
+                    }
+                    behavior {
+                        singleLine = true
+                    }
+                    style {
+                        colors = colorsTxtFld
+                    }
                 }
-                Spacer(modifier = Modifier.height(PaddingSmall))
-                Row {
-                    AkariTextField(
-                        state = notesState,
-                        modifier = Modifier.weight(1f)
-                    )
+
+                val notesConfig = rememberAkariTextFieldConfig {
+                    slots {
+                        label = { Text("Notas del enlace") }
+                        placeholder = { Text("Información adicional...") }
+                    }
+                    behavior {
+                        minLines = 2
+                        maxLines = 4
+                    }
+                    style {
+                        colors = colorsTxtFld
+                    }
                 }
+
+                AkariTextField(
+                    value = labelTextFieldValue,
+                    onValueChange = onLabelTextFieldValueChange,
+                    config = labelConfig,
+                    focusRequester = labelFocusRequester
+                )
+                AkariTextField(
+                    value = notesTextFieldValue,
+                    onValueChange = onNotesTextFieldValueChange,
+                    config = notesConfig,
+                    focusRequester = notesFocusRequester
+                )
             }
         }
     }
@@ -356,36 +565,49 @@ private fun LinksTextField(
     modifier: Modifier = Modifier,
     newUrlTextFieldValue: TextFieldValue = TextFieldValue(""),
     focusRequester: FocusRequester,
-    onNewUrlTextFieldValueChange: (TextFieldValue) -> Unit = {}
+    colorsTxtFld: TextFieldColors,
+    onNewUrlTextFieldValueChange: (TextFieldValue) -> Unit = {},
+    enabledAddIcon: Boolean = true,
+    onAddLink: () -> Unit = {}
 ) {
-    val newUrlState = rememberAkariOutlinedTextFieldState(
-        value = newUrlTextFieldValue,
-        onValueChange = onNewUrlTextFieldValueChange,
-        builder = {
+    val config = rememberAkariTextFieldConfig {
+        slots {
             label = { Text("URL") }
-            this.focusRequester = focusRequester
+            placeholder = { Text("https://ejemplo.com") }
+            leadingIcon = {
+                Icon(
+                    modifier = Modifier,
+                    imageVector = Icons.Default.Link,
+                    contentDescription = null
+                )
+            }
+            trailingIcon = {
+                IconButton(
+                    onClick = onAddLink,
+                    enabled = enabledAddIcon
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Agregar enlace"
+                    )
+                }
+            }
         }
-    )
+        behavior {
+            singleLine = true
+        }
+        style {
+            colors = colorsTxtFld
+        }
+    }
 
     AkariTextField(
-        state = newUrlState,
-        modifier = modifier
-    )
-}
-
-@Composable
-private fun LinksButton(
-    modifier: Modifier = Modifier,
-    addLink: () -> Unit,
-    enabled: Boolean,
-){
-    IconButton(
         modifier = modifier,
-        onClick = { addLink() },
-        enabled = enabled
-    ) {
-        Icon(Icons.Default.Add, contentDescription = "Add Link")
-    }
+        value = newUrlTextFieldValue,
+        onValueChange = onNewUrlTextFieldValueChange,
+        config = config,
+        focusRequester = focusRequester
+    )
 }
 
 @Composable
@@ -394,7 +616,7 @@ private fun LinksList(
     onMove: (Int, Int) -> Unit,
     editLink: (LinkEntry) -> Unit,
     removeLink: (LinkEntry) -> Unit
-){
+) {
     val state = rememberAkariReorderableColumnState<LinkEntry> { from, to ->
         onMove(from, to)
     }
@@ -424,72 +646,77 @@ private fun LinkItem(
     entry: LinkEntry,
     onClear: () -> Unit,
     onEdit: () -> Unit,
-){
-    ListItem(
+) {
+    val elevation by animateDpAsState(
+        targetValue = if (isDragging) 8.dp else 0.dp,
+        label = "elevation"
+    )
+
+    Card(
         modifier = modifier,
-        colors = ListItemDefaults.colors(
-            containerColor = if (isDragging) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f)
+        colors = CardDefaults.cardColors(
+            containerColor = if (isDragging) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            }
         ),
-        overlineContent = entry.label?.let { label ->
-            {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelMedium
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
+    ) {
+        ListItem(
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            leadingContent = {
+                Icon(
+                    modifier = Modifier.size(28.dp),
+                    imageVector = Icons.Default.DragIndicator,
+                    contentDescription = "Reordenar",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            }
-        },
-        headlineContent = {
-            Text(
-                text = entry.uri.toString(),
-                style = MaterialTheme.typography.bodyMedium
-            )
-        },
-        supportingContent = entry.note?.let { note ->
-            {
+            },
+            overlineContent = entry.label?.let { label ->
+                {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            },
+            headlineContent = {
                 Text(
-                    text = note,
-                    style = MaterialTheme.typography.labelSmall
+                    text = entry.uri.toString(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-            }
-        },
-        trailingContent = {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onEdit) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit Link")
+            },
+            supportingContent = entry.note?.let { note ->
+                {
+                    Text(
+                        text = note,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
-                IconButton(onClick = onClear) {
-                    Icon(Icons.Default.Clear, contentDescription = "Clear Link")
+            },
+            trailingContent = {
+                Row(horizontalArrangement = Arrangement.spacedBy(DesignTokens.Padding.ExtraSmall)) {
+                    IconButton(onClick = onEdit) {
+                        Icon(Icons.Default.Edit, contentDescription = "Editar enlace")
+                    }
+                    IconButton(onClick = onClear) {
+                        Icon(Icons.Default.Delete, contentDescription = "Eliminar enlace")
+                    }
                 }
             }
-        }
-    )
+        )
+    }
 }
 
 @Composable
-private fun NotesComponent(
-    modifier: Modifier = Modifier,
-    notesTextFieldValue: TextFieldValue,
-    focusRequester: FocusRequester,
-    onNotesTextFieldValueChange: (TextFieldValue) -> Unit = {}
-){
-    val notesState = rememberAkariOutlinedTextFieldState(
-        value = notesTextFieldValue,
-        onValueChange = onNotesTextFieldValueChange,
-        builder = {
-            label = { Text("Notes") }
-            this.focusRequester = focusRequester
-        }
-    )
-
-    AkariTextField(modifier = modifier, state = notesState)
-}
-
-@Composable
-private fun TagsComponent(){
+private fun TagsComponent() {
     Text("Tags")
     Spacer(modifier = Modifier.height(PaddingSmall))
     TextField(
@@ -501,7 +728,6 @@ private fun TagsComponent(){
 
 @Composable
 private fun GardenSelector(
-    modifier: Modifier = Modifier,
     currentGarden: LinkGarden,
     gardens: List<LinkGarden>,
     onClick: (Int) -> Unit
@@ -509,112 +735,116 @@ private fun GardenSelector(
     var expanded by remember { mutableStateOf(false) }
     val accountValid = gardens.any { it.id == currentGarden.id }
 
-    Box(modifier = Modifier){
-        Card(
-            modifier = modifier
-                .animateContentSize(),
-            shape = MaterialTheme.shapes.extraLarge,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-            ),
-            onClick = { expanded = !expanded }
+    Box(modifier = Modifier) {
+        OutlinedCard(
+            onClick = { expanded = !expanded },
+            colors = CardDefaults.outlinedCardColors(
+                containerColor = if (expanded) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
+                else
+                    Color.Transparent
+            )
         ) {
             Row(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = DesignTokens.Padding.Medium,
+                        vertical = DesignTokens.Padding.Small
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Icon(
-                    imageVector = Icons.Default.AccountCircle,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(32.dp)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                if (accountValid) {
-                    Column(modifier = Modifier) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(DesignTokens.Padding.Medium),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocalFlorist,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    if (accountValid) {
+                        Column {
+                            Text(
+                                text = currentGarden.name,
+                                style = MaterialTheme.typography.titleMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            currentGarden.description.takeIf { it.isNotBlank() }?.let {
+                                Text(
+                                    text = it,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    } else {
                         Text(
-                            text = currentGarden.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = currentGarden.description,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.secondary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            text = "Seleccionar jardín",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                } else {
-                    Text(
-                        text = stringResource(id = R.string.select_garden),
-                        style = MaterialTheme.typography.labelMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
                 }
                 Icon(
-                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (expanded) "Collapse" else "Expand",
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp
+                    else Icons.Default.KeyboardArrowDown,
+                    contentDescription = if (expanded) "Contraer" else "Expandir",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
         DropdownMenu(
-            modifier = Modifier
-                .widthIn(max = 300.dp),
             expanded = expanded,
             onDismissRequest = { expanded = false },
+            modifier = Modifier,
             shape = MaterialTheme.shapes.medium
         ) {
-            gardens.filter { it.id != currentGarden.id }.forEachIndexed { index, item ->
+            gardens.forEachIndexed { index, item ->
                 DropdownMenuItem(
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Default.AccountCircle,
+                            imageVector = Icons.Default.LocalFlorist,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = if (item.id == currentGarden.id) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
                         )
                     },
                     text = {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(text = item.name)
-                            Spacer(modifier = Modifier.width(8.dp))
+                        Column {
                             Text(
-                                text = item.description,
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.secondary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                text = item.name,
+                                style = MaterialTheme.typography.bodyLarge
                             )
+                            item.description.takeIf { it.isNotBlank() }?.let {
+                                Text(
+                                    text = it,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     },
                     onClick = {
                         onClick(index)
                         expanded = false
-                    }
+                    },
+                    trailingIcon = if (item.id == currentGarden.id) {
+                        { Icon(Icons.Default.Check, contentDescription = "Seleccionado") }
+                    } else null
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun SaveButton(
-    onSave: () -> Unit,
-    enabled: Boolean
-){
-    Button(
-        onClick = onSave,
-        enabled = enabled
-    ) {
-        Text("Save")
     }
 }

@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Folder
@@ -26,34 +24,25 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.navigation.NavHostController
-import com.akari.uicomponents.reorderableComponents.AkariReorderableItem
 import com.akari.uicomponents.reorderableComponents.AkariReorderableLazyColumn
 import com.akari.uicomponents.reorderableComponents.DragActivation
 import com.akari.uicomponents.reorderableComponents.rememberAkariReorderableLazyState
 import com.habitiora.linkarium.domain.model.LinkGarden
-import com.habitiora.linkarium.ui.navigation.Screens
-import com.habitiora.linkarium.ui.utils.localNavigator.LocalNavigator
-import com.habitiora.linkarium.ui.utils.localNavigator.navigateToRoute
 
 @Composable
 fun GardensScreen(
     viewModel: GardensViewModel = hiltViewModel()
 ){
     val gardens by viewModel.gardens.collectAsState()
-    val navController: NavHostController = LocalNavigator.current
 
     GardensContent(
         modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp).fillMaxSize(),
         gardens = gardens,
-        onClick = { id ->
-            navController.navigateToRoute(Screens.ShowSeeds.createRoute(id))
-        },
+        onClick = viewModel::navigateToShowSeeds,
         onMove = viewModel::moveGarden,
         onDragStart = viewModel::onDragStart,
         onDragEnd = viewModel::onDragEnd,
@@ -66,7 +55,7 @@ fun GardensScreen(
 private fun GardensContent(
     modifier: Modifier = Modifier,
     gardens: List<LinkGarden>,
-    onClick: (Long) -> Unit,
+    onClick: (LinkGarden) -> Unit,
     onMove: (Int, Int) -> Unit,
     onDragStart: () -> Unit,
     onDragEnd: () -> Unit,
@@ -102,7 +91,7 @@ private fun GardensContent(
                 modifier = Modifier.akariDragHandle(),
                 isDragging = isDragging,
                 garden = item,
-                onClick = onClick,
+                onClick = { onClick(item) },
                 onEdit = { onEdit(item) }
             )
         }
@@ -114,12 +103,12 @@ private fun GardenItem(
     modifier: Modifier = Modifier,
     isDragging: Boolean = false,
     garden: LinkGarden,
-    onClick: (Long) -> Unit,
+    onClick: () -> Unit,
     onEdit: () -> Unit
 ){
     Card(
         modifier = modifier,
-        onClick = { onClick(garden.id) },
+        onClick = onClick,
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors().copy(
             containerColor = if (isDragging) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)

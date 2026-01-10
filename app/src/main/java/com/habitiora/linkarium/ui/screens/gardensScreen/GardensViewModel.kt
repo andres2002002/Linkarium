@@ -5,7 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.habitiora.linkarium.data.local.room.DatabaseContract
 import com.habitiora.linkarium.data.repository.LinkGardenRepository
 import com.habitiora.linkarium.domain.model.LinkGarden
+import com.habitiora.linkarium.ui.navigation.Screens
+import com.habitiora.linkarium.ui.utils.pubsAndSubs.GardenSelectionManager
 import com.habitiora.linkarium.ui.utils.pubsAndSubs.GardenUpdateManager
+import com.habitiora.linkarium.ui.utils.pubsAndSubs.NavigationEventBus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +26,9 @@ import javax.inject.Inject
 @HiltViewModel
 class GardensViewModel  @Inject constructor(
     private val gardenRepository: LinkGardenRepository,
-    private val gardenUpdateManager: GardenUpdateManager
+    private val gardenUpdateManager: GardenUpdateManager,
+    private val gardenSelectionManager: GardenSelectionManager,
+    private val navigationEventBus: NavigationEventBus
 ) : ViewModel() {
     private val _gardens = MutableStateFlow<List<LinkGarden>>(emptyList())
     val gardens: StateFlow<List<LinkGarden>> = _gardens.asStateFlow()
@@ -44,6 +49,12 @@ class GardensViewModel  @Inject constructor(
 
     init {
         setupGardens()
+    }
+
+    fun navigateToShowSeeds(garden: LinkGarden){
+        val index = _gardens.value.indexOf(garden).takeIf { it != -1 }
+        index?.let{ index -> gardenSelectionManager.selectGarden(index) }
+        navigationEventBus.navigate(Screens.ShowSeeds, garden.id)
     }
 
     fun onDragStart() {

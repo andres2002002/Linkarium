@@ -6,11 +6,10 @@ import com.habitiora.linkarium.R
 
 sealed class Screens(
     val baseRoute: String,
-    @StringRes val normalTitle: Int,
-    @StringRes val creativeTitle: Int = normalTitle,
+    @StringRes val title: Int,
     @DrawableRes val iconSelect: Int? = null,
     @DrawableRes val iconUnselect: Int? = iconSelect,
-    val typeScreen: TypeScreen = TypeScreen.Primary
+    val isTopLevel: Boolean = false
 ) {
     /** Ruta completa (con placeholders si aplica) */
     open val route: String get() = baseRoute
@@ -41,30 +40,26 @@ sealed class Screens(
     }
     data object ShowGarden: Screens(
         baseRoute = "show_garden",
-        normalTitle = R.string.link_garden,
-        creativeTitle = R.string.link_garden,
+        title = R.string.link_garden,
         iconSelect = R.drawable.round_home_24,
-        iconUnselect = R.drawable.outline_home_24
+        iconUnselect = R.drawable.outline_home_24,
+        isTopLevel = true
     )
     data object Gardens: Screens(
         baseRoute = "gardens",
-        normalTitle = R.string.gardens,
-        creativeTitle = R.string.gardens,
+        title = R.string.gardens,
         iconSelect = R.drawable.round_collections_bookmark_24,
         iconUnselect = R.drawable.outline_collections_bookmark_24,
-        typeScreen = TypeScreen.Primary
+        isTopLevel = true
     )
     data object Settings: Screens(
         baseRoute = "settings",
-        normalTitle = R.string.settings,
-        creativeTitle = R.string.settings,
-        typeScreen = TypeScreen.Secondary
+        title = R.string.settings,
+        isTopLevel = true
     )
     data object PlantNew: Screens(
         baseRoute = "plant_new",
-        normalTitle = R.string.plant,
-        creativeTitle = R.string.plant,
-        typeScreen = TypeScreen.Tertiary
+        title = R.string.plant,
     ){
         override val route = "$baseRoute?seedId={seedId}"
 
@@ -76,9 +71,7 @@ sealed class Screens(
 
     data object ShowSeeds: Screens(
         baseRoute = "show_seeds",
-        normalTitle = R.string.plant,
-        creativeTitle = R.string.plant,
-        typeScreen = TypeScreen.Tertiary
+        title = R.string.plant,
     ){
         override val route = "$baseRoute/{gardenId}"
 

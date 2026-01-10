@@ -9,11 +9,13 @@ import com.habitiora.linkarium.data.repository.LinkGardenRepository
 import com.habitiora.linkarium.data.repository.LinkSeedRepository
 import com.habitiora.linkarium.domain.model.LinkGarden
 import com.habitiora.linkarium.domain.model.LinkSeed
+import com.habitiora.linkarium.ui.navigation.Screens
 import com.habitiora.linkarium.ui.scaffold.dialogs.DialogType
 import com.habitiora.linkarium.ui.scaffold.dialogs.MessageValues
 import com.habitiora.linkarium.ui.utils.pubsAndSubs.GardenSelectionManager
 import com.habitiora.linkarium.ui.utils.pubsAndSubs.GardenUpdateManager
 import com.habitiora.linkarium.ui.utils.pubsAndSubs.MessageBus
+import com.habitiora.linkarium.ui.utils.pubsAndSubs.NavigationEventBus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -35,7 +37,8 @@ class ShowGardenViewModel @Inject constructor(
     private val seedRepository: LinkSeedRepository,
     private val gardenSelectionManager: GardenSelectionManager,
     private val messageBus: MessageBus,
-    private val gardenUpdateManager: GardenUpdateManager
+    private val gardenUpdateManager: GardenUpdateManager,
+    private val navigationEventBus: NavigationEventBus
 ): ViewModel() {
 
     // region State Properties
@@ -95,5 +98,9 @@ class ShowGardenViewModel @Inject constructor(
     /** Llamar cuando el pager settle cambie (desde UI) */
     fun onUserSwipedToPage(page: Int) {
         gardenSelectionManager.selectGarden(page)
+    }
+
+    fun navigateToPlantNew(id: Long){
+        navigationEventBus.navigate(Screens.PlantNew, id)
     }
 }

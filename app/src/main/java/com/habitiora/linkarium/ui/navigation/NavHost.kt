@@ -13,8 +13,6 @@ import com.habitiora.linkarium.ui.screens.gardensScreen.GardensScreen
 import com.habitiora.linkarium.ui.screens.gardensScreen.ShowSeedsOfGarden
 import com.habitiora.linkarium.ui.screens.plantSeed.PlantSeedScreen
 import com.habitiora.linkarium.ui.screens.showGarden.ShowGardenScreen
-import com.habitiora.linkarium.ui.screens.showGarden.ShowSeedsScreen
-import com.habitiora.linkarium.ui.utils.localNavigator.LocalNavigator
 import com.habitiora.linkarium.ui.utils.localWindowSizeClass.LocalWindowSizeClass
 
 @Composable
@@ -23,7 +21,6 @@ fun NavigationHost(
     windowSizeClass: WindowSizeClass
 ) {
     CompositionLocalProvider(
-        LocalNavigator provides navController,
         LocalWindowSizeClass provides windowSizeClass
     ) {
         NavHost(

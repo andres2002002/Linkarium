@@ -3,150 +3,73 @@ package com.habitiora.linkarium.ui.scaffold
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavHostController
 
-class ScaffoldConfig private constructor(
-    val gesturesEnabled: Boolean = true,
-    val containerColor: Color = Color.Transparent,
-    val contentColor: Color = Color.Unspecified,
-    val snackbarHost: (@Composable () -> Unit)? = null,
-    internal val topBar: Map<WindowWidthSizeClass, @Composable () -> Unit> = emptyMap(),
-    internal val bottomBar: Map<WindowWidthSizeClass, @Composable () -> Unit> = emptyMap(),
-    internal val fab: Map<WindowWidthSizeClass, @Composable () -> Unit> = emptyMap(),
-    internal val fabPosition: Map<WindowWidthSizeClass, FabPosition> = emptyMap(),
-    internal val navigationRail: Map<WindowWidthSizeClass, @Composable (String?, NavHostController) -> Unit> = emptyMap(),
-    internal val drawer: (@Composable (String?, NavHostController, () -> Unit) -> Unit)? = null
+
+/**
+ * Configuración inmutable del LinkariumScaffold.
+ */
+@Immutable
+class ScaffoldConfig internal constructor(
+    val gesturesEnabled: Boolean,
+    val containerColor: Color,
+    val contentColor: Color,
+    val snackbarHost: (@Composable () -> Unit)?,
+
+    private val topBars:
+    Map<WindowWidthSizeClass, @Composable () -> Unit>,
+
+    private val bottomBars:
+    Map<WindowWidthSizeClass, @Composable () -> Unit>,
+
+    private val fabs:
+    Map<WindowWidthSizeClass, @Composable () -> Unit>,
+
+    private val fabPositions:
+    Map<WindowWidthSizeClass, FabPosition>,
+
+    private val navigationRails:
+    Map<WindowWidthSizeClass, @Composable () -> Unit>,
+
+    val drawer:
+    (@Composable (closeDrawer: () -> Unit) -> Unit)?
 ) {
 
-    class Builder {
-        private var gesturesEnabled: Boolean = true
-        private var containerColor: Color = Color.Transparent
-        private var contentColor: Color = Color.Unspecified
-        private var snackbarHost: (@Composable () -> Unit)? = null
-        private val topBar = mutableMapOf<WindowWidthSizeClass, @Composable () -> Unit>()
-        private val bottomBar = mutableMapOf<WindowWidthSizeClass, @Composable () -> Unit>()
-        private val fab = mutableMapOf<WindowWidthSizeClass, @Composable () -> Unit>()
-        private val fabPosition = mutableMapOf<WindowWidthSizeClass, FabPosition>()
-        private val navigationRail = mutableMapOf<WindowWidthSizeClass, @Composable (String?, NavHostController) -> Unit>()
-        private var drawer: (@Composable (String?, NavHostController, () -> Unit) -> Unit)? = null
+    /* -------------------- Access API -------------------- */
 
-        fun enableGestures(enabled: Boolean) = apply { gesturesEnabled = enabled }
+    /**
+     * TopBar correspondiente al ancho actual.
+     */
+    @Composable
+    fun topBar(width: WindowWidthSizeClass) =
+        topBars[width]
 
-        fun containerColor(color: Color) = apply { containerColor = color }
+    /**
+     * BottomBar correspondiente al ancho actual.
+     */
+    @Composable
+    fun bottomBar(width: WindowWidthSizeClass) =
+        bottomBars[width]
 
-        fun contentColor(color: Color) = apply { contentColor = color }
+    /**
+     * FloatingActionButton correspondiente al ancho actual.
+     */
+    @Composable
+    fun fab(width: WindowWidthSizeClass) =
+        fabs[width]
 
-        fun snackbarHost(host: @Composable () -> Unit) = apply { snackbarHost = host }
+    /**
+     * Posición del FAB, con fallback seguro.
+     */
+    fun fabPosition(width: WindowWidthSizeClass): FabPosition =
+        fabPositions[width] ?: FabPosition.End
 
-        fun topBar(content: @Composable () -> Unit) = apply {
-            topBar[WindowWidthSizeClass.Compact] = content
-            topBar[WindowWidthSizeClass.Medium] = content
-            topBar[WindowWidthSizeClass.Expanded] = content
-        }
-
-        fun topBar(widthSizeClasses: Array<WindowWidthSizeClass>, content: @Composable () -> Unit) = apply {
-            widthSizeClasses.forEach { widthSizeClass ->
-                topBar(widthSizeClass, content)
-            }
-        }
-        fun topBar(widthSizeClass: WindowWidthSizeClass, content: @Composable () -> Unit) = apply {
-            topBar[widthSizeClass] = content
-        }
-
-        fun bottomBar(content: @Composable () -> Unit) = apply {
-            bottomBar[WindowWidthSizeClass.Compact] = content
-            bottomBar[WindowWidthSizeClass.Medium] = content
-            bottomBar[WindowWidthSizeClass.Expanded] = content
-        }
-
-        fun bottomBar(widthSizeClasses: Array<WindowWidthSizeClass>, content: @Composable () -> Unit) = apply {
-            widthSizeClasses.forEach { widthSizeClass ->
-                bottomBar(widthSizeClass, content)
-            }
-        }
-
-        fun bottomBar(widthSizeClass: WindowWidthSizeClass, content: @Composable () -> Unit) = apply {
-            bottomBar[widthSizeClass] = content
-        }
-
-        fun floatingActionButton(content: @Composable () -> Unit) = apply {
-            fab[WindowWidthSizeClass.Compact] = content
-            fab[WindowWidthSizeClass.Medium] = content
-            fab[WindowWidthSizeClass.Expanded] = content
-        }
-
-        fun floatingActionButton(widthSizeClasses: Array<WindowWidthSizeClass>, content: @Composable () -> Unit) = apply {
-            widthSizeClasses.forEach { widthSizeClass ->
-                floatingActionButton(widthSizeClass, content)
-            }
-        }
-
-        fun floatingActionButton(
-            widthSizeClass: WindowWidthSizeClass,
-            content: @Composable () -> Unit
-        ) = apply {
-            fab[widthSizeClass] = content
-        }
-
-        fun floatingActionButtonPosition(
-            position: FabPosition
-        ) = apply {
-            fabPosition[WindowWidthSizeClass.Compact] = position
-            fabPosition[WindowWidthSizeClass.Medium] = position
-            fabPosition[WindowWidthSizeClass.Expanded] = position
-        }
-
-        fun floatingActionButtonPosition(
-            widthSizeClasses: Array<WindowWidthSizeClass>,
-            position: FabPosition
-        ) = apply {
-            widthSizeClasses.forEach { widthSizeClass ->
-                floatingActionButtonPosition(widthSizeClass, position)
-            }
-        }
-
-        fun floatingActionButtonPosition(
-            widthSizeClass: WindowWidthSizeClass,
-            position: FabPosition
-        ) = apply {
-            fabPosition[widthSizeClass] = position
-        }
-
-        fun navigationRail(content: @Composable (String?, NavHostController) -> Unit) = apply {
-            navigationRail[WindowWidthSizeClass.Compact] = content
-            navigationRail[WindowWidthSizeClass.Medium] = content
-            navigationRail[WindowWidthSizeClass.Expanded] = content
-        }
-
-        fun navigationRail(widthSizeClasses: Array<WindowWidthSizeClass>, content: @Composable (String?, NavHostController) -> Unit) = apply {
-            widthSizeClasses.forEach { widthSizeClass ->
-                navigationRail(widthSizeClass, content)
-            }
-        }
-
-        fun navigationRail(
-            widthSizeClass: WindowWidthSizeClass,
-            content: @Composable (String?, NavHostController) -> Unit
-        ) = apply {
-            navigationRail[widthSizeClass] = content
-        }
-
-        fun drawer(content: @Composable (String?, NavHostController, () -> Unit) -> Unit) = apply {
-            drawer = content
-        }
-
-        fun build() = ScaffoldConfig(
-            gesturesEnabled = gesturesEnabled,
-            containerColor = containerColor,
-            contentColor = contentColor,
-            snackbarHost = snackbarHost,
-            topBar = topBar.toMap(),
-            bottomBar = bottomBar.toMap(),
-            fab = fab.toMap(),
-            fabPosition = fabPosition.toMap(),
-            navigationRail = navigationRail.toMap(),
-            drawer = drawer
-        )
-    }
+    /**
+     * NavigationRail correspondiente al ancho actual.
+     */
+    @Composable
+    fun navigationRail(width: WindowWidthSizeClass) =
+        navigationRails[width]
 }

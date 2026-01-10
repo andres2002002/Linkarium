@@ -14,6 +14,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.sqlite.SQLiteException
+import com.habitiora.linkarium.core.ProcessStatus
 import com.habitiora.linkarium.core.SnackbarMessage
 import com.habitiora.linkarium.data.local.room.DatabaseContract
 import com.habitiora.linkarium.data.repository.LinkGardenRepository
@@ -25,7 +26,9 @@ import com.habitiora.linkarium.domain.usecase.LinkEntryImpl
 import com.habitiora.linkarium.domain.usecase.LinkSeedImpl
 import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LabelDescriptionTextFieldValues
 import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LinkEntryTextFieldValues
+import com.habitiora.linkarium.ui.utils.pubsAndSubs.AddSeedEventBus
 import com.habitiora.linkarium.ui.utils.pubsAndSubs.GardenSelectionManager
+import com.habitiora.linkarium.ui.utils.pubsAndSubs.NavigationEventBus
 import com.habitiora.linkarium.ui.utils.pubsAndSubs.SnackbarEventBus
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -42,11 +45,12 @@ class PlantSeedViewModel @Inject constructor(
     private val seedRepository: LinkSeedRepository,
     private val gardenRepository: LinkGardenRepository,
     private val gardenSelectionManager: GardenSelectionManager,
-    private val snackbarEventBus: SnackbarEventBus
+    private val snackbarEventBus: SnackbarEventBus,
+    private val addSeedEventBus: AddSeedEventBus,
+    private val navigationEventBus: NavigationEventBus
 ) : ViewModel() {
 
     // region State Properties
-
     private val seedId: Long? = savedStateHandle["seedId"]
 
     val gardens: StateFlow<List<LinkGarden>> = gardenRepository.getAll()
@@ -80,7 +84,10 @@ class PlantSeedViewModel @Inject constructor(
     private val _entriesList = MutableStateFlow<List<LinkEntry>>(emptyList())
     val entries: StateFlow<List<LinkEntry>> = _entriesList.asStateFlow()
 
-    val isValidSeed: StateFlow<Boolean> = combine(
+    private val _addSeedStatus = MutableStateFlow<ProcessStatus<Boolean>>(ProcessStatus.Empty)
+    val addSeedStatus: StateFlow<ProcessStatus<Boolean>> = _addSeedStatus.asStateFlow()
+
+    private val isValidSeed: StateFlow<Boolean> = combine(
         _nameNotesTextFieldValue,
         entries,
         _newEntryTextFieldValues
@@ -108,6 +115,24 @@ class PlantSeedViewModel @Inject constructor(
 
     init {
         loadSeedIfExists()
+        syncValid()
+        listenAddSeedEvent()
+    }
+
+    private fun syncValid(){
+        viewModelScope.launch {
+            isValidSeed.collect{
+                addSeedEventBus.updateEnable(it)
+            }
+        }
+    }
+
+    private fun listenAddSeedEvent() {
+        viewModelScope.launch {
+            addSeedEventBus.events.collect { event ->
+                saveSeed()
+            }
+        }
     }
 
     private fun loadSeedIfExists() {
@@ -178,6 +203,11 @@ class PlantSeedViewModel @Inject constructor(
     // region Public Actions
 
     fun setGardenIndex(index: Int) = gardenSelectionManager.selectGarden(index)
+
+    fun consumeStatusAndBackStack(){
+        _addSeedStatus.value = ProcessStatus.Empty
+        navigationEventBus.back()
+    }
 
     fun updateNameNotesTextFieldValue(key: String, value: TextFieldValue) {
         _nameNotesTextFieldValue.update {
@@ -268,13 +298,13 @@ class PlantSeedViewModel @Inject constructor(
         }
     }
 
-    fun saveSeed(onSuccess: () -> Unit) {
+    private fun saveSeed() {
         viewModelScope.launch {
             // Intentar agregar entrada actual si existe
             addEntryOfCurrent()
 
             try {
-                saveSeedInternal(onSuccess)
+                saveSeedInternal()
             } catch (e: SQLiteException) {
                 Timber.e(e, "SQLite error saving seed")
                 showErrorMessage("Error de base de datos al guardar")
@@ -320,7 +350,7 @@ class PlantSeedViewModel @Inject constructor(
         }
     }
 
-    private suspend fun saveSeedInternal(onSuccess: () -> Unit) {
+    private suspend fun saveSeedInternal() {
         if (willUpdateOrder) {
             updateOrders()
         }
@@ -338,11 +368,12 @@ class PlantSeedViewModel @Inject constructor(
             onSuccess = { savedId ->
                 Timber.d("Seed saved successfully with id: $savedId")
                 clearAllFields()
-                onSuccess()
+                _addSeedStatus.value = ProcessStatus.Success(true)
             },
             onFailure = { error ->
                 Timber.e(error, "Failed to save seed")
                 showErrorMessage("No se pudo guardar la semilla")
+                _addSeedStatus.value = ProcessStatus.Error("No se pudo guardar la semilla")
             }
         )
     }
