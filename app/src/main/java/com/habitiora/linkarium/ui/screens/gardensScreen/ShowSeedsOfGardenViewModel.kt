@@ -9,9 +9,12 @@ import com.habitiora.linkarium.core.ProcessStatus
 import com.habitiora.linkarium.data.repository.LinkGardenRepository
 import com.habitiora.linkarium.data.repository.LinkSeedRepository
 import com.habitiora.linkarium.domain.model.LinkSeed
+import com.habitiora.linkarium.ui.navigation.Screens
 import com.habitiora.linkarium.ui.scaffold.dialogs.DialogType
 import com.habitiora.linkarium.ui.scaffold.dialogs.MessageValues
+import com.habitiora.linkarium.ui.utils.pubsAndSubs.GardenSelectionManager
 import com.habitiora.linkarium.ui.utils.pubsAndSubs.MessageBus
+import com.habitiora.linkarium.ui.utils.pubsAndSubs.NavigationEventBus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +29,8 @@ import javax.inject.Inject
 class ShowSeedsOfGardenViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val seedRepository: LinkSeedRepository,
-    private val messageBus: MessageBus
+    private val messageBus: MessageBus,
+    private val navigationEventBus: NavigationEventBus
 ) : ViewModel() {
     val gardenId: Long = checkNotNull(savedStateHandle["gardenId"])
 
@@ -38,6 +42,10 @@ class ShowSeedsOfGardenViewModel @Inject constructor(
             started = SharingStarted.Eagerly,
             initialValue = PagingData.empty()
         )
+
+    fun navigateToPlantNew(id: Long){
+        navigationEventBus.navigate(Screens.PlantNew, id)
+    }
 
     fun onDeleteLinkSeed(linkSeed: LinkSeed) {
         val message = MessageValues(

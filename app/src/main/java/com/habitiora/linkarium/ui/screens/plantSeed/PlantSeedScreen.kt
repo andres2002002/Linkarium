@@ -16,11 +16,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
@@ -31,12 +29,10 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.LocalFlorist
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,6 +42,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -67,11 +64,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.akari.uicomponents.reorderableComponents.AkariReorderableColumn
 import com.akari.uicomponents.reorderableComponents.rememberAkariReorderableColumnState
 import com.akari.uicomponents.textFields.AkariTextField
+import com.akari.uicomponents.textFields.internalConfig.AkariTextFieldDefaults
 import com.akari.uicomponents.textFields.rememberAkariTextFieldConfig
 import com.habitiora.linkarium.core.DataValidator
 import com.habitiora.linkarium.domain.model.LinkEntry
 import com.habitiora.linkarium.domain.model.LinkGarden
-import com.habitiora.linkarium.ui.utils.localNavigator.LocalNavigator
 import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LabelDescriptionTextFieldValues
 import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LinkEntryTextFieldValues
 
@@ -92,20 +89,36 @@ private object DesignTokens {
 
     val CardElevation = 2.dp
     val CornerRadius = 16.dp
+
+    val containerColor: Color
+        @Composable
+        get() = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
 }
+
+@Composable
+private fun getAkariTextFieldColors() = AkariTextFieldDefaults.colors().copy(
+    focusedLabelColor = DesignTokens.containerColor,
+    unfocusedLabelColor = DesignTokens.containerColor,
+    disabledLabelColor = DesignTokens.containerColor
+)
 
 @Composable
 fun PlantSeedScreen(
     viewModel: PlantSeedViewModel = hiltViewModel()
-){
+) {
     val nameNotesTextFieldValue by viewModel.nameNotesTextFieldValue.collectAsState()
     val newEntryTextFieldValues by viewModel.newEntryTextFieldValues.collectAsState()
     val entries: List<LinkEntry> by viewModel.entries.collectAsState()
     val garden by viewModel.garden.collectAsState()
     val gardens by viewModel.gardens.collectAsState()
-    val isValidSeed by viewModel.isValidSeed.collectAsState()
 
-    val navController = LocalNavigator.current
+    val addSeedStatus by viewModel.addSeedStatus.collectAsState()
+
+    LaunchedEffect(addSeedStatus) {
+        if (addSeedStatus.isSuccess()) {
+            viewModel.consumeStatusAndBackStack()
+        }
+    }
 
     PlantSeedContent(
         garden = garden,
@@ -120,8 +133,6 @@ fun PlantSeedScreen(
         editLink = viewModel::editEntry,
         removeLink = viewModel::removeEntry,
         onMove = viewModel::moveEntry,
-        isValidSeed = isValidSeed,
-        onSave = { viewModel.saveSeed(onSuccess = {navController.popBackStack()}) }
     )
 }
 
@@ -138,14 +149,13 @@ private fun PlantSeedContent(
     addLink: () -> Unit,
     editLink: (LinkEntry) -> Unit,
     removeLink: (LinkEntry) -> Unit,
-    onMove: (Int, Int) -> Unit,
-    isValidSeed: Boolean,
-    onSave: () -> Unit
-){
+    onMove: (Int, Int) -> Unit
+) {
     val focusRequesters = remember {
         List(5) { FocusRequester() }
     }
 
+    val colorsTxtFld = getAkariTextFieldColors()
 
     LazyColumn(
         modifier = Modifier
@@ -155,7 +165,10 @@ private fun PlantSeedContent(
         verticalArrangement = Arrangement.spacedBy(DesignTokens.Padding.Medium)
     ) {
         item {
-            SectionCard(title = "Jardín") {
+            SectionCard(
+                title = "Jardín",
+                subtitle = "Selecciona el jardín al que deseas agregar esta semilla"
+            ) {
                 GardenSelector(
                     currentGarden = garden,
                     gardens = gardens,
@@ -173,6 +186,7 @@ private fun PlantSeedContent(
                 NameField(
                     nameTextFieldValue = nameNotesTextFieldValue.label,
                     focusRequester = focusRequesters[0],
+                    colorsTxtFld = colorsTxtFld,
                     onNameTextFieldValueChange = {
                         updateNameNotesTextFieldValue(
                             LabelDescriptionTextFieldValues.LABEL_KEY,
@@ -192,7 +206,12 @@ private fun PlantSeedContent(
                 LinksComponent(
                     entryTextFieldValues = newEntryTextFieldValues,
                     updateNewEntryTextFieldValues = updateNewEntryTextFieldValues,
-                    focusRequesters = Triple(focusRequesters[1], focusRequesters[2], focusRequesters[3]),
+                    focusRequesters = Triple(
+                        focusRequesters[1],
+                        focusRequesters[2],
+                        focusRequesters[3]
+                    ),
+                    colorsTxtFld = colorsTxtFld,
                     entries = entries,
                     addLink = addLink,
                     editLink = editLink,
@@ -211,6 +230,7 @@ private fun PlantSeedContent(
                 NotesField(
                     notesTextFieldValue = nameNotesTextFieldValue.description,
                     focusRequester = focusRequesters[4],
+                    colorsTxtFld = colorsTxtFld,
                     onNotesTextFieldValueChange = {
                         updateNameNotesTextFieldValue(
                             LabelDescriptionTextFieldValues.DESCRIPTION_KEY,
@@ -221,12 +241,6 @@ private fun PlantSeedContent(
             }
         }
         item { TagsComponent() }
-        item {
-            SaveButton(
-                onSave = onSave,
-                enabled = isValidSeed
-            )
-        }
     }
 }
 
@@ -240,35 +254,38 @@ private fun SectionCard(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(DesignTokens.Padding.Small)
     ) {
-        Column(modifier = Modifier.padding(horizontal = DesignTokens.Padding.ExtraSmall)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-            subtitle?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                containerColor = DesignTokens.containerColor
             ),
-            shape = MaterialTheme.shapes.large
+            shape = MaterialTheme.shapes.medium
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(DesignTokens.Padding.Medium),
-                content = content
-            )
+                    .padding(DesignTokens.Padding.Small),
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                subtitle?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(DesignTokens.Padding.ExtraSmall),
+            content = content
+        )
     }
 }
 
@@ -276,6 +293,7 @@ private fun SectionCard(
 private fun NameField(
     nameTextFieldValue: TextFieldValue,
     focusRequester: FocusRequester,
+    colorsTxtFld: TextFieldColors,
     onNameTextFieldValueChange: (TextFieldValue) -> Unit
 ) {
     val config = rememberAkariTextFieldConfig {
@@ -285,6 +303,9 @@ private fun NameField(
         }
         behavior {
             singleLine = true
+        }
+        style {
+            colors = colorsTxtFld
         }
     }
     AkariTextField(
@@ -299,6 +320,7 @@ private fun NameField(
 private fun NotesField(
     notesTextFieldValue: TextFieldValue,
     focusRequester: FocusRequester,
+    colorsTxtFld: TextFieldColors,
     onNotesTextFieldValueChange: (TextFieldValue) -> Unit
 ) {
     val config = rememberAkariTextFieldConfig {
@@ -308,6 +330,9 @@ private fun NotesField(
         }
         behavior {
             minLines = 2
+        }
+        style {
+            colors = colorsTxtFld
         }
     }
 
@@ -324,12 +349,13 @@ private fun LinksComponent(
     entryTextFieldValues: LinkEntryTextFieldValues,
     updateNewEntryTextFieldValues: (String, TextFieldValue) -> Unit,
     focusRequesters: Triple<FocusRequester, FocusRequester, FocusRequester>,
+    colorsTxtFld: TextFieldColors,
     entries: List<LinkEntry>,
     addLink: () -> Unit,
     editLink: (LinkEntry) -> Unit,
     removeLink: (LinkEntry) -> Unit,
     onMove: (Int, Int) -> Unit
-){
+) {
     var showSuccessAnimation by remember { mutableStateOf(false) }
     val urlValidation = remember(entryTextFieldValues.url.text) {
         DataValidator.validateUrl(entryTextFieldValues.url.text)
@@ -345,6 +371,7 @@ private fun LinksComponent(
             notesTextFieldValue = entryTextFieldValues.note,
             labelFocusRequester = focusRequesters.second,
             notesFocusRequester = focusRequesters.third,
+            colorsTxtFld = colorsTxtFld,
             onLabelTextFieldValueChange = {
                 updateNewEntryTextFieldValues(LinkEntryTextFieldValues.LABEL_KEY, it)
             },
@@ -355,29 +382,22 @@ private fun LinksComponent(
         Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(DesignTokens.Padding.Small),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 LinksTextField(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
                     newUrlTextFieldValue = entryTextFieldValues.url,
                     focusRequester = focusRequesters.first,
+                    colorsTxtFld = colorsTxtFld,
                     onNewUrlTextFieldValueChange = {
                         updateNewEntryTextFieldValues(LinkEntryTextFieldValues.URL_KEY, it)
-                    }
-                )
-
-                FilledIconButton(
-                    modifier = Modifier.offset(y = DesignTokens.Padding.Small),
-                    onClick = {
+                    },
+                    enabledAddIcon = isUrlValid,
+                    onAddLink = {
                         addLink()
                         showSuccessAnimation = true
-                    },
-                    enabled = isUrlValid,
-                    shape = CircleShape
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Agregar enlace")
-                }
+                    }
+                )
             }
 
             // Mensaje de error
@@ -445,9 +465,10 @@ private fun LinksMetaData(
     notesTextFieldValue: TextFieldValue,
     labelFocusRequester: FocusRequester,
     notesFocusRequester: FocusRequester,
+    colorsTxtFld: TextFieldColors,
     onLabelTextFieldValueChange: (TextFieldValue) -> Unit,
     onNotesTextFieldValueChange: (TextFieldValue) -> Unit
-){
+) {
 
     var isAddMetadata by rememberSaveable { mutableStateOf(false) }
 
@@ -503,6 +524,9 @@ private fun LinksMetaData(
                     behavior {
                         singleLine = true
                     }
+                    style {
+                        colors = colorsTxtFld
+                    }
                 }
 
                 val notesConfig = rememberAkariTextFieldConfig {
@@ -513,6 +537,9 @@ private fun LinksMetaData(
                     behavior {
                         minLines = 2
                         maxLines = 4
+                    }
+                    style {
+                        colors = colorsTxtFld
                     }
                 }
 
@@ -538,7 +565,10 @@ private fun LinksTextField(
     modifier: Modifier = Modifier,
     newUrlTextFieldValue: TextFieldValue = TextFieldValue(""),
     focusRequester: FocusRequester,
-    onNewUrlTextFieldValueChange: (TextFieldValue) -> Unit = {}
+    colorsTxtFld: TextFieldColors,
+    onNewUrlTextFieldValueChange: (TextFieldValue) -> Unit = {},
+    enabledAddIcon: Boolean = true,
+    onAddLink: () -> Unit = {}
 ) {
     val config = rememberAkariTextFieldConfig {
         slots {
@@ -551,9 +581,23 @@ private fun LinksTextField(
                     contentDescription = null
                 )
             }
+            trailingIcon = {
+                IconButton(
+                    onClick = onAddLink,
+                    enabled = enabledAddIcon
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Agregar enlace"
+                    )
+                }
+            }
         }
         behavior {
             singleLine = true
+        }
+        style {
+            colors = colorsTxtFld
         }
     }
 
@@ -565,13 +609,14 @@ private fun LinksTextField(
         focusRequester = focusRequester
     )
 }
+
 @Composable
 private fun LinksList(
     entries: List<LinkEntry>,
     onMove: (Int, Int) -> Unit,
     editLink: (LinkEntry) -> Unit,
     removeLink: (LinkEntry) -> Unit
-){
+) {
     val state = rememberAkariReorderableColumnState<LinkEntry> { from, to ->
         onMove(from, to)
     }
@@ -601,7 +646,7 @@ private fun LinkItem(
     entry: LinkEntry,
     onClear: () -> Unit,
     onEdit: () -> Unit,
-){
+) {
     val elevation by animateDpAsState(
         targetValue = if (isDragging) 8.dp else 0.dp,
         label = "elevation"
@@ -671,7 +716,7 @@ private fun LinkItem(
 }
 
 @Composable
-private fun TagsComponent(){
+private fun TagsComponent() {
     Text("Tags")
     Spacer(modifier = Modifier.height(PaddingSmall))
     TextField(
@@ -690,7 +735,7 @@ private fun GardenSelector(
     var expanded by remember { mutableStateOf(false) }
     val accountValid = gardens.any { it.id == currentGarden.id }
 
-    Box(modifier = Modifier){
+    Box(modifier = Modifier) {
         OutlinedCard(
             onClick = { expanded = !expanded },
             colors = CardDefaults.outlinedCardColors(
@@ -801,18 +846,5 @@ private fun GardenSelector(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun SaveButton(
-    onSave: () -> Unit,
-    enabled: Boolean
-){
-    Button(
-        onClick = onSave,
-        enabled = enabled
-    ) {
-        Text("Save")
     }
 }
