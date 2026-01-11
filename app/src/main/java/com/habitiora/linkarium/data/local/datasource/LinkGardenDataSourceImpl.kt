@@ -3,7 +3,6 @@ package com.habitiora.linkarium.data.local.datasource
 import com.habitiora.linkarium.data.local.room.dao.LinkGardenEntityDao
 import com.habitiora.linkarium.data.local.usecase.toEntity
 import com.habitiora.linkarium.domain.model.LinkGarden
-import com.habitiora.linkarium.domain.model.LinkGardenWithSeeds
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -27,12 +26,6 @@ class LinkGardenDataSourceImpl @Inject constructor(
 
     override fun getAll(): Flow<List<LinkGarden>> =
         dao.getAll()
-
-    override suspend fun getAllForExport(): List<LinkGarden> =
-        dao.getAllForExport()
-
-    override suspend fun getForList(ids: List<Long>): List<LinkGarden> =
-        dao.getForList(ids)
 
     override fun getById(id: Long): Flow<LinkGarden?> =
         dao.getById(id)

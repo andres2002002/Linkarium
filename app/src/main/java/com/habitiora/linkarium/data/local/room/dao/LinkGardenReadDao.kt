@@ -26,5 +26,13 @@ interface LinkGardenReadDao {
         SELECT * FROM ${DatabaseContract.LinkGarden.TABLE_NAME}
         ORDER BY id DESC
     """)
-    fun getGardensForExport(): List<LinkGardenAggregate>
+    suspend fun getAllGardensForExport(): List<LinkGardenAggregate>
+
+    @Transaction
+    @Query("""
+        SELECT * FROM ${DatabaseContract.LinkGarden.TABLE_NAME}
+        WHERE id IN (:gardenIds)
+        ORDER BY id DESC
+    """)
+    suspend fun getGardensForExport(gardenIds: List<Long>): List<LinkGardenAggregate>
 }
