@@ -1,6 +1,5 @@
 package com.habitiora.linkarium.ui.navigation
 
-import androidx.compose.material3.Text
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -9,6 +8,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.habitiora.linkarium.ui.screens.export.ExportScreen
 import com.habitiora.linkarium.ui.screens.gardensScreen.GardensScreen
 import com.habitiora.linkarium.ui.screens.gardensScreen.ShowSeedsOfGarden
 import com.habitiora.linkarium.ui.screens.plantSeed.PlantSeedScreen
@@ -26,7 +26,7 @@ fun NavigationHost(
     ) {
         NavHost(
             navController = navController,
-            startDestination = Screens.ShowGarden.route
+            startDestination = Screens.Export.route
         ) {
             composable(route = Screens.ShowGarden.route) {
                 ShowGardenScreen()
@@ -36,6 +36,9 @@ fun NavigationHost(
             }
             composable(route = Screens.Settings.route) {
                 SettingsScreen()
+            }
+            composable(route = Screens.Export.route) {
+                ExportScreen()
             }
             composable(
                 route = Screens.PlantNew.route,

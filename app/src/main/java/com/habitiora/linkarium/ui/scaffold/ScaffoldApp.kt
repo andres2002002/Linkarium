@@ -57,6 +57,7 @@ import com.habitiora.linkarium.ui.scaffold.dialogs.DialogApp
 import com.habitiora.linkarium.ui.screens.gardenManager.GardenManagerDialog
 import com.habitiora.linkarium.ui.utils.navigationEvents.NavigationEvent
 import com.habitiora.linkarium.ui.utils.nevControllerFunctions.navigateTo
+import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,6 +81,7 @@ fun ScaffoldApp(
         viewModel.navigationEvents.collect { event ->
             when (event) {
                 is NavigationEvent.To -> {
+                    Timber.d("Navigating to ${event.screen.route}, is top level: ${event.screen.isTopLevel}")
                     navController.navigateTo(screen = event.screen, event.id, event.inclusive)
                 }
                 NavigationEvent.Back -> { navController.popBackStack() }

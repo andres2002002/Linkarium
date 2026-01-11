@@ -8,14 +8,11 @@ import com.habitiora.linkarium.core.exporters.ExportContent
 import com.habitiora.linkarium.core.exporters.ExportFormat
 import com.habitiora.linkarium.core.exporters.ExportRequest
 import com.habitiora.linkarium.data.local.datasource.ExportDataSource
-import com.habitiora.linkarium.data.local.datasource.LinkGardenDataSource
-import com.habitiora.linkarium.data.local.datasource.LinkSeedDataSource
 import com.habitiora.linkarium.domain.model.Exporter
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 class JsonExporter @Inject constructor(
-    private val gardenDataSource: LinkGardenDataSource,
     private val exportDataSource: ExportDataSource,
     @ApplicationContext private val context: Context
 ) : Exporter {
@@ -29,8 +26,7 @@ class JsonExporter @Inject constructor(
 
     override suspend fun export(request: ExportRequest) {
         val content = when (request.content) {
-            is ExportContent.OnlyGardens -> gardenDataSource.getForList(request.content.gardenIds)
-            is ExportContent.GardenAndSeeds -> exportDataSource.getGardensWithSeeds(request.content.gardenIds)
+            is ExportContent.Gardens -> exportDataSource.getGardensWithSeeds(request.content.gardenIds)
             ExportContent.FullBackup -> exportDataSource.getAllGardensWithSeeds()
         }
 
