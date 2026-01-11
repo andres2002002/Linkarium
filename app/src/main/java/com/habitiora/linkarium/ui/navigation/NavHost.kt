@@ -26,7 +26,7 @@ fun NavigationHost(
     ) {
         NavHost(
             navController = navController,
-            startDestination = Screens.Export.route
+            startDestination = Screens.ShowGarden.route
         ) {
             composable(route = Screens.ShowGarden.route) {
                 ShowGardenScreen()

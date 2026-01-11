@@ -12,6 +12,10 @@ import javax.inject.Singleton
 class LinkEntryDataSourceImpl @Inject constructor(
     private val dao: LinkEntryEntityDao
 ): LinkEntryDataSource {
+    override suspend fun upsertAll(entries: List<LinkEntryEntity>) =
+        dao.upsertAll(entries)
+    override suspend fun deleteMissing(seedId: Long, keepIds: List<Long>) =
+        dao.deleteMissing(seedId, keepIds)
     override suspend fun insert(linkEntry: LinkEntry): Long =
         dao.insert(linkEntry.toEntity())
     override suspend fun insertAll(linkEntries: List<LinkEntry>): List<Long> =

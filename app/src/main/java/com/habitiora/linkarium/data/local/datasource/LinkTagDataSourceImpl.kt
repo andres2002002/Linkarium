@@ -12,6 +12,8 @@ import javax.inject.Singleton
 class LinkTagDataSourceImpl @Inject constructor(
     private val dao: LinkTagEntityDao
 ): LinkTagDataSource {
+    override suspend fun upsertAll(tags: List<LinkTagEntity>) =
+        dao.upsertAll(tags)
     override suspend fun insert(linkTag: LinkTag): Long =
         dao.insert(linkTag.toEntity())
     override suspend fun insertAll(linkTags: List<LinkTag>): List<Long> =

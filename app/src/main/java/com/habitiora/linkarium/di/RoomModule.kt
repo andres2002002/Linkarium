@@ -41,6 +41,14 @@ object RoomModule {
 
     @Provides
     @Singleton
+    fun provideLinkSeedReadDao(appDatabase: AppDatabase) = appDatabase.linkSeedReadDao()
+
+    @Provides
+    @Singleton
+    fun provideLinkGardenReadDao(appDatabase: AppDatabase) = appDatabase.linkGardenReadDao()
+
+    @Provides
+    @Singleton
     fun provideLinkTagDao(appDatabase: AppDatabase) = appDatabase.linkTagDao()
 
     @Provides

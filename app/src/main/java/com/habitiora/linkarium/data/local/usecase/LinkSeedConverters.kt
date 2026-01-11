@@ -21,8 +21,8 @@ fun LinkSeed.toEntity(): LinkSeedEntity = LinkSeedEntity(
 
 fun LinkSeed.toComplete(): LinkSeedComplete {
     val seedEntity = this.toEntity()
-    val tags: List<LinkTagEntity> = this.tags.toListTagEntity()
-    val links: List<LinkEntryEntity> = this.links.toListEntryEntity()
+    val tags: List<LinkTagEntity> = this.tags.toTagEntities()
+    val links: List<LinkEntryEntity> = this.links.toEntryEntities()
     return LinkSeedComplete(
         seed = seedEntity,
         tags = tags,
@@ -49,10 +49,10 @@ fun LinkSeedEntity.toDomain(
 fun List<LinkSeedComplete>.toListDomain(): List<LinkSeed> =
     this.map { it.toDomain() }
 
-fun List<LinkTag>.toListTagEntity(newSeed: Long? = null): List<LinkTagEntity> =
+fun List<LinkTag>.toTagEntities(newSeed: Long? = null): List<LinkTagEntity> =
     this.map { it.toEntity(newSeed) }
 
-fun List<LinkEntry>.toListEntryEntity(newSeed: Long? = null): List<LinkEntryEntity> =
+fun List<LinkEntry>.toEntryEntities(newSeed: Long? = null): List<LinkEntryEntity> =
     this.map { it.toEntity(newSeed) }
 
 fun LinkTag.toEntity(newSeed: Long? = null): LinkTagEntity = LinkTagEntity(
