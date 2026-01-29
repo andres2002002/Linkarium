@@ -14,12 +14,4 @@ object LinkTagSchema {
             ExportField("tag", LinkTagEntity::tag)
         )
     )
-
-    val domainSchema = ExportSchema(
-        listOf(
-            ExportField("id", LinkTag::id),
-            ExportField("seedId", LinkTag::seedId),
-            ExportField("tag", LinkTag::tag)
-        )
-    )
 }

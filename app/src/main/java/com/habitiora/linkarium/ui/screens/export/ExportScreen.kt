@@ -20,16 +20,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
@@ -47,6 +53,7 @@ import com.habitiora.linkarium.core.exporters.ExportContent
 import com.habitiora.linkarium.core.exporters.ExportFormat
 import com.habitiora.linkarium.core.exporters.ExportRequest
 import com.habitiora.linkarium.core.exporters.ExportState
+import com.habitiora.linkarium.core.exporters.ExportStatus
 import com.habitiora.linkarium.domain.model.LinkGarden
 import com.habitiora.linkarium.ui.utils.ExportSelectionMode
 
@@ -64,7 +71,7 @@ object ExportTokens{
 fun ExportScreen(
     viewModel: ExportViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val exportStatus by viewModel.exportStatus.collectAsState()
     val exportFormat by viewModel.exportFormat.collectAsState()
     val exportSelectionMode by viewModel.exportSelectionMode.collectAsState()
     val gardens by viewModel.gardens.collectAsState()
@@ -77,8 +84,12 @@ fun ExportScreen(
         viewModel.export(uri)
     }
 
+    ExportProgressDialog(
+        status = exportStatus,
+        onDismiss = { viewModel.resetStatus() }
+    )
+
     ExportContentScreen(
-        state = state,
         format = exportFormat,
         exportSelectionMode = exportSelectionMode,
         onExport = { launcher.launch("${exportFormat?.createFileName()}") },
@@ -93,8 +104,49 @@ fun ExportScreen(
 private fun ExportFormat?.createFileName(name: String = "Linkarium_Backup") = "$name.${this?.extension}"
 
 @Composable
+fun ExportProgressDialog(
+    status: ExportStatus,
+    onDismiss: () -> Unit
+) {
+    if (status is ExportStatus.Idle) return
+
+    AlertDialog(
+        onDismissRequest = { /* Bloquear cierre si está cargando, o permitir cancelar */ },
+        title = { Text(text = "Exportando Datos") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                when (status) {
+                    is ExportStatus.InProgress -> {
+                        Text("Procesando item ${status.current} de ${status.total}")
+                        LinearProgressIndicator(
+                            progress = { status.percentage },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    is ExportStatus.Success -> {
+                        Text("¡Exportación completada exitosamente!")
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.Green)
+                    }
+                    is ExportStatus.Error -> {
+                        Text("Error: ${status.exception.localizedMessage}")
+                        Icon(Icons.Default.Error, contentDescription = null, tint = Color.Red)
+                    }
+                    else -> {}
+                }
+            }
+        },
+        confirmButton = {
+            if (status !is ExportStatus.InProgress) {
+                TextButton(onClick = onDismiss) {
+                    Text("Cerrar")
+                }
+            }
+        }
+    )
+}
+
+@Composable
 private fun ExportContentScreen(
-    state: ExportState,
     format: ExportFormat?,
     exportSelectionMode: ExportSelectionMode,
     onExport: () -> Unit,

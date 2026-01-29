@@ -49,10 +49,3 @@ sealed interface ExportNode<T>{
         val schema: ExportSchema<C>
     ) : ExportNode<T>
 }
-/*
-    (
-    val header: String,
-    val property: KProperty1<T, *>,
-    val formatter: (Any?) -> String = { it?.toString() ?: "" }
-)
-*/

@@ -6,7 +6,6 @@ import com.habitiora.linkarium.core.exporters.ExportNode.ExportField
 
 
 object LinkGardenSchema {
-
     val schema = ExportSchema(
         listOf(
             ExportField("id", LinkGarden::id),

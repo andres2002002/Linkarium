@@ -17,15 +17,4 @@ object LinkEntrySchema {
             ExportField("note", LinkEntryEntity::note)
         )
     )
-
-    val domainSchema = ExportSchema(
-        listOf(
-            ExportField("id", LinkEntry::id),
-            ExportField("seedId", LinkEntry::seedId),
-            ExportField("order", LinkEntry::order),
-            ExportField("uri", LinkEntry::uri),
-            ExportField("label", LinkEntry::label),
-            ExportField("note", LinkEntry::note)
-        )
-    )
 }

@@ -10,22 +10,12 @@ import kotlinx.serialization.json.JsonPrimitive
 class ExportSchema<T>(
     private val fields: List<ExportNode<T>>
 ) {
-    companion object {
-        private val tokenRegex: Regex
-            get() = "@([a-zA-Z0-9_]+)".toRegex()
-        val listRegex: Regex
-            get() = "#([a-zA-Z0-9_]+)".toRegex()
-        private val listKeyRegex = "#([a-zA-Z0-9_]+):([a-zA-Z0-9_]+)".toRegex()
 
-        // Helper simple para escapar caracteres especiales en strings JSON
-        private fun escapeJson(raw: String): String {
-            return raw.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t")
-        }
+    private val jsonConfig = Json {
+        prettyPrint = true // False para ahorrar bytes en archivos grandes, o true si es para lectura humana
+        encodeDefaults = true
     }
+
 
     // Mapa rápido para buscar nodos por su header original
     private val fieldMap: Map<String, ExportNode<T>> = fields.associateBy { it.header }
@@ -34,26 +24,32 @@ class ExportSchema<T>(
     private val simpleFields: List<ExportNode.ExportField<T>> = fields.filterIsInstance<ExportNode.ExportField<T>>()
 
     /**
-     * Procesa un template JSON y retorna un nuevo JSON string con los datos inyectados.
+     * 1. Prepara el template una sola vez.
+     * Esto evita parsear el String miles de veces.
      */
-    fun generateJsonFromTemplate(entity: T, templateJsonString: String): String {
-        val templateElement = Json.parseToJsonElement(templateJsonString)
-        val resultElement = processElement(entity, templateElement)
-        return Json { prettyPrint = true }.encodeToString(resultElement)
+    fun prepareTemplate(templateJsonString: String): JsonElement {
+        return Json.parseToJsonElement(templateJsonString)
     }
+
+    /**
+     * 2. Procesa una entidad usando un template ya preparado.
+     * Retorna el String JSON de esa única entidad.
+     */
+    fun processEntity(entity: T, templateElement: JsonElement): String {
+        val resultElement = processElement(entity, templateElement)
+        return jsonConfig.encodeToString(resultElement)
+    }
+
+    // --- Lógica Interna (La misma de antes, pero adaptada a recursividad eficiente) ---
 
     private fun processElement(entity: T, template: JsonElement): JsonElement {
         return when (template) {
             is JsonObject -> processJsonObject(entity, template)
             is JsonPrimitive -> {
-                if (template.isString) {
-                    // Si es string, hacemos reemplazo de tokens: "Hola @name"
-                    JsonPrimitive(replaceTokens(template.content, entity))
-                } else {
-                    template // Números o booleanos se quedan igual
-                }
+                if (template.isString) JsonPrimitive(replaceTokens(template.content, entity))
+                else template
             }
-            is JsonArray -> template // Arrays directos en el template no suelen tener lógica, se devuelven tal cual
+            is JsonArray -> template // Arrays estáticos se quedan igual
         }
     }
 
@@ -61,40 +57,25 @@ class ExportSchema<T>(
         val resultMap = mutableMapOf<String, JsonElement>()
 
         jsonObject.entries.forEach { (key, element) ->
-            // 1. Analizamos la llave: "source:target" o solo "target"
             val parts = key.split(":", limit = 2)
             val sourceHeader = parts.first()
             val targetKey = if (parts.size > 1) parts[1] else sourceHeader
 
-            // 2. Buscamos si existe ese nodo en nuestro Schema
             val node = fieldMap[sourceHeader]
 
             when (node) {
-                // Caso A: Es una Lista Anidada (detectado por el Schema)
                 is ExportNode.ExportNestedList<T, *> -> {
-                    // Buscamos la definición del schema interno en el template
-                    // El usuario usa "$schema" dentro del objeto para definir la estructura de los hijos
-                    val innerTemplate = (element as? JsonObject)?.get("\$schema")
-
+                    val innerTemplate = (element as? JsonObject)?.get($$"$schema")
                     if (innerTemplate != null) {
                         resultMap[targetKey] = processNestedList(node, entity, innerTemplate)
                     } else {
-                        // Si no hay $schema, intentamos serializar por defecto o ignorar
                         resultMap[targetKey] = JsonArray(emptyList())
                     }
                 }
-
-                // Caso B: Es una Entidad Anidada
                 is ExportNode.ExportNestedEntity<T, *> -> {
                     resultMap[targetKey] = processNestedEntity(node, entity, element)
                 }
-
-                // Caso C: Es un campo simple o un campo que no existe en el schema (custom fields)
-                // Si el nodo es null (no existe en schema), asumimos que es un campo estático/custom del template
-                // y procesamos su valor buscando tokens.
                 else -> {
-                    // Usamos la key original del template (key completa) si no hubo match con source
-                    // Si hubo match con Field, usamos targetKey.
                     val finalKey = if (node != null) targetKey else key
                     resultMap[finalKey] = processElement(entity, element)
                 }
@@ -103,54 +84,26 @@ class ExportSchema<T>(
         return JsonObject(resultMap)
     }
 
-    // --- Helpers de Recursividad ---
-
     @Suppress("UNCHECKED_CAST")
-    private fun <C> processNestedList(
-        node: ExportNode.ExportNestedList<T, C>,
-        parentEntity: T,
-        template: JsonElement
-    ): JsonArray {
-        val list = node.property.get(parentEntity)
-        val jsonItems = list.map { childItem ->
-            // Recursión: El schema del hijo procesa el template del hijo
-            // OJO: Aquí 'processElement' debe ser accesible, o llamamos recursivamente a lógica interna
-            // Como 'node.schema' es otro ExportSchema, necesitamos exponer un método interno o usar helper.
-            // Simplificación: Duplicamos lógica o hacemos público el processElement en la clase.
-            // Para mantener encapsulamiento, delegamos al schema hijo:
-            node.schema.processInternal(childItem, template)
-        }
-        return JsonArray(jsonItems)
+    private fun <C> processNestedList(node: ExportNode.ExportNestedList<T, C>, parent: T, template: JsonElement): JsonArray {
+        val list = node.property.get(parent)
+        return JsonArray(list.map { node.schema.processInternal(it, template) })
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun <C> processNestedEntity(
-        node: ExportNode.ExportNestedEntity<T, C>,
-        parentEntity: T,
-        template: JsonElement
-    ): JsonElement {
-        val childEntity = node.property.get(parentEntity)
-        return if (childEntity == null) {
-            JsonNull
-        } else {
-            node.schema.processInternal(childEntity, template)
-        }
+    private fun <C> processNestedEntity(node: ExportNode.ExportNestedEntity<T, C>, parent: T, template: JsonElement): JsonElement {
+        val child = node.property.get(parent) ?: return JsonNull
+        return node.schema.processInternal(child, template)
     }
 
-    // Método helper para permitir la recursión entre Schemas distintos
-    fun processInternal(entity: T, template: JsonElement): JsonElement {
-        return processElement(entity, template)
-    }
+    fun processInternal(entity: T, template: JsonElement): JsonElement = processElement(entity, template)
 
-    private fun replaceTokens(templateString: String, entity: T): String {
-        var result = templateString
-        // Iteramos solo sobre los campos simples definidos en este esquema
-        simpleFields.forEach { field ->
-            val token = "@${field.header}"
-            if (result.contains(token)) {
-                result = result.replace(token, field.getValue(entity))
-            }
+    private fun replaceTokens(template: String, entity: T): String {
+        var res = template
+        simpleFields.forEach { f ->
+            // Optimización: solo reemplaza si contiene el token
+            if (res.contains("@${f.header}")) res = res.replace("@${f.header}", f.getValue(entity))
         }
-        return result
+        return res
     }
 }

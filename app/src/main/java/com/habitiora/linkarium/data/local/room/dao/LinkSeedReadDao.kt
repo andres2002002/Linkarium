@@ -15,6 +15,9 @@ interface LinkSeedReadDao {
     @Query("SELECT * FROM ${DatabaseContract.LinkSeed.TABLE_NAME}")
     fun getAll(): Flow<List<LinkSeedAggregate>>
 
+    @Query("SELECT COUNT(*) FROM ${DatabaseContract.LinkSeed.TABLE_NAME}")
+    suspend fun count(): Int
+
     @Transaction
     @Query("""
         SELECT * FROM ${DatabaseContract.LinkSeed.TABLE_NAME}

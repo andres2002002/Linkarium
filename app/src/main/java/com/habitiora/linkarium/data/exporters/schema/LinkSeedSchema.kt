@@ -27,24 +27,4 @@ object LinkSeedSchema {
             )
         )
     )
-
-    private val domainSchema = ExportSchema(
-        listOf(
-            ExportField("id", LinkSeed::id),
-            ExportField("name", LinkSeed::name),
-            ExportField("gardenId", LinkSeed::gardenId),
-            ExportField("order", LinkSeed::order),
-            ExportField(
-                header = "isFavorite",
-                property = LinkSeed::isFavorite,
-                formatter = ExportFormatters.boolean01
-            ),
-            ExportField("notes", LinkSeed::notes),
-            ExportField(
-                header = "modifiedAt",
-                property = LinkSeed::modifiedAt,
-                formatter = ExportFormatters.isoDateTime
-            )
-        )
-    )
 }
