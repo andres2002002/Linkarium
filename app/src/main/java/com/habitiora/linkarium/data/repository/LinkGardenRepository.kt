@@ -2,7 +2,6 @@ package com.habitiora.linkarium.data.repository
 
 import com.habitiora.linkarium.core.ProcessStatus
 import com.habitiora.linkarium.domain.model.LinkGarden
-import com.habitiora.linkarium.domain.model.LinkGardenWithSeeds
 import com.habitiora.linkarium.domain.model.LinkSeed
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow

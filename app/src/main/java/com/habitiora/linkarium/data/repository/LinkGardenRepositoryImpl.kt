@@ -15,12 +15,7 @@ class LinkGardenRepositoryImpl @Inject constructor(
     private val db: AppDatabase,
     private val gardenDataSource: LinkGardenDataSource
 ): LinkGardenRepository {
-
-    // ---------------------------------------------------------
-    // 📖 READ Operations - Cache-First Strategy
-    // ---------------------------------------------------------
-
-    // Obtener todos los jardines con soporte de caché
+    // Obtener todos los jardines
     override fun getAll(): Flow<List<LinkGarden>> =
         gardenDataSource.getAll()
 
@@ -31,48 +26,28 @@ class LinkGardenRepositoryImpl @Inject constructor(
      * Inserta un nuevo jardín con validaciones
      */
     override suspend fun insert(linkGarden: LinkGarden): Result<Long> =
-        db.withTransaction {
-            runCatching {
-                require(linkGarden.name.isNotBlank()) { "El nombre no puede estar vacío" }
-                require(linkGarden.id <= 0) { "El ID debe ser 0 o negativo para inserción" }
+        runCatching {
+            require(linkGarden.name.isNotBlank()) { "El nombre no puede estar vacío" }
+            require(linkGarden.id <= 0) { "El ID debe ser 0 o negativo para inserción" }
+            db.withTransaction {
                 val maxOrder = gardenDataSource.getMaxOrder()
-                val id = gardenDataSource.insert(linkGarden.update(order = maxOrder + 1))
-                id
-            }.onSuccess { id ->
-                Timber.d("Inserted garden with id: $id")
-            }.onFailure { e ->
-                Timber.e(e, "Error inserting garden")
+                gardenDataSource.insert(linkGarden.update(order = maxOrder + 1))
             }
         }
-
 
     /**
      * Actualiza un jardín existente
      * Invalida caché relacionado para mantener consistencia
      */
     override suspend fun update(linkGarden: LinkGarden): Result<Unit> =
-        db.withTransaction {
-            runCatching {
-                require(linkGarden.id > 0) { "El ID debe ser válido para actualización" }
-                require(linkGarden.name.isNotBlank()) { "El nombre no puede estar vacío" }
-                gardenDataSource.update(linkGarden)
-            }.onSuccess {
-                Timber.d("Updated garden with id: ${linkGarden.id}")
-            }.onFailure { e ->
-                Timber.e(e, "Error updating garden")
-            }
+        runCatching {
+            require(linkGarden.id > 0) { "El ID debe ser válido para actualización" }
+            require(linkGarden.name.isNotBlank()) { "El nombre no puede estar vacío" }
+            gardenDataSource.update(linkGarden)
         }
 
     override suspend fun update(linkGardens: List<LinkGarden>): Result<Unit> =
-        db.withTransaction {
-            runCatching {
-                gardenDataSource.update(linkGardens)
-            }.onSuccess {
-                Timber.d("Updated ${linkGardens.size} gardens")
-            }.onFailure { e ->
-                Timber.e(e, "Error updating gardens")
-            }
-        }
+        runCatching { gardenDataSource.update(linkGardens) }
 
 
     /**
@@ -80,15 +55,9 @@ class LinkGardenRepositoryImpl @Inject constructor(
      * Limpieza atómica de caché y BD
      */
     override suspend fun delete(linkGarden: LinkGarden): Result<Unit> =
-        db.withTransaction {
-            runCatching {
-                require(linkGarden.id > 0) { "El ID debe ser válido" }
-                deleteById(linkGarden.id).getOrThrow()
-            }.onSuccess {
-                Timber.d("Deleted garden with id: ${linkGarden.id}")
-            }.onFailure { e ->
-                Timber.e(e, "Error deleting garden")
-            }
+        runCatching {
+            require(linkGarden.id > 0) { "El ID debe ser válido" }
+            gardenDataSource.delete(linkGarden)
         }
 
 
@@ -96,29 +65,11 @@ class LinkGardenRepositoryImpl @Inject constructor(
      * Elimina un jardín por ID con limpieza completa
      */
     override suspend fun deleteById(id: Long): Result<Unit> =
-        db.withTransaction {
-            runCatching {
-                require(id > 0) { "El ID debe ser válido" }
-                gardenDataSource.deleteById(id)
-            }.onSuccess {
-                Timber.d("Deleted garden with id: $id")
-            }.onFailure { e ->
-                Timber.e(e, "Error deleting garden")
-            }
-        }
-
+        runCatching { gardenDataSource.deleteById(id) }
 
     /**
      * Elimina todos los jardines y limpia todos los datos del caché
      */
     override suspend fun deleteAll(): Result<Unit> =
-        db.withTransaction {
-            runCatching {
-                gardenDataSource.deleteAll()
-            }.onSuccess {
-                Timber.d("Deleted all gardens")
-            }.onFailure { e ->
-                Timber.e(e, "Error deleting all gardens")
-            }
-        }
+        runCatching { gardenDataSource.deleteAll() }
 }

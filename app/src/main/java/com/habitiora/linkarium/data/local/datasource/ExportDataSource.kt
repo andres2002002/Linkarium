@@ -1,45 +1,27 @@
 package com.habitiora.linkarium.data.local.datasource
 
-import androidx.room.withTransaction
-import com.habitiora.linkarium.data.local.room.AppDatabase
-import com.habitiora.linkarium.data.local.room.entity.LinkSeedEntity
-import com.habitiora.linkarium.data.local.usecase.toDomain
-import com.habitiora.linkarium.domain.model.LinkGarden
-import com.habitiora.linkarium.domain.model.LinkSeed
-import kotlinx.coroutines.flow.first
+import com.habitiora.linkarium.data.local.room.dao.LinkGardenReadDao
+import com.habitiora.linkarium.data.local.room.dao.LinkSeedReadDao
+import com.habitiora.linkarium.data.local.room.relations.LinkGardenAggregate
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class ExportDataSource @Inject constructor(
-    private val db: AppDatabase,
-    private val gardenDataSource: LinkGardenDataSource,
-    private val seedDataSource: LinkSeedDataSource,
-    private val entryDataSource: LinkEntryDataSource,
-    private val tagDataSource: LinkTagDataSource
+    private val linkGardenReadDao: LinkGardenReadDao,
+    private val linkSeedReadDao: LinkSeedReadDao
 ) {
 
-    suspend fun getGardensWithSeeds(ids: List<Long>): Map<LinkGarden, List<LinkSeed>> =
-        db.withTransaction {
-            val gardens = gardenDataSource.getForList(ids)
-            gardens.associateWith { garden ->
-                getSeedsOf(garden.id)
-            }
-        }
+    suspend fun countGardens(): Int = linkGardenReadDao.count()
 
-    suspend fun getAllGardensWithSeeds(): Map<LinkGarden, List<LinkSeed>> =
-        db.withTransaction {
-            val gardens = gardenDataSource.getAllForExport()
-            gardens.associateWith { garden ->
-                getSeedsOf(garden.id)
-            }
-        }
+    suspend fun getGardensWithSeeds(ids: List<Long>): List<LinkGardenAggregate> =
+            linkGardenReadDao.getGardensForExport(ids)
 
-    suspend fun getSeedsOf(gardenId: Long): List<LinkSeed> =
-        seedDataSource.getSeedsForExport(gardenId)
-            .map { getLinkSeedDomain(it) }
+    suspend fun getAllGardensWithSeeds(): List<LinkGardenAggregate> =
+        linkGardenReadDao.getAllGardensForExport()
 
-    suspend fun getLinkSeedDomain(seed: LinkSeedEntity): LinkSeed {
-        val entries = entryDataSource.getLinksBySeed(seed.id).first()
-        val tags = tagDataSource.getTagsBySeed(seed.id).first()
-        return seed.toDomain(entries, tags)
-    }
+    fun getAllGardensWithSeedsFlow(): Flow<List<LinkGardenAggregate>> =
+        linkGardenReadDao.getAllGardensForExportFlow()
+
+    fun getGardensWithSeedsFlow(ids: List<Long>): Flow<List<LinkGardenAggregate>> =
+        linkGardenReadDao.getGardensForExportFlow(ids)
 }

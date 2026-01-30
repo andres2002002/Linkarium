@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Upsert
 import com.habitiora.linkarium.data.local.room.DatabaseContract
 import com.habitiora.linkarium.data.local.room.entity.LinkTagEntity
 import kotlinx.coroutines.flow.Flow
@@ -15,6 +16,8 @@ interface LinkTagEntityDao {
     companion object {
         const val TABLE_NAME = DatabaseContract.LinkTag.TABLE_NAME
     }
+    @Upsert
+    suspend fun upsertAll(tags: List<LinkTagEntity>)
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(linkTag: LinkTagEntity): Long
     @Insert(onConflict = OnConflictStrategy.ABORT)

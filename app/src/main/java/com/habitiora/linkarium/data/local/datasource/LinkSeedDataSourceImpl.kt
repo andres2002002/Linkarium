@@ -2,7 +2,6 @@ package com.habitiora.linkarium.data.local.datasource
 
 import androidx.paging.PagingSource
 import com.habitiora.linkarium.data.local.room.dao.LinkSeedEntityDao
-import com.habitiora.linkarium.data.local.room.entity.LinkSeedComplete
 import com.habitiora.linkarium.data.local.room.entity.LinkSeedEntity
 import com.habitiora.linkarium.data.local.usecase.toEntity
 import com.habitiora.linkarium.domain.model.LinkSeed

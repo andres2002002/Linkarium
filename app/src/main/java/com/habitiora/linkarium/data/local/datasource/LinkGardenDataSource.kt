@@ -1,7 +1,6 @@
 package com.habitiora.linkarium.data.local.datasource
 
 import com.habitiora.linkarium.domain.model.LinkGarden
-import com.habitiora.linkarium.domain.model.LinkGardenWithSeeds
 import kotlinx.coroutines.flow.Flow
 
 interface LinkGardenDataSource {
@@ -11,8 +10,6 @@ interface LinkGardenDataSource {
     suspend fun delete(linkGarden: LinkGarden)
     suspend fun deleteAll()
     fun getAll(): Flow<List<LinkGarden>>
-    suspend fun getAllForExport(): List<LinkGarden>
-    suspend fun getForList(ids: List<Long>): List<LinkGarden>
     fun getById(id: Long): Flow<LinkGarden?>
     suspend fun deleteById(id: Long)
     suspend fun getMaxOrder(): Int

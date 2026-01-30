@@ -6,16 +6,10 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Transaction
 import androidx.room.Update
 import com.habitiora.linkarium.data.local.room.DatabaseContract
-import com.habitiora.linkarium.data.local.room.entity.LinkEntryEntity
-import com.habitiora.linkarium.data.local.room.entity.LinkSeedComplete
 import com.habitiora.linkarium.data.local.room.entity.LinkSeedEntity
-import com.habitiora.linkarium.data.local.room.entity.LinkTagEntity
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import timber.log.Timber
 
 @Dao
 interface LinkSeedEntityDao {

@@ -1,8 +1,5 @@
 package com.habitiora.linkarium.ui.screens.settings
 
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -32,36 +29,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.habitiora.linkarium.R
-import com.habitiora.linkarium.core.exporters.ExportContent
-import com.habitiora.linkarium.core.exporters.ExportFormat
-import com.habitiora.linkarium.core.exporters.ExportRequest
+import com.habitiora.linkarium.ui.navigation.Screens
 
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/octet-stream")
-    ) { uri: Uri? ->
-        if (uri == null) return@rememberLauncherForActivityResult
-        viewModel.export(ExportRequest(
-            ExportContent.GardenAndSeeds(listOf(1)),
-            ExportFormat.Json,
-            uri
-        ))
-    }
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
     ) {
         item{
-            SettingsHeader("Exportar")
+            SettingsHeader("Exportar/Importar")
         }
         item {
             SettingsItem(
-                title = "Exportar Test",
+                title = "Exportar",
                 icon = Icons.Outlined.Description,
-                onClick = { launcher.launch("test.json") }
+                onClick = { viewModel.navigateTo(Screens.Export) }
             )
         }
         item {
