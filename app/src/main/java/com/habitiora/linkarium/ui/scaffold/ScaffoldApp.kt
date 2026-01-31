@@ -36,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -43,10 +44,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.akari.uicomponents.tooltip.AkariTooltip
@@ -59,6 +66,45 @@ import com.habitiora.linkarium.ui.utils.navigationEvents.NavigationEvent
 import com.habitiora.linkarium.ui.utils.nevControllerFunctions.navigateTo
 import timber.log.Timber
 
+@Composable
+fun LinkariumGuard(
+    windowSizeClass: WindowSizeClass,
+    viewModel: SecurityViewModel = hiltViewModel()
+){
+    val isLocked by viewModel.lockState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // 1. Manejo del Ciclo de Vida (Auto-Lock al salir)
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) {
+                viewModel.lock()
+            }
+            // Opcional: Intentar desbloqueo automático al volver (ON_START)
+            if (event == Lifecycle.Event.ON_START && isLocked) {
+                // Casteo seguro porque cambiamos la herencia (ver paso 4)
+                (context as? FragmentActivity)?.let {
+                    viewModel.checkBiometrics(it)
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // 2. Control de UI (Cortina vs Contenido)
+    if (isLocked) {
+        LockScreen(
+            onUnlockClick = {
+                (context as? FragmentActivity)?.let { viewModel.checkBiometrics(it) }
+            }
+        )
+    } else {
+        // Tu NavHost existe aquí, limpio y protegido
+        ScaffoldApp(windowSizeClass)
+    }
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScaffoldApp(
