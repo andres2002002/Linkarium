@@ -10,8 +10,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -58,6 +61,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.akari.uicomponents.tooltip.AkariTooltip
 import com.habitiora.linkarium.R
+import com.habitiora.linkarium.core.AuthState
 import com.habitiora.linkarium.ui.navigation.NavigationHost
 import com.habitiora.linkarium.ui.navigation.Screens
 import com.habitiora.linkarium.ui.scaffold.dialogs.DialogApp
@@ -71,7 +75,7 @@ fun LinkariumGuard(
     windowSizeClass: WindowSizeClass,
     viewModel: SecurityViewModel = hiltViewModel()
 ){
-    val isLocked by viewModel.lockState.collectAsStateWithLifecycle()
+    val state by viewModel.authState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -82,7 +86,7 @@ fun LinkariumGuard(
                 viewModel.lock()
             }
             // Opcional: Intentar desbloqueo automático al volver (ON_START)
-            if (event == Lifecycle.Event.ON_START && isLocked) {
+            if (event == Lifecycle.Event.ON_START && state == AuthState.Locked) {
                 // Casteo seguro porque cambiamos la herencia (ver paso 4)
                 (context as? FragmentActivity)?.let {
                     viewModel.checkBiometrics(it)
@@ -93,16 +97,26 @@ fun LinkariumGuard(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // 2. Control de UI (Cortina vs Contenido)
-    if (isLocked) {
-        LockScreen(
-            onUnlockClick = {
+    when (state) {
+        AuthState.Loading -> {
+            // Técnicamente inalcanzable visualmente gracias al Splash
+            // Pero útil dejar un Box vacío por seguridad de renderizado
+            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary))
+        }
+        AuthState.Locked -> {
+            LockScreen(
+                onUnlockClick = {
+                    (context as? FragmentActivity)?.let { viewModel.checkBiometrics(it) }
+                }
+            )
+            // Auto-trigger biométrico al aparecer la pantalla
+            LaunchedEffect(Unit) {
                 (context as? FragmentActivity)?.let { viewModel.checkBiometrics(it) }
             }
-        )
-    } else {
-        // Tu NavHost existe aquí, limpio y protegido
-        ScaffoldApp(windowSizeClass)
+        }
+        AuthState.Unlocked -> {
+            ScaffoldApp(windowSizeClass)
+        }
     }
 }
 @OptIn(ExperimentalMaterial3Api::class)
