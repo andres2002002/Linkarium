@@ -36,7 +36,8 @@ fun LockScreen(onUnlockClick: () -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Linkarium está bloqueado",
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(24.dp))
             Button(onClick = onUnlockClick) {
