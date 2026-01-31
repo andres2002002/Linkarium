@@ -1,19 +1,19 @@
 [versions]
-agp = "8.13.2"
+agp = "9.0.0"
 kotlin = "2.3.0"
 coreKtx = "1.17.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.10.0"
-activityCompose = "1.12.2"
-composeBom = "2025.12.01"
+activityCompose = "1.12.3"
+composeBom = "2026.01.01"
 
-navigation = "2.9.6"
+navigation = "2.9.7"
 
 hiltViewModelCompose = "1.3.0"
 
-daggerHilt = "2.57.2"
+daggerHilt = "2.59"
 
 datastore = "1.2.0"
 
@@ -26,24 +26,28 @@ junitJupiter = "6.0.2"
 runner = "1.7.0"
 rules = "1.7.0"
 
-pagin = "3.3.6"
+pagin = "3.4.0"
 
 testCore = "1.7.0"
 testCoreKtx = "1.7.0"
 
 mockito = "5.21.0"
-mockitoKotlin = "6.1.0"
+mockitoKotlin = "6.2.3"
 
 timber = "5.0.1"
 
-kotlinSerialization = "1.9.0"
+kotlinSerialization = "1.10.0"
 pluginKotlinSerialization = "2.3.0"
 
 apachePdfBox = "2.0.27.0"
 
-kspVersion = "2.2.21-2.0.4"
+biometric = "1.1.0"
 
-uicomponents = "1.1.32"
+splashscreen = "1.2.0"
+
+kspVersion = "2.3.4"
+
+uicomponents = "1.1.33"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -60,6 +64,10 @@ androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "u
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+
+androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
+
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
 
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 

@@ -5,11 +5,9 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Transaction
 import androidx.room.Update
 import com.habitiora.linkarium.data.local.room.DatabaseContract
 import com.habitiora.linkarium.data.local.room.entity.LinkGardenEntity
-import com.habitiora.linkarium.domain.usecase.LinkGardenWithSeedsImpl
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -30,10 +28,6 @@ interface LinkGardenEntityDao {
     suspend fun deleteAll()
     @Query("SELECT * FROM $TABLE_NAME ORDER BY sort_order ASC")
     fun getAll(): Flow<List<LinkGardenEntity>>
-    @Query("SELECT * FROM $TABLE_NAME ORDER BY sort_order ASC")
-    suspend fun getAllForExport(): List<LinkGardenEntity>
-    @Query("SELECT * FROM $TABLE_NAME WHERE id IN (:ids)")
-    suspend fun getForList(ids: List<Long>): List<LinkGardenEntity>
     @Query("SELECT * FROM $TABLE_NAME WHERE id = :id")
     fun getById(id: Long): Flow<LinkGardenEntity?>
     @Query("DELETE FROM $TABLE_NAME WHERE id = :id")

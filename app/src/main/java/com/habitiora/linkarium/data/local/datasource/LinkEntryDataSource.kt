@@ -5,6 +5,8 @@ import com.habitiora.linkarium.domain.model.LinkEntry
 import kotlinx.coroutines.flow.Flow
 
 interface LinkEntryDataSource {
+    suspend fun upsertAll(entries: List<LinkEntryEntity>)
+    suspend fun deleteMissing(seedId: Long, keepIds: List<Long>)
     suspend fun insert(linkEntry: LinkEntry): Long
     suspend fun insertAll(linkEntries: List<LinkEntry>): List<Long>
     suspend fun update(linkEntry: LinkEntry)

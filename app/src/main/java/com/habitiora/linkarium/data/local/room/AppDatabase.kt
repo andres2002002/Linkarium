@@ -5,7 +5,9 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.habitiora.linkarium.data.local.room.dao.LinkEntryEntityDao
 import com.habitiora.linkarium.data.local.room.dao.LinkGardenEntityDao
+import com.habitiora.linkarium.data.local.room.dao.LinkGardenReadDao
 import com.habitiora.linkarium.data.local.room.dao.LinkSeedEntityDao
+import com.habitiora.linkarium.data.local.room.dao.LinkSeedReadDao
 import com.habitiora.linkarium.data.local.room.dao.LinkTagEntityDao
 import com.habitiora.linkarium.data.local.room.entity.LinkEntryEntity
 import com.habitiora.linkarium.data.local.room.entity.LinkGardenEntity
@@ -26,6 +28,8 @@ import com.habitiora.linkarium.data.local.room.entity.LinkTagEntity
 abstract class AppDatabase : RoomDatabase() {
     abstract fun linkSeedDao(): LinkSeedEntityDao
     abstract fun linkGardenDao(): LinkGardenEntityDao
+    abstract fun linkSeedReadDao(): LinkSeedReadDao
+    abstract fun linkGardenReadDao(): LinkGardenReadDao
     abstract fun linkTagDao(): LinkTagEntityDao
     abstract fun linkEntryDao(): LinkEntryEntityDao
 }

@@ -10,8 +10,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -36,6 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -43,21 +47,78 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.akari.uicomponents.tooltip.AkariTooltip
 import com.habitiora.linkarium.R
+import com.habitiora.linkarium.core.AuthState
 import com.habitiora.linkarium.ui.navigation.NavigationHost
 import com.habitiora.linkarium.ui.navigation.Screens
 import com.habitiora.linkarium.ui.scaffold.dialogs.DialogApp
 import com.habitiora.linkarium.ui.screens.gardenManager.GardenManagerDialog
 import com.habitiora.linkarium.ui.utils.navigationEvents.NavigationEvent
 import com.habitiora.linkarium.ui.utils.nevControllerFunctions.navigateTo
+import timber.log.Timber
 
+@Composable
+fun LinkariumGuard(
+    windowSizeClass: WindowSizeClass,
+    viewModel: SecurityViewModel = hiltViewModel()
+){
+    val state by viewModel.authState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // 1. Manejo del Ciclo de Vida (Auto-Lock al salir)
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) {
+                viewModel.lock()
+            }
+            // Opcional: Intentar desbloqueo automático al volver (ON_START)
+            if (event == Lifecycle.Event.ON_START && state == AuthState.Locked) {
+                // Casteo seguro porque cambiamos la herencia (ver paso 4)
+                (context as? FragmentActivity)?.let {
+                    viewModel.checkBiometrics(it)
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    when (state) {
+        AuthState.Loading -> {
+            // Técnicamente inalcanzable visualmente gracias al Splash
+            // Pero útil dejar un Box vacío por seguridad de renderizado
+            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary))
+        }
+        AuthState.Locked -> {
+            LockScreen(
+                onUnlockClick = {
+                    (context as? FragmentActivity)?.let { viewModel.checkBiometrics(it) }
+                }
+            )
+            // Auto-trigger biométrico al aparecer la pantalla
+            LaunchedEffect(Unit) {
+                (context as? FragmentActivity)?.let { viewModel.checkBiometrics(it) }
+            }
+        }
+        AuthState.Unlocked -> {
+            ScaffoldApp(windowSizeClass)
+        }
+    }
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScaffoldApp(
@@ -80,6 +141,7 @@ fun ScaffoldApp(
         viewModel.navigationEvents.collect { event ->
             when (event) {
                 is NavigationEvent.To -> {
+                    Timber.d("Navigating to ${event.screen.route}, is top level: ${event.screen.isTopLevel}")
                     navController.navigateTo(screen = event.screen, event.id, event.inclusive)
                 }
                 NavigationEvent.Back -> { navController.popBackStack() }

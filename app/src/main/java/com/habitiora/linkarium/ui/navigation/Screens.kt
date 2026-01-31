@@ -29,6 +29,7 @@ sealed class Screens(
             ShowGarden,
             Gardens,
             Settings,
+            Export,
             PlantNew,
             ShowSeeds
         )
@@ -77,4 +78,9 @@ sealed class Screens(
 
         override fun createRoute(id: Long) = "$baseRoute/$id"
     }
+
+    data object Export: Screens(
+        baseRoute = "export",
+        title = R.string.export,
+    )
 }

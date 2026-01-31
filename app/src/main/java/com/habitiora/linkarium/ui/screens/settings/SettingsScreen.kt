@@ -1,8 +1,5 @@
 package com.habitiora.linkarium.ui.screens.settings
 
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -22,8 +19,11 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -32,36 +32,36 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.habitiora.linkarium.R
-import com.habitiora.linkarium.core.exporters.ExportContent
-import com.habitiora.linkarium.core.exporters.ExportFormat
-import com.habitiora.linkarium.core.exporters.ExportRequest
+import com.habitiora.linkarium.ui.navigation.Screens
 
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/octet-stream")
-    ) { uri: Uri? ->
-        if (uri == null) return@rememberLauncherForActivityResult
-        viewModel.export(ExportRequest(
-            ExportContent.GardenAndSeeds(listOf(1)),
-            ExportFormat.Json,
-            uri
-        ))
-    }
+    val isBiometricLockEnabled by viewModel.isBiometricLockEnabled.collectAsState()
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
     ) {
+        item {
+            SettingsHeader("Seguridad")
+        }
+        item {
+            SettingsItemToggle(
+                title = "Usar huella dactilar",
+                isChecked = isBiometricLockEnabled,
+                icon = Icons.Outlined.Description,
+                onToggle = { viewModel.updateBiometricLock(it) }
+            )
+        }
         item{
-            SettingsHeader("Exportar")
+            SettingsHeader("Exportar/Importar")
         }
         item {
             SettingsItem(
-                title = "Exportar Test",
+                title = "Exportar",
                 icon = Icons.Outlined.Description,
-                onClick = { launcher.launch("test.json") }
+                onClick = { viewModel.navigateTo(Screens.Export) }
             )
         }
         item {
@@ -199,5 +199,48 @@ fun SettingsItem(
             )
         },
         modifier = Modifier.clickable { onClick() }
+    )
+}
+
+@Composable
+fun SettingsItemToggle(
+    title: String,
+    subtitle: String? = null,
+    isChecked: Boolean,
+    icon: ImageVector,
+    onToggle: (Boolean) -> Unit,
+){
+    ListItem(
+        headlineContent = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge
+            )
+        },
+        supportingContent = subtitle?.let {
+            {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        trailingContent = {
+            Switch(
+                checked = isChecked,
+                onCheckedChange = onToggle,
+                modifier = Modifier.padding(end = 16.dp)
+            )
+        },
+        leadingContent = {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp)
+            )
+        },
+        modifier = Modifier
     )
 }

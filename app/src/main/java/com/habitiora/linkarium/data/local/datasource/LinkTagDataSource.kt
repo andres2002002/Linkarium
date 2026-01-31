@@ -5,6 +5,7 @@ import com.habitiora.linkarium.domain.model.LinkTag
 import kotlinx.coroutines.flow.Flow
 
 interface LinkTagDataSource {
+    suspend fun upsertAll(tags: List<LinkTagEntity>)
     suspend fun insert(linkTag: LinkTag): Long
     suspend fun insertAll(linkTags: List<LinkTag>): List<Long>
     suspend fun update(linkTag: LinkTag)
