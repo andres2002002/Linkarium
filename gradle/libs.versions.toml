@@ -41,6 +41,10 @@ pluginKotlinSerialization = "2.3.0"
 
 apachePdfBox = "2.0.27.0"
 
+biometric = "1.1.0"
+
+splashscreen = "1.2.0"
+
 kspVersion = "2.3.4"
 
 uicomponents = "1.1.33"
@@ -60,6 +64,10 @@ androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "u
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+
+androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
+
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
 
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 

@@ -143,6 +143,12 @@ dependencies {
     //PDFBox
     implementation(libs.apache.pdfbox)
 
+    //Biometric
+    implementation(libs.androidx.biometric)
+
+    //Splashscreen
+    implementation(libs.androidx.core.splashscreen)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
