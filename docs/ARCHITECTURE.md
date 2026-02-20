@@ -4,8 +4,17 @@
 - [Primeros Pasos](#-primeros-pasos)
 - [Navegación y Scaffold](#-preparar-navegación-y-scaffold)
 - [Detalles por paquete](#-detalles-de-las-estructuras-del-proyecto)
+- [Convenciones de código](#-convenciones-de-código)
 
 # 📐 Arquitectura del Proyecto
+
+Este proyecto sigue una arquitectura limpia (Clean Architecture) adaptada para Android, utilizando Jetpack Compose para la UI. El objetivo es separar las responsabilidades, facilitar el mantenimiento y mejorar la escalabilidad.
+
+La arquitectura se divide en tres capas principales:
+
+1.  **Capa de UI (Interfaz de Usuario)**: Compuesta por `Activity`, `Composables` (pantallas y componentes) y `ViewModels`. Es responsable de mostrar los datos y de capturar las interacciones del usuario.
+2.  **Capa de Dominio (Domain)**: Contiene la lógica de negocio pura. Define los modelos de datos (`LinkGarden`, `LinkSeed`) y los casos de uso. Esta capa es independiente de Android y de cualquier framework de UI o base de datos.
+3.  **Capa de Datos (Data)**: Gestiona todas las fuentes de datos. Implementa los repositorios definidos en la capa de dominio y se encarga de obtener datos de Room, DataStore o futuras APIs remotas.
 
 ## 🧩️ Estructura del Proyecto
 
@@ -13,271 +22,141 @@
 app/
 └── src/
     └── main/
-        ├── java/com/tuapp/enlaces/
-        │    ├── core/              # Utilidades, constantes, extensiones
+        ├── java/com/habitiora/linkarium/
+        │    ├── core/              # Utilidades, constantes, extensiones, helpers
         │    ├── data/              # Capa de datos
-        │    │    ├── local/        # Persistencia local (Room, DAOs, entidades)
-        │    │    │    ├── datasource/ # Data sources Accesos a Daos y validaciones menores
-        │    │    │    ├── room/    # Base de datos Room
-        │    │    │    │    ├── dao/      # Data Access Objects
-        │    │    │    │    ├── entity/   # Entidades de Room
-        │    │    │    │    └── migrations/   # Migraciones de Room
-        │    │    │    └── usecase/ # Casos de uso con Room
-        │    │    ├── remote/       # API / servicios remotos (futuro sync)
+        │    │    ├── local/        # Persistencia local (Room, DAOs, DataStore)
+        │    │    │    ├── datasource/ # Fuentes de datos que acceden a los DAOs
+        │    │    │    └── room/       # Configuración de Room (DB, DAOs, Entidades)
+        │    │    ├── exporters/      # Lógica para exportar datos (PDF, JSON)
         │    │    └── repository/   # Implementaciones de repositorios
         │    ├── domain/            # Lógica de negocio
-        │    │    ├── model/        # Modelos de dominio (Link, Tag, Folder)
-        │    │    └── usecase/      # Casos de uso como implementaciones de modelos
+        │    │    ├── model/        # Modelos de dominio (LinkGarden, LinkSeed)
+        │    │    └── usecase/      # Casos de uso (lógica compleja)
         │    ├── ui/                # Interfaz con Jetpack Compose
-        │    │    ├── components/   # Composables reutilizables (botones, cards, inputs)
-        │    │    ├── scaffold/     # Componentes del Scaffold (ScaffoldConfig,, ScaffoldContent, etc.)
-        │    │    ├── screens/      # Pantallas principales
-        │    │    │    ├── gardenManager/ # Añadir/Editar un Garden
-        │    │    │    ├── gardensScreen/ # Lista de Gardens
-        │    │    │    ├── plantSeed/     # Agregar nuevo enlace
-        │    │    │    ├── showGarden/    # Pantalla con seeds por garden
-        │    │    │    └── settings/      # Configuración
-        │    │    ├── navigation/   # NavHost y rutas
-        │    │    ├── utils/        # Utilidades de UI (DateFormatter, UiText)
-        │    │    └── theme/        # Colores, tipografía, shapes
-        │    └── di/                # Inyección de dependencias (Hilt/Koin)
-        └── res/                    # Recursos XML mínimos (íconos, strings)
+        │    │    ├── components/   # Composables reutilizables
+        │    │    ├── navigation/   # NavHost y rutas de navegación
+        │    │    ├── scaffold/     # Componentes del Scaffold principal
+        │    │    ├── screens/      # Pantallas de la aplicación
+        │    │    └── theme/        # Tema de la aplicación (colores, tipografía)
+        │    └── di/                # Inyección de dependencias con Hilt
+        └── res/                    # Recursos XML (íconos, strings, etc.)
 ```
 
 ### Notas rápidas:
 
-* **core/**: evita duplicar helpers o constantes. Ejemplo: `DateFormatter`, `UiText`, `Result<T>`.
-* **data/**: encapsula todas las fuentes de datos (Room, repositorios, APIs).
-* **domain/**: define modelos y casos de uso, desacoplados de UI.
-* **ui/**: organiza Compose en `screens` (pantallas completas) y `components` (widgets).
-* **navigation/**: centraliza rutas y `NavHost`.
-* **di/**: módulos de Hilt.
-* **theme/**: tipografía, colores y formas según Compose.
+*   **`core/`**: Evita duplicar helpers o constantes. Ideal para extensiones, `UiText`, `Result<T>`.
+*   **`data/`**: Encapsula todas las fuentes de datos (Room, repositorios, APIs).
+*   **`domain/`**: Define modelos y casos de uso, desacoplado de la UI y los datos.
+*   **`ui/`**: Organiza el código de Jetpack Compose en `screens` y `components` reutilizables.
+*   **`navigation/`**: Centraliza la lógica de navegación, rutas y el `NavHost`.
+*   **`di/`**: Contiene los módulos de Hilt para la inyección de dependencias.
 
 ---
 
 ## 🧱 Primeros Pasos
 
-1. **Configurar Hilt**
+1.  **Configurar Hilt**
 
-    * Añadir dependencias de Hilt (`compiler`, `android`, `navigation`).
-    * Agregar `ksp` (ver `Dependencies.md`).
-    * Crear clase `ApplicationApp`:
+    *   Añadir dependencias de Hilt y KSP.
+    *   Crear una clase `Application` anotada con `@HiltAndroidApp`.
+    *   Anotar `MainActivity` con `@AndroidEntryPoint`.
+    *   Registrar la clase `Application` en el `AndroidManifest.xml`.
 
-      ```kotlin
-      @HiltAndroidApp
-      class LinkariumApp : Application()
-      ```
-    * Anotar `MainActivity`:
+2.  **Configurar Timber**
 
-      ```kotlin
-      @AndroidEntryPoint
-      class MainActivity : ComponentActivity()
-      ```
-    * Registrar en `AndroidManifest.xml`:
+    *   Inicializar en la clase `Application` para diferenciar entre builds de `DEBUG` y `release`.
 
-      ```xml
-      <application
-          android:name=".LinkariumApp"
-          ... />
-      ```
+3.  **Configurar Room**
 
-2. **Configurar Timber**
+    *   Definir modelos en `/domain/model` como interfaces.
+    *   Crear entidades en `/data/local/room/entity` que representen las tablas de la base de datos.
+    *   Definir un `DatabaseContract` con constantes para nombres de tablas y columnas.
+    *   Implementar los `DAO` (Data Access Objects) para el acceso a la base de datos.
+    *   Implementar `DataSource` que actúan como intermediarios con los DAOs.
+    *   Implementar `Repository` que orquestan las fuentes de datos y manejan las transacciones.
+    *   Registrar todo en módulos de Hilt en la carpeta `/di`.
 
-    * Inicializar en `LinkariumApp`:
+> ⚠️ **Importante**: Ningún `Dao` debe realizar transacciones (`@Transaction`) directamente. Esta lógica se delega a los repositorios para mantener la cohesión y la claridad.
 
-      ```kotlin
-      override fun onCreate() {
-          super.onCreate()
-          if (BuildConfig.DEBUG) {
-              Timber.plant(DebugTree())
-              Timber.i("onCreate: Timber inicializado")
-          } else {
-              Timber.plant(CrashReportingTree())
-              Timber.i("onCreate: Timber en modo producción")
-          }
-      }
- 
-      private class CrashReportingTree : Timber.Tree() {
-          override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
-              // Integrar con Crashlytics u otro servicio
-          }
-      }
-      ```
-
-3. **Configurar Room**
-
-    * Crear modelos en `/domain/model` (interfaces).
-    * Crear entidades en `/data/local/room/entity` con `@Entity`, `@PrimaryKey`, `@ColumnInfo`.
-    * Definir `DatabaseContract` en `/data/local/room` (constantes de tablas).
-    * Crear base de datos `RoomDatabase` + `TypeConverters` (usar Gson).
-    * Implementar DAOs en `/data/local/room/dao`.
-    * Implementar data sources en `/data/local/datasource` que traduzcan entidades ↔ modelos de dominio.
-    * Implementar repositorios en `/data/repository` para manejo de datos y cache.
-    * Registrar en `/di` módulos de Room y repositorios.
-
-    -Se añadió la función `update()` para reemplazar `copy()` en interfaces, ya que `copy()` no puede declararse directamente en ellas. En caso necesario, se implementa una clase Impl para conservar ese comportamiento o mapear datos compuestos.
-   ⚠️ Importante: Ningún `Dao` debe realizar transacciones directamente; estas se manejan desde los repositorios.
 ---
 
 ## ⚙️ Preparar Navegación y Scaffold
 
-* Centralizar rutas en `/ui/navigation` en una sealed class con los parametros escenciales (route, title, etc.).
-* Se crea un Navhost de navegacion principal con textos temporales para integrar las pantallas mas adelante
+*   **Navegación**: Se centralizan las rutas en una `sealed class` dentro de `/ui/navigation`. Esto permite definir rutas base, argumentos y títulos de pantalla en un solo lugar.
+*   **Scaffold**: Se utiliza un `ScaffoldViewModel` para comunicar eventos y cambios de estado (como el título de la pantalla o la aparición de diálogos) entre las pantallas y el `LinkariumScaffold` principal.
 
 # Detalles de las estructuras del proyecto
 
 ## 🧭️ ui/navigation
 
-* Estructura de Screens:
-    ```kotlin
-      sealed class Screens(
-      val baseRoute: String,
-      @StringRes val normalTitle: Int,
-      @StringRes val creativeTitle: Int = normalTitle,
-      @DrawableRes val iconSelect: Int? = null,
-      @DrawableRes val iconUnselect: Int? = iconSelect,
-      val typeScreen: TypeScreen = TypeScreen.Primary
-      ) {
-      /** Ruta completa (con placeholders si aplica) */
-      open val route: String get() = baseRoute
-    
-      /** Permite detectar rutas dinámicas (por ejemplo "show_seeds/3") */
-      open fun matches(route: String?): Boolean =
-      route?.substringBefore("?")?.startsWith(baseRoute) == true
-      /**
-        * Permite crear rutas dinámicas (por ejemplo "show_seeds/3").
-        * Tiene valor por defecto -1 que se considera null
-        * */
-          open fun createRoute(id: Long = -1): String = baseRoute
-    
-      companion object{
-      /** Registro automático de pantallas */
-      val allScreens: List<Screens> = listOf(/*screens*/)
-            fun fromRoute(route: String?): Screens? {
-                return allScreens.firstOrNull { it.matches(route) }
-            }
-      }
-  /*Screens de la aplicacion como dataobject o data class segun sea necesario*/
-    }
-  ```
-  Se usa de esta manera con params dentro de NavHost para pasar index de entidades para editar o mostrar detalles.
-
-  * Estructura de NavHost :
-  ```kotlin
-      @Composable
-    fun NavigationHost(
-    navController: NavHostController,
-    windowSizeClass: WindowSizeClass
-    ) {
-  //el navController se pasa al provedor local para tenerlo disponibble desde cualquier parte de la app
-        CompositionLocalProvider(
-        LocalNavigator provides navController,
-        LocalWindowSizeClass provides windowSizeClass
-        ) {
-            NavHost(
-            navController = navController,
-            startDestination = Screens.ShowGarden.route
-            ) {
-                /*los composables de la app*/
-            }
-        }
-    }
-  ```
-* Estructura de TypeScreen:
-```kotlin
-sealed class TypeScreen(
-    open val showTopBar: Boolean,
-    open val showBottomBar: Boolean,
-    open val showFloatingActionButton: Boolean
-) {
-    /*tipos de pantalla, ej. primario, secundario, etc*/
-}
-```
-Estas clases son para que las maneje el Scaffold y organizar mejor que se ve en cada pantalla.
-
-un ejemplo de como se vinculan estas estructuras es la siguiente:
-    Tomemos la screen `ShowGarden` desde ella se debe poder navegar a `Settings` y `Gardens` ademas de agregar un nuevo enlace.
-    por tanto decimos que `ShowGarden` es de tipo primario y deben mostrarse todos los menus, ahora para navegar a añadir un enlace
-    debe pasar el parametro de la id para que luego el `ViewModel` de `PlantNewSeed` pueda obtener la entidad correspondiente.
-    por tanto debemos pasarlo en la route con `createRoute(id: Long)` y para saber a que pantalla navegar usamos `match` en vez de
-    una igualdad de strings asi el scaffold sabe en que pantalla esta, solo teniendo la ruta y sabe que menus mostrar.
+*   **`Screens`**: `sealed class` que define cada pantalla con su ruta, título y tipo. Incluye funciones para construir rutas dinámicas (ej. `show_seeds/3`) y para identificar la pantalla actual a partir de una ruta.
+*   **`NavigationHost`**: `Composable` que contiene el `NavHost` y provee el `NavController` a través de un `CompositionLocal` para que esté disponible en cualquier parte de la UI.
+*   **`TypeScreen`**: `sealed class` que define las características del Scaffold para cada tipo de pantalla (ej. si muestra TopBar, BottomBar, etc.).
 
 ## 🎨️ ui/scaffold
 
-* **LinkariumScaffold** 
-    Es el componente que organiza todas la partes del scaffol que provee el ScaffoldConfig.
-* **ScaffoldConfig**
-    Es la configuracion y datos que se muestran segun el `WindowSizeClass` de la pantalla, utiliza un buider para manejo mas comodo.
-* **ScaffoldApp**
-    Es el componente que se va a mostrar, se contruye un config, se obtiene el viewmodel para comunicacion entre el scaffold
-    y las pantallas y se pasa al `LinkariumScaffold`.
-* **ScaffoldViewModel**
-    Es el viewmodel que contiene los datos reactivos del scaffold como titulos, eventos, etc. pueden pasarse buses para
-    comunicacion entre el scaffold y las pantallas de la app.
-* **Dialogs**
-    es el sistema de dialofos de la app, los mensages estan dados por `MessageValues` que contiene detalles y datos para dar un
-    dialogo personalizado, hay configuaraciones personalizadas en `DialogType` para casos de error, confirmacion, info y advertencias.
-    los mensajes se transmiten con `MessageBus`
+*   **`LinkariumScaffold`**: El `Composable` que organiza la estructura visual principal (TopAppBar, BottomNavigation, FAB) basándose en la configuración recibida.
+*   **`ScaffoldConfig`**: Clase que define la configuración del Scaffold (títulos, acciones, menús) adaptándose al tamaño de la pantalla (`WindowSizeClass`).
+*   **`ScaffoldViewModel`**: `ViewModel` que gestiona el estado reactivo del Scaffold, permitiendo a las pantallas modificar el título o solicitar la muestra de diálogos de forma desacoplada.
+*   **`Dialogs`**: Sistema centralizado para mostrar diálogos. Se basa en un `MessageBus` (un `SharedFlow`) para emitir solicitudes de diálogo desde cualquier ViewModel.
 
-##  💾️ Helpers
+## 🛠️ core/ (Helpers)
 
-* **ClipboardHelper**
-  - Helper para copiar y obtener datos del clipboard
-  - Usa funciones suspendidas para que se ejecute en un hilo separado
-  - `rememberClipboarHelper` es una función de Compose que recuerda el estado del helper
+*   **`ClipboardHelper`**: Utilidad para interactuar con el portapapeles de forma asíncrona.
+*   **`UriHelper`**: Facilita la interacción con URIs, como abrir enlaces en el navegador o compartir contenido.
+*   **`ExportFormatters`**: Contiene la lógica para dar formato a los datos antes de ser exportados, como convertir una lista de `LinkSeed` a un string HTML.
 
-* **UriHelper**
-   - Helper para manejar acciones de uri (abrir navegador, compartir, etc)
-   - `rememberUriHelper` es una función de Compose que recuerda el estado del helper
+## 💾 /data/
 
-## 💾 /data/room/
+### `data/local/room`
 
-Todas las Constantes de Room estan en `/data/local/room/DatabaseContract`
-para centralizar las tablas y nombres de campos y evitar errores de tipeo y confusiones.
+*   **`DatabaseContract`**: Centraliza los nombres de tablas y columnas para evitar errores de tipeo.
+*   **Entidades (`entity/`)**: Representan las tablas de la base de datos.
+    *   `LinkGardenEntity`: Una colección de enlaces.
+    *   `LinkSeedEntity`: La unidad principal, que agrupa la información de un enlace.
+    *   `LinkEntryEntity`: Un enlace individual (URI, label, notas) dentro de un `LinkSeed`.
+    *   `LinkTagEntity`: Una etiqueta asociada a un `LinkSeed`.
+*   **DAOs (`dao/`)**: Interfaces con métodos para acceder a la base de datos (`@Query`, `@Insert`, etc.). No contienen lógica de transacción.
 
-* **entity**
-    - `LinkGardenEntity`: Contiene campos de name y dascription para una coleccion de `LinkSeedEntity`.
-    - `LinkSeedEntity`: Contiene datos sobre el/los enlaces vinculados, esta vinculada a una `LinkGardenEntity`.
-    - `LinkEntryEntity`: Contiene campos para un label, notes y una uri, esta vinculada a una `LinkSeedEntity`.
-    - `LinkTagEntity`: Contiene campos de name para el tag y esta vinculada a una `LinkSeedEntity`.
-    `LinkEntryEntity` y `LinkTagEntity` son entidades para una `LinkSeed`del modelo, pero se separan en room para mejorar
-    el rendimiento de busquedas y evitar convertir datos en la databse.
-* **dao**
-  > Los dao no manejan directamente transactions, eso lo relegan a los repositorios.
-    - `LinkGardenDao`: Dao para `LinkGardenEntity`.
-    - `LinkSeedDao`: Dao para `LinkSeedEntity`, tiene un metodo para obtener los `LinkSeedEntity` de una `LinkGardenEntity` paginados y un metodo suspendido para exportaciones sin paginar.
-    - `LinkEntryDao`: Dao para `LinkEntryEntity`.
-    - `LinkTagDao`: Dao para `LinkTagEntity`.
-* **datasource**
-  > Los DataSource hacen de interediario entre los dao y los repositorios, hacen pequeñas transformaciones simples entre dominio y entidad.
-    - `LinkGardenDataSource`: Data source para `LinkGardenEntity`.
-    - `LinkSeedDataSource`: Data source para `LinkSeedEntity`.
-    - `LinkEntryDataSource`: Data source para `LinkEntryEntity`.
-    - `LinkTagDataSource`: Data source para `LinkTagEntity`.
-* **repository**
-  > Los repositorios manejan transformaciones y mapeos mas complejos entre entidades y modelos de dominio, incluyendo los transactions.
-    - `LinkGardenRepository`: Repositorio para `LinkGardenEntity`.
-    - `LinkSeedRepository`: Repositorio para `LinkSeedEntity`.
-    - `LinkEntryRepository`: Repositorio para `LinkEntryEntity`.
-    - `LinkTagRepository`: Repositorio para `LinkTagEntity`.
+### `data/local/datasource`
+
+*   Intermediarios entre los DAOs y los repositorios. Realizan transformaciones simples entre los modelos de dominio y las entidades de Room.
+
+### `data/repository`
+
+*   Implementaciones de las interfaces del dominio. Orquestan las fuentes de datos (`DataSource`), manejan la lógica de transacciones (`@Transaction`) y transforman los datos de las entidades a modelos de dominio complejos.
+
+### `data/exporters`
+
+*   **`TemplateEngine`**: Motor de plantillas simple para reemplazar placeholders en archivos de texto (ej. plantillas HTML para exportaciones).
+*   **Schemas**: Definen la estructura de los datos para la importación y exportación (ej. `LinkGardenAggregateSchema` para JSON).
+
+## 🧠 /domain/model
+
+Modelos de negocio puros, definidos como interfaces para maximizar el desacoplamiento.
+
+*   **`LinkGarden`**: Representa una colección o "jardín" de enlaces.
+*   **`LinkSeed`**: La unidad principal de un enlace guardado, que puede contener múltiples `LinkEntry` y `LinkTag`.
+*   **`LinkEntry`**: Un enlace específico con su URI, título y notas.
+*   **`LinkTag`**: Una etiqueta para clasificar enlaces.
+*   **`UserPreferences`**: Modela las preferencias del usuario guardadas en DataStore.
+*   **`Exporter`**: Define la interfaz para diferentes estrategias de exportación (PDF, JSON).
 
 ## 📏 Convenciones de código
 
-1. **Room**
-* Las entidades de room deben terminar en Entity.
-* Los Dao deben ser interfaces y terminar en Dao.
-* Los data sources deben ser interfaces y terminar en DataSource.
-* Los repositorios deben ser interfaces y terminar en Repository.
-* Las implementaciones de interfaz son de la forma [interface_name]Impl.
-* No deben tratarse `@Transaction` en los dao´s se maneja en los repositorios.
+1.  **Room**
+    *   Entidades: `[Nombre]Entity`
+    *   DAOs: `[Nombre]Dao` (interfaz)
+    *   DataSource: `[Nombre]DataSource` (interfaz) / `[Nombre]DataSourceImpl` (clase)
+    *   Repositorio: `[Nombre]Repository` (interfaz) / `[Nombre]RepositoryImpl` (clase)
+    *   Las transacciones (`@Transaction`) se manejan exclusivamente en los `RepositoryImpl`.
 
-2. **Model**
-* Los modelos base deben ser interfaces.
-* Si es necesario instanciar un modelo (por ejemplo `LinkSeed` que se compone de tres entities) se hace una data class [model]Impl en /usecase/.
+2.  **Dominio**
+    *   Los modelos de negocio son interfaces para promover el desacoplamiento.
+    *   Si se necesita una instancia concreta para lógica de negocio o mapeo, se crea una `data class` en el paquete `/usecase/` que implemente la interfaz del modelo.
 
-3. **Others**
-    * Las pantallas se guardan con nombre de la forma [screen_name]Screen.
-    * El `ViewModel` de una Pantalla se guarda en el mismo paquete que la pantalla y se guardan con nombres de la forma [screen_name]ViewModel.
-    * `Flow` se utiliza para exponer estados reactivos y consistentes con el ciclo de vida de los composables.
-    * Se usa `suspend fun` en caso de procesos secundarios, como guardados en segundo plano o exportaciones e importaciones de datos.
+3.  **UI**
+    *   Pantallas: `[Nombre]Screen.kt`
+    *   ViewModels: `[Nombre]ViewModel.kt`, ubicados en el mismo paquete que su pantalla.
+    *   Se utiliza `StateFlow` para exponer el estado de la UI desde el ViewModel a los `Composables`.

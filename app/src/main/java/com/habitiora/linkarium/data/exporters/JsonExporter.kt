@@ -149,4 +149,5 @@ class JsonExporter @Inject constructor(
             outputStream.close()
         }
     }
+        .flowOn(Dispatchers.IO)
 }

@@ -5,9 +5,12 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.habitiora.linkarium.core.LocalDateTimeSerializer
 import com.habitiora.linkarium.data.local.room.DatabaseContract
+import kotlinx.serialization.Serializable
 import java.time.LocalDateTime
 
+@Serializable
 @Entity(
     tableName = DatabaseContract.LinkSeed.TABLE_NAME,
     foreignKeys = [
@@ -36,5 +39,6 @@ data class LinkSeedEntity(
     @ColumnInfo(name = DatabaseContract.LinkSeed.COLUMN_ORDER) val order: Int = 0,
     @ColumnInfo(name = DatabaseContract.LinkSeed.COLUMN_IS_FAVORITE) val isFavorite: Boolean = false,
     @ColumnInfo(name = DatabaseContract.LinkSeed.COLUMN_NOTES) val notes: String? = null,
+    @Serializable(with = LocalDateTimeSerializer::class)
     @ColumnInfo(name = DatabaseContract.LinkSeed.COLUMN_DATE_TIME) val modifiedAt: LocalDateTime = LocalDateTime.now()
 )

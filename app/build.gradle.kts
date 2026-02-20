@@ -1,8 +1,5 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 
     alias(libs.plugins.dagger.hilt)
@@ -10,11 +7,16 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+kotlin {
+    compilerOptions {
+        languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_3
+        freeCompilerArgs.add("-Xannotation-default-target=param-property")
+    }
+}
+
 android {
     namespace = "com.habitiora.linkarium"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.habitiora.linkarium"
@@ -46,12 +48,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
-    kotlin {
-        compilerOptions {
-            freeCompilerArgs.add("-Xannotation-default-target=param-property")
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
-    }
     buildFeatures {
         buildConfig = true
         compose = true
@@ -63,7 +59,7 @@ android {
     }
 
     sourceSets {
-        getByName("androidTest").assets.srcDirs("$projectDir/schemas")
+        getByName("androidTest").assets.directories += "$projectDir/schemas"
     }
 }
 

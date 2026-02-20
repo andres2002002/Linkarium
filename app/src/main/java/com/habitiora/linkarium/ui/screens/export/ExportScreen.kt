@@ -44,15 +44,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.akari.uicomponents.checkbox.AkariCheckBox
-import com.habitiora.linkarium.core.exporters.ExportContent
 import com.habitiora.linkarium.core.exporters.ExportFormat
-import com.habitiora.linkarium.core.exporters.ExportRequest
-import com.habitiora.linkarium.core.exporters.ExportState
 import com.habitiora.linkarium.core.exporters.ExportStatus
 import com.habitiora.linkarium.domain.model.LinkGarden
 import com.habitiora.linkarium.ui.utils.ExportSelectionMode
@@ -92,7 +88,7 @@ fun ExportScreen(
     ExportContentScreen(
         format = exportFormat,
         exportSelectionMode = exportSelectionMode,
-        onExport = { launcher.launch("${exportFormat?.createFileName()}") },
+        onExport = { launcher.launch(exportFormat.createFileName()) },
         onFormatSelected = viewModel::setExportFormat,
         gardens = gardens,
         gardensSelected = gardensSelected,
@@ -168,14 +164,18 @@ private fun ExportContentScreen(
             )
         }
         item {
-            OptionsDivider(
-                isExpanded = isExpanded,
-                onClick = { isExpanded = !isExpanded }
-            )
+            AnimatedVisibility(
+                visible = format != ExportFormat.Backup
+            ) {
+                OptionsDivider(
+                    isExpanded = isExpanded,
+                    onClick = { isExpanded = !isExpanded }
+                )
+            }
         }
         item {
             AnimatedVisibility(
-                visible = isExpanded
+                visible = isExpanded && format != ExportFormat.Backup
             ) {
                 SelectContentExport(
                     gardensSelected = gardensSelected,

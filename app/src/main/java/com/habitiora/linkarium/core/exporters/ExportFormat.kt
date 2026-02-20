@@ -8,7 +8,7 @@ sealed interface ExportFormat {
      */
     val extension: String
     companion object{
-        val allFormats = listOf(Json, Pdf, Html)
+        val allFormats = listOf(Backup, Json)
     }
     data object Json : ExportFormat{
         override val name: String
@@ -16,16 +16,10 @@ sealed interface ExportFormat {
         override val extension: String
             get() = "json"
     }
-    data object Pdf : ExportFormat{
+    data object Backup : ExportFormat{
         override val name: String
-            get() = "PDF"
+            get() = "Backup"
         override val extension: String
-            get() = "pdf"
-    }
-    data object Html : ExportFormat{
-        override val name: String
-            get() = "HTML"
-        override val extension: String
-            get() = "html"
+            get() = "linkarium"
     }
 }

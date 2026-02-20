@@ -28,7 +28,13 @@ interface LinkGardenReadDao {
         SELECT * FROM ${DatabaseContract.LinkGarden.TABLE_NAME}
         WHERE id = :gardenId
     """)
-    fun getGardenById(gardenId: Long): Flow<LinkGardenAggregate?>
+    fun getGardenByIdFlow(gardenId: Long): Flow<LinkGardenAggregate?>
+    @Transaction
+    @Query("""
+        SELECT * FROM ${DatabaseContract.LinkGarden.TABLE_NAME}
+        WHERE id = :gardenId
+    """)
+    suspend fun getGardenById(gardenId: Long): LinkGardenAggregate?
 
     @Transaction
     @Query("""

@@ -5,7 +5,9 @@ import androidx.room.Relation
 import com.habitiora.linkarium.data.local.room.DatabaseContract
 import com.habitiora.linkarium.data.local.room.entity.LinkGardenEntity
 import com.habitiora.linkarium.data.local.room.entity.LinkSeedEntity
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class LinkGardenAggregate(
     @Embedded val garden: LinkGardenEntity,
 
