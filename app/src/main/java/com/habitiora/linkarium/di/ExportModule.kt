@@ -1,5 +1,6 @@
 package com.habitiora.linkarium.di
 
+import com.habitiora.linkarium.data.exporters.BackupExporter
 import com.habitiora.linkarium.data.exporters.JsonExporter
 import com.habitiora.linkarium.domain.model.Exporter
 import dagger.Binds
@@ -16,5 +17,11 @@ abstract class ExportModule {
     @IntoSet
     abstract fun bindJsonExporter(
         exporter: JsonExporter
+    ): Exporter
+
+    @Binds
+    @IntoSet
+    abstract fun bindBackupExporter(
+        exporter: BackupExporter
     ): Exporter
 }

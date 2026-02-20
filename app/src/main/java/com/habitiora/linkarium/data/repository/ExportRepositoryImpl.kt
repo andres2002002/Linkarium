@@ -5,6 +5,7 @@ import com.habitiora.linkarium.core.exporters.ExportStatus
 import com.habitiora.linkarium.domain.model.Exporter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -14,7 +15,7 @@ class ExportRepositoryImpl @Inject constructor(
 ) : ExportRepository {
     override fun export(request: ExportRequest): Flow<ExportStatus> {
         val exporter = exporters.firstOrNull { it.canHandle(request.format) }
-            ?: return emptyFlow() // Or emit Error
+            ?: throw IllegalArgumentException("No exporter found for format ${request.format}")
 
         return exporter.export(request)
     }

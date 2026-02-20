@@ -29,7 +29,7 @@ class ExportViewModel @Inject constructor(
     private val _exportStatus = MutableStateFlow<ExportStatus>(ExportStatus.Idle)
     val exportStatus: StateFlow<ExportStatus> = _exportStatus.asStateFlow()
 
-    private val _exportFormat = MutableStateFlow<ExportFormat>(ExportFormat.Json)
+    private val _exportFormat = MutableStateFlow<ExportFormat>(ExportFormat.Backup)
     val exportFormat: StateFlow<ExportFormat> = _exportFormat.asStateFlow()
 
     private val _exportSelectionMode = MutableStateFlow(ExportSelectionMode.AllGardens)
@@ -61,8 +61,12 @@ class ExportViewModel @Inject constructor(
 
     private fun exportInternal(request: ExportRequest) {
         viewModelScope.launch {
-            exportUseCase(request).collect { status ->
-                _exportStatus.value = status
+            try {
+                exportUseCase(request).collect { status ->
+                    _exportStatus.value = status
+                }
+            } catch (e: Exception) {
+                Timber.e(e)
             }
         }
     }

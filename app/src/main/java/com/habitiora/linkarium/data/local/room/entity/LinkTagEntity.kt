@@ -7,7 +7,9 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.habitiora.linkarium.data.local.room.DatabaseContract
 import com.habitiora.linkarium.domain.model.LinkTag
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(
     tableName = DatabaseContract.LinkTag.TABLE_NAME,
     foreignKeys = [

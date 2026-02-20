@@ -6,9 +6,12 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.habitiora.linkarium.core.UriSerializer
 import com.habitiora.linkarium.data.local.room.DatabaseContract
 import com.habitiora.linkarium.domain.model.LinkEntry
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(
     tableName = DatabaseContract.LinkEntry.TABLE_NAME,
     foreignKeys = [
@@ -34,6 +37,7 @@ data class LinkEntryEntity(
     override val seedId: Long = 0,
     @ColumnInfo(name = DatabaseContract.LinkEntry.COLUMN_ORDER)
     override val order: Int = 0,
+    @Serializable(with = UriSerializer::class)
     @ColumnInfo(name = DatabaseContract.LinkEntry.COLUMN_URI)
     override val uri: Uri,
     @ColumnInfo(name = DatabaseContract.LinkEntry.COLUMN_LABEL)

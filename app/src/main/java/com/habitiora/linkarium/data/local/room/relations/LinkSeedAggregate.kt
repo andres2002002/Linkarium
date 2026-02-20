@@ -8,7 +8,9 @@ import com.habitiora.linkarium.data.local.room.entity.LinkSeedEntity
 import com.habitiora.linkarium.data.local.room.entity.LinkTagEntity
 import com.habitiora.linkarium.domain.model.LinkSeed
 import com.habitiora.linkarium.domain.usecase.LinkSeedImpl
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class LinkSeedAggregate(
     @Embedded val seed: LinkSeedEntity,
 
