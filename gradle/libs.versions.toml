@@ -1,19 +1,19 @@
 [versions]
 agp = "9.0.1"
-kotlin = "2.3.0"
+kotlin = "2.3.10"
 coreKtx = "1.17.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.10.0"
-activityCompose = "1.12.3"
-composeBom = "2026.01.01"
+activityCompose = "1.12.4"
+composeBom = "2026.02.00"
 
 navigation = "2.9.7"
 
 hiltViewModelCompose = "1.3.0"
 
-daggerHilt = "2.59"
+daggerHilt = "2.59.2"
 
 datastore = "1.2.0"
 
@@ -21,12 +21,12 @@ room = "2.8.4"
 
 json = "2.13.2"
 
-junitJupiter = "6.0.2"
+junitJupiter = "6.0.3"
 
 runner = "1.7.0"
 rules = "1.7.0"
 
-pagin = "3.4.0"
+pagin = "3.4.1"
 
 testCore = "1.7.0"
 testCoreKtx = "1.7.0"
@@ -37,9 +37,11 @@ mockitoKotlin = "6.2.3"
 timber = "5.0.1"
 
 kotlinSerialization = "1.10.0"
-pluginKotlinSerialization = "2.3.0"
+pluginKotlinSerialization = "2.3.10"
 
 apachePdfBox = "2.0.27.0"
+
+coil = "2.7.0"
 
 biometric = "1.1.0"
 
@@ -109,6 +111,8 @@ mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", versio
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 
 apache-pdfbox = { group = "com.tom-roush", name = "pdfbox-android", version.ref = "apachePdfBox" }
+
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 
 kotlinx-serialization-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version.ref = "kotlinSerialization" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinSerialization" }
