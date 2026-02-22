@@ -21,7 +21,7 @@ import com.habitiora.linkarium.data.local.room.entity.LinkTagEntity
         LinkTagEntity::class,
         LinkEntryEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
