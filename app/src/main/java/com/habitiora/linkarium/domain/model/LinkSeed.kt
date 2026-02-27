@@ -1,10 +1,13 @@
 package com.habitiora.linkarium.domain.model
 
+import android.net.Uri
 import java.time.LocalDateTime
 
 interface LinkSeed{
     val id: Long
     val name: String
+
+    val coverUri: Uri?
     val links: List<LinkEntry>
     val gardenId: Long
     val order: Int

@@ -35,6 +35,7 @@ data class LinkSeedEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = DatabaseContract.LinkSeed.COLUMN_ID) val id: Long = 0,
     @ColumnInfo(name = DatabaseContract.LinkSeed.COLUMN_NAME) val name: String,
+    @ColumnInfo(name = DatabaseContract.LinkSeed.COLUMN_COVER_URI) val coverUri: String? = null,
     @ColumnInfo(name = DatabaseContract.LinkSeed.COLUMN_GARDEN_ID) val gardenId: Long = 0,
     @ColumnInfo(name = DatabaseContract.LinkSeed.COLUMN_ORDER) val order: Int = 0,
     @ColumnInfo(name = DatabaseContract.LinkSeed.COLUMN_IS_FAVORITE) val isFavorite: Boolean = false,

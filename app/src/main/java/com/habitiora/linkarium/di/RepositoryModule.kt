@@ -14,6 +14,8 @@ import com.habitiora.linkarium.data.repository.LinkGardenRepository
 import com.habitiora.linkarium.data.repository.LinkGardenRepositoryImpl
 import com.habitiora.linkarium.data.repository.LinkSeedRepository
 import com.habitiora.linkarium.data.repository.LinkSeedRepositoryImpl
+import com.habitiora.linkarium.data.repository.UriMetadataRepository
+import com.habitiora.linkarium.data.repository.UriMetadataRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -67,5 +69,11 @@ abstract class RepositoryModule {
     abstract fun bindExportRepository(
         impl: ExportRepositoryImpl
     ): ExportRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindUriMetadataRepository(
+        impl: UriMetadataRepositoryImpl
+    ): UriMetadataRepository
     // endregion
 }

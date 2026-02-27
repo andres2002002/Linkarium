@@ -1,7 +1,11 @@
 package com.habitiora.linkarium.core
 
+import android.net.Uri
 import android.util.Patterns
+import androidx.core.net.toUri
 import com.habitiora.linkarium.R
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import kotlin.text.trim
 
 /**
  * Utilidad principal para validación de datos con configuración flexible.
@@ -33,8 +37,11 @@ object DataValidator {
         )
     ): ValidationResult = when {
         input.isNullOrEmpty() -> ValidationResult(config.allowEmpty)
-        !Patterns.WEB_URL.matcher(input).matches() -> ValidationResult(false, R.string.app_name)
+        input.trim().toUriOrNull() == null -> ValidationResult(false, R.string.app_name)
         else -> ValidationResult(true)
     }
 
+    private fun String.toUriOrNull(): Uri? {
+        return runCatching { toUri() }.getOrNull()
+    }
 }

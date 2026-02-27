@@ -1,5 +1,6 @@
 package com.habitiora.linkarium.ui.screens.plantSeed
 
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.expandVertically
@@ -13,11 +14,13 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -61,6 +64,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import coil3.compose.AsyncImage
 import com.akari.uicomponents.reorderableComponents.AkariReorderableColumn
 import com.akari.uicomponents.reorderableComponents.rememberAkariReorderableColumnState
 import com.akari.uicomponents.textFields.AkariTextField
@@ -69,8 +73,8 @@ import com.akari.uicomponents.textFields.rememberAkariTextFieldConfig
 import com.habitiora.linkarium.core.DataValidator
 import com.habitiora.linkarium.domain.model.LinkEntry
 import com.habitiora.linkarium.domain.model.LinkGarden
-import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LabelDescriptionTextFieldValues
-import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LinkEntryTextFieldValues
+import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LabelDescriptionInput
+import com.habitiora.linkarium.ui.utils.multiTextFieldValues.LinkEntryInput
 
 private val PaddingSmall = 4.dp
 
@@ -106,50 +110,24 @@ private fun getAkariTextFieldColors() = AkariTextFieldDefaults.colors().copy(
 fun PlantSeedScreen(
     viewModel: PlantSeedViewModel = hiltViewModel()
 ) {
-    val nameNotesTextFieldValue by viewModel.nameNotesTextFieldValue.collectAsState()
-    val newEntryTextFieldValues by viewModel.newEntryTextFieldValues.collectAsState()
-    val entries: List<LinkEntry> by viewModel.entries.collectAsState()
-    val garden by viewModel.garden.collectAsState()
-    val gardens by viewModel.gardens.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
-    val addSeedStatus by viewModel.addSeedStatus.collectAsState()
-
-    LaunchedEffect(addSeedStatus) {
-        if (addSeedStatus.isSuccess()) {
-            viewModel.consumeStatusAndBackStack()
+    LaunchedEffect(uiState.addSeedStatus) {
+        if (uiState.addSeedStatus.isSuccess()) {
+            viewModel.onEvent(PlantSeedEvent.ConsumeStatusAndBackStack)
         }
     }
 
     PlantSeedContent(
-        garden = garden,
-        gardens = gardens,
-        onGardenChange = viewModel::setGardenIndex,
-        nameNotesTextFieldValue = nameNotesTextFieldValue,
-        updateNameNotesTextFieldValue = viewModel::updateNameNotesTextFieldValue,
-        newEntryTextFieldValues = newEntryTextFieldValues,
-        updateNewEntryTextFieldValues = viewModel::updateNewEntryTextFieldValues,
-        entries = entries,
-        addLink = viewModel::addEntryOfCurrent,
-        editLink = viewModel::editEntry,
-        removeLink = viewModel::removeEntry,
-        onMove = viewModel::moveEntry,
+        uiState = uiState,
+        onEvent = viewModel::onEvent
     )
 }
 
 @Composable
 private fun PlantSeedContent(
-    garden: LinkGarden,
-    gardens: List<LinkGarden>,
-    onGardenChange: (Int) -> Unit,
-    nameNotesTextFieldValue: LabelDescriptionTextFieldValues,
-    updateNameNotesTextFieldValue: (String, TextFieldValue) -> Unit,
-    newEntryTextFieldValues: LinkEntryTextFieldValues,
-    updateNewEntryTextFieldValues: (String, TextFieldValue) -> Unit,
-    entries: List<LinkEntry>,
-    addLink: () -> Unit,
-    editLink: (LinkEntry) -> Unit,
-    removeLink: (LinkEntry) -> Unit,
-    onMove: (Int, Int) -> Unit
+    uiState: PlantSeedUiState,
+    onEvent: (PlantSeedEvent) -> Unit
 ) {
     val focusRequesters = remember {
         List(5) { FocusRequester() }
@@ -170,9 +148,9 @@ private fun PlantSeedContent(
                 subtitle = "Selecciona el jardín al que deseas agregar esta semilla"
             ) {
                 GardenSelector(
-                    currentGarden = garden,
-                    gardens = gardens,
-                    onClick = onGardenChange
+                    currentGarden = uiState.selectedGarden,
+                    gardens = uiState.gardens,
+                    onClick = { onEvent(PlantSeedEvent.OnGardenChange(it)) }
                 )
             }
         }
@@ -184,15 +162,26 @@ private fun PlantSeedContent(
                 subtitle = "Dale un nombre identificable a tu semilla"
             ) {
                 NameField(
-                    nameTextFieldValue = nameNotesTextFieldValue.label,
+                    nameTextFieldValue = uiState.nameNotes.label,
                     focusRequester = focusRequesters[0],
                     colorsTxtFld = colorsTxtFld,
                     onNameTextFieldValueChange = {
-                        updateNameNotesTextFieldValue(
-                            LabelDescriptionTextFieldValues.LABEL_KEY,
-                            it
+                        onEvent(
+                            PlantSeedEvent.OnNameNotesTextFieldValueChange(
+                                LabelDescriptionInput.Key.LABEL,
+                                it
+                            )
                         )
                     }
+                )
+                Spacer(modifier = Modifier.height(PaddingSmall))
+                CoverComponent(
+                    coverImageUri = uiState.coverImageUri,
+                    coverTextFieldValue = uiState.cover,
+                    onCoverTextFieldValueChange = {
+                        onEvent(PlantSeedEvent.OnCoverTextFieldValueChange(it))
+                    },
+                    colorsTxtFld = colorsTxtFld
                 )
             }
         }
@@ -201,22 +190,24 @@ private fun PlantSeedContent(
         item {
             SectionCard(
                 title = "Enlaces",
-                subtitle = "${entries.size} enlace(s) agregado(s)"
+                subtitle = "${uiState.entries.size} enlace(s) agregado(s)"
             ) {
                 LinksComponent(
-                    entryTextFieldValues = newEntryTextFieldValues,
-                    updateNewEntryTextFieldValues = updateNewEntryTextFieldValues,
+                    entryTextFieldValues = uiState.newEntry,
+                    updateNewEntryTextFieldValues = { key, value ->
+                        onEvent(PlantSeedEvent.OnNewEntryTextFieldValueChange(key, value))
+                    },
                     focusRequesters = Triple(
                         focusRequesters[1],
                         focusRequesters[2],
                         focusRequesters[3]
                     ),
                     colorsTxtFld = colorsTxtFld,
-                    entries = entries,
-                    addLink = addLink,
-                    editLink = editLink,
-                    removeLink = removeLink,
-                    onMove = onMove
+                    entries = uiState.entries,
+                    addLink = { onEvent(PlantSeedEvent.OnAddLink) },
+                    editLink = { onEvent(PlantSeedEvent.OnEditLink(it)) },
+                    removeLink = { onEvent(PlantSeedEvent.OnRemoveLink(it)) },
+                    onMove = { from, to -> onEvent(PlantSeedEvent.OnMoveLink(from, to)) }
                 )
             }
         }
@@ -228,13 +219,15 @@ private fun PlantSeedContent(
                 subtitle = "Información adicional sobre esta semilla"
             ) {
                 NotesField(
-                    notesTextFieldValue = nameNotesTextFieldValue.description,
+                    notesTextFieldValue = uiState.nameNotes.description,
                     focusRequester = focusRequesters[4],
                     colorsTxtFld = colorsTxtFld,
                     onNotesTextFieldValueChange = {
-                        updateNameNotesTextFieldValue(
-                            LabelDescriptionTextFieldValues.DESCRIPTION_KEY,
-                            it
+                        onEvent(
+                            PlantSeedEvent.OnNameNotesTextFieldValueChange(
+                                LabelDescriptionInput.Key.DESCRIPTION,
+                                it
+                            )
                         )
                     }
                 )
@@ -345,9 +338,113 @@ private fun NotesField(
 }
 
 @Composable
+private fun CoverComponent(
+    coverImageUri: Uri?,
+    coverTextFieldValue: TextFieldValue,
+    onCoverTextFieldValueChange: (TextFieldValue) -> Unit,
+    colorsTxtFld: TextFieldColors
+) {
+
+    var visible by rememberSaveable { mutableStateOf(false) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(DesignTokens.Padding.Small)) {
+        OutlinedCard(
+            onClick = { visible = !visible },
+            colors = CardDefaults.outlinedCardColors(
+                containerColor = if (visible) {
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
+                } else {
+                    Color.Transparent
+                }
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(DesignTokens.Padding.Medium),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Cover de la semilla",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    Text(
+                        text = "Coloca una imagen para complementar el contenido.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(
+                    imageVector = if (visible) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = if (visible) "Ocultar" else "Mostrar",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = visible,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(DesignTokens.Padding.Small)) {
+
+                val config = rememberAkariTextFieldConfig {
+                    slots {
+                        label = { Text("URL") }
+                        placeholder = { Text("https://ejemplo.com") }
+                        leadingIcon = {
+                            Icon(
+                                modifier = Modifier,
+                                imageVector = Icons.Default.Link,
+                                contentDescription = null
+                            )
+                        }
+                    }
+                    behavior {
+                        singleLine = true
+                    }
+                    style {
+                        colors = colorsTxtFld
+                    }
+                }
+
+                if (coverImageUri != null){
+                    AsyncImage(
+                        model = coverImageUri.toString(),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                    )
+                }
+                else{
+                    Box(
+                        modifier = Modifier
+                            .width(100.dp)
+                            .fillMaxHeight(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No Image", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+
+                AkariTextField(
+                    value = coverTextFieldValue,
+                    onValueChange = onCoverTextFieldValueChange,
+                    config = config,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun LinksComponent(
-    entryTextFieldValues: LinkEntryTextFieldValues,
-    updateNewEntryTextFieldValues: (String, TextFieldValue) -> Unit,
+    entryTextFieldValues: LinkEntryInput,
+    updateNewEntryTextFieldValues: (LinkEntryInput.Key, TextFieldValue) -> Unit,
     focusRequesters: Triple<FocusRequester, FocusRequester, FocusRequester>,
     colorsTxtFld: TextFieldColors,
     entries: List<LinkEntry>,
@@ -373,10 +470,10 @@ private fun LinksComponent(
             notesFocusRequester = focusRequesters.third,
             colorsTxtFld = colorsTxtFld,
             onLabelTextFieldValueChange = {
-                updateNewEntryTextFieldValues(LinkEntryTextFieldValues.LABEL_KEY, it)
+                updateNewEntryTextFieldValues(LinkEntryInput.Key.LABEL, it)
             },
             onNotesTextFieldValueChange = {
-                updateNewEntryTextFieldValues(LinkEntryTextFieldValues.NOTE_KEY, it)
+                updateNewEntryTextFieldValues(LinkEntryInput.Key.NOTE, it)
             }
         )
         Column {
@@ -390,7 +487,7 @@ private fun LinksComponent(
                     focusRequester = focusRequesters.first,
                     colorsTxtFld = colorsTxtFld,
                     onNewUrlTextFieldValueChange = {
-                        updateNewEntryTextFieldValues(LinkEntryTextFieldValues.URL_KEY, it)
+                        updateNewEntryTextFieldValues(LinkEntryInput.Key.URL, it)
                     },
                     enabledAddIcon = isUrlValid,
                     onAddLink = {
@@ -570,7 +667,9 @@ private fun LinksTextField(
     enabledAddIcon: Boolean = true,
     onAddLink: () -> Unit = {}
 ) {
-    val config = rememberAkariTextFieldConfig {
+    val config = rememberAkariTextFieldConfig(
+        enabledAddIcon
+    ) {
         slots {
             label = { Text("URL") }
             placeholder = { Text("https://ejemplo.com") }

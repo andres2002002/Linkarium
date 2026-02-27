@@ -13,6 +13,7 @@ object DatabaseContract {
         const val TABLE_NAME = "link_seed"
         const val COLUMN_ID = "id"
         const val COLUMN_NAME = "name"
+        const val COLUMN_COVER_URI = "cover_uri"
         const val COLUMN_GARDEN_ID = "gardenId"
         const val COLUMN_IS_FAVORITE = "isFavorite"
         const val COLUMN_ORDER = "sort_order"
@@ -38,6 +39,7 @@ object DatabaseContract {
         const val COLUMN_SEED_ID = "seed_id"
         const val COLUMN_ORDER = "sort_order"
         const val COLUMN_URI = "uri"
+        const val COLUMN_THUMBNAIL_URI = "thumbnail_uri"
         const val COLUMN_LABEL = "label"
         const val COLUMN_NOTE = "note"
         val Empty = LinkEntryEntity(

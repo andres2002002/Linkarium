@@ -1,5 +1,6 @@
 package com.habitiora.linkarium.domain.usecase
 
+import android.net.Uri
 import com.habitiora.linkarium.domain.model.LinkEntry
 import com.habitiora.linkarium.domain.model.LinkSeed
 import com.habitiora.linkarium.domain.model.LinkTag
@@ -19,6 +20,7 @@ import java.time.LocalDateTime
 data class LinkSeedImpl(
     override val id: Long = 0,
     override val name: String = "",
+    override val coverUri: Uri? = null,
     override val links: List<LinkEntry> = emptyList(),
     override val gardenId: Long = 0,
     override val order: Int = 0,

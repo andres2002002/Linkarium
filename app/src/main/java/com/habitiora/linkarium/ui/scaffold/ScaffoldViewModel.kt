@@ -21,7 +21,9 @@ class ScaffoldViewModel @Inject constructor(
     val message = messageBus.message
     val enableAddSeed = addSeedEventBus.enable
 
-    fun emitEventAddSeed() = addSeedEventBus::emitEvent
+    fun emitEventAddSeed(){
+        addSeedEventBus.emitEvent()
+    }
 
     fun dismissDialog(){
         messageBus.pubMessage(null)

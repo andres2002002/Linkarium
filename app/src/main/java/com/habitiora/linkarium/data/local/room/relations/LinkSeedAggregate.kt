@@ -1,5 +1,6 @@
 package com.habitiora.linkarium.data.local.room.relations
 
+import androidx.core.net.toUri
 import androidx.room.Embedded
 import androidx.room.Relation
 import com.habitiora.linkarium.data.local.room.DatabaseContract
@@ -32,8 +33,12 @@ data class LinkSeedAggregate(
         id = seed.id,
         name = seed.name,
         order = seed.order,
+        coverUri = seed.coverUri?.toUri(),
+        isFavorite = seed.isFavorite,
+        notes = seed.notes,
         gardenId = seed.gardenId,
         links = links,
-        tags = tags
+        tags = tags,
+        modifiedAt = seed.modifiedAt
     )
 }

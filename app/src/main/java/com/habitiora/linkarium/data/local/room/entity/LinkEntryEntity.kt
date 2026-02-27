@@ -40,6 +40,9 @@ data class LinkEntryEntity(
     @Serializable(with = UriSerializer::class)
     @ColumnInfo(name = DatabaseContract.LinkEntry.COLUMN_URI)
     override val uri: Uri,
+    @Serializable(with = UriSerializer::class)
+    @ColumnInfo(name = DatabaseContract.LinkEntry.COLUMN_THUMBNAIL_URI)
+    override val thumbnailUri: Uri? = null,
     @ColumnInfo(name = DatabaseContract.LinkEntry.COLUMN_LABEL)
     override val label: String? = null,
     @ColumnInfo(name = DatabaseContract.LinkEntry.COLUMN_NOTE)

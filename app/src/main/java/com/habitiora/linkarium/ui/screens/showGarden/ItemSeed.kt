@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
@@ -50,12 +51,14 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import com.akari.uicomponents.checkbox.AkariCheckBox
 import com.akari.uicomponents.tooltip.AkariTooltip
 import com.habitiora.linkarium.R
@@ -157,6 +160,14 @@ fun ItemSeed(
                 onEdit = { callbacks.onEdit(seed) },
                 onDelete = { callbacks.onDelete(seed) },
                 widthSizeClass = widthSizeClass
+            )
+            AsyncImage(
+                model = seed.coverUri?.toString()?: ItemSeedDefaults.defaultPreview,
+                contentDescription = "Thumbnail Preview",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
             )
             MultiLinksContent(
                 modifier = Modifier.padding(start = 16.dp),

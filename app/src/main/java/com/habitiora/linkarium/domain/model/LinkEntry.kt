@@ -7,6 +7,7 @@ interface LinkEntry{
     val seedId: Long
     val order: Int
     val uri: Uri
+    val thumbnailUri: Uri?
     val label: String?
     val note: String?
 }

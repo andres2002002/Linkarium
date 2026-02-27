@@ -8,6 +8,7 @@ data class LinkEntryImpl(
     override val seedId: Long = 0,
     override val order: Int = 0,
     override val uri: Uri,
+    override val thumbnailUri: Uri? = null,
     override val label: String? = null,
     override val note: String? = null
 ): LinkEntry{

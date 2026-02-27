@@ -106,6 +106,13 @@ dependencies {
     //gson
     implementation(libs.google.gson)
 
+    //coil
+    implementation(libs.coil.compose)
+    implementation(libs.coil.okhttp)
+
+    //jsoup
+    implementation(libs.jsoup)
+
     //test
     // androidTestImplementation is required for UI tests
     // testImplementation is required for local tests
