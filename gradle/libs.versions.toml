@@ -41,7 +41,9 @@ pluginKotlinSerialization = "2.3.10"
 
 apachePdfBox = "2.0.27.0"
 
-coil = "2.7.0"
+coil = "3.3.0"
+
+jsoup = "1.22.1"
 
 biometric = "1.1.0"
 
@@ -112,7 +114,10 @@ timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "tim
 
 apache-pdfbox = { group = "com.tom-roush", name = "pdfbox-android", version.ref = "apachePdfBox" }
 
-coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
+coil-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
+
+jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 
 kotlinx-serialization-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version.ref = "kotlinSerialization" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinSerialization" }

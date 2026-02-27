@@ -108,6 +108,10 @@ dependencies {
 
     //coil
     implementation(libs.coil.compose)
+    implementation(libs.coil.okhttp)
+
+    //jsoup
+    implementation(libs.jsoup)
 
     //test
     // androidTestImplementation is required for UI tests

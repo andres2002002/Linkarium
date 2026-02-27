@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,6 +26,7 @@ class AddSeedEventBus @Inject constructor() {
 
     // Función para enviar un mensaje desde cualquier ViewModel
     fun emitEvent() {
+        Timber.d("Emitting add seed event")
         _events.tryEmit(Unit)
     }
 

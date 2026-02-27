@@ -10,6 +10,7 @@ import com.habitiora.linkarium.domain.model.LinkTag
 fun LinkSeed.toEntity(): LinkSeedEntity = LinkSeedEntity(
     id = this.id,
     name = this.name,
+    coverUri = this.coverUri?.toString(),
     gardenId = this.gardenId,
     order = this.order,
     isFavorite = this.isFavorite,
