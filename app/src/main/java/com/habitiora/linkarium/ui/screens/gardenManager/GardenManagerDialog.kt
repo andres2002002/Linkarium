@@ -11,6 +11,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -57,9 +59,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -70,51 +75,68 @@ import com.akari.uicomponents.textFields.AkariTextField
 import com.akari.uicomponents.textFields.rememberAkariTextFieldConfig
 
 // Design tokens para consistencia
+// ─── Design Tokens ────────────────────────────────────────────────────────────
+// Hereda la misma escala de espaciado que PlantSeedTokens e ItemSeedDefaults
+private object DialogTokens {
+    object Spacing {
+        val XS = 4.dp
+        val S  = 8.dp
+        val M  = 16.dp
+        val L  = 24.dp
+        val XL = 32.dp
+    }
 
-// Design tokens para consistencia
-private object DialogDesignTokens {
-    val SpacingXSmall = 4.dp
-    val SpacingSmall = 8.dp
-    val SpacingMedium = 16.dp
-    val SpacingLarge = 24.dp
-    val SpacingXLarge = 32.dp
+    val DialogPadding    = 20.dp
+    val DialogMinWidth   = 320.dp
+    val DialogMaxWidth   = 560.dp
+    val DialogElevation  = 6.dp
 
-    val DialogPadding = 24.dp
-    val DialogMinWidth = 320.dp
-    val DialogMaxWidth = 560.dp
-    val DialogElevation = 6.dp
+    val IconSize         = 22.dp
+    val HeaderIconSize   = 40.dp
 
-    val IconSize = 24.dp
-    val HeaderIconSize = 40.dp
+    /** Grosor trazo de acento lateral — igual que ExpandablePanel */
+    val AccentStrokeWidth = 3.dp
+
+    /** Duración estándar — igual que ItemSeed / PlantSeed */
+    const val AnimMs     = 280
 }
 
+// ─── Gradient helpers (mismo sistema que SectionCard) ─────────────────────────
+@Composable
+private fun dialogHeaderGradient(): Brush =
+    Brush.horizontalGradient(
+        listOf(
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+            MaterialTheme.colorScheme.secondary.copy(alpha = 0.07f),
+            Color.Transparent
+        )
+    )
+
+// ─── Entry point ──────────────────────────────────────────────────────────────
 @Composable
 fun GardenManagerDialog(
     viewModel: GardenManagerViewModel = hiltViewModel(),
     onDismiss: () -> Unit
 ) {
-    val nameTextFieldValue by viewModel.nameTextFieldValue.collectAsState()
+    val nameTextFieldValue        by viewModel.nameTextFieldValue.collectAsState()
     val descriptionTextFieldValue by viewModel.descriptionTextFieldValue.collectAsState()
-    val enabledButton by viewModel.isValidGarden.collectAsState()
+    val enabledButton             by viewModel.isValidGarden.collectAsState()
 
-    // Manejamos el cierre con éxito
     var showSuccessAnimation by remember { mutableStateOf(false) }
 
     ContentScreen(
-        nameTextFieldValue = nameTextFieldValue,
-        onNameChange = viewModel::setNameTextFieldValue,
+        nameTextFieldValue        = nameTextFieldValue,
+        onNameChange              = viewModel::setNameTextFieldValue,
         descriptionTextFieldValue = descriptionTextFieldValue,
-        onDescriptionChange = viewModel::setDescriptionTextFieldValue,
-        onDismissRequest = onDismiss,
-        enabledButton = enabledButton,
-        onSave = {
-            viewModel.saveGarden()
-            showSuccessAnimation = true
-        },
-        showSuccessAnimation = showSuccessAnimation
+        onDescriptionChange       = viewModel::setDescriptionTextFieldValue,
+        onDismissRequest          = onDismiss,
+        enabledButton             = enabledButton,
+        onSave                    = { viewModel.saveGarden(); showSuccessAnimation = true },
+        showSuccessAnimation      = showSuccessAnimation
     )
 }
 
+// ─── ContentScreen ────────────────────────────────────────────────────────────
 @Composable
 private fun ContentScreen(
     nameTextFieldValue: TextFieldValue,
@@ -131,38 +153,39 @@ private fun ContentScreen(
     Dialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-            usePlatformDefaultWidth = false
+            dismissOnBackPress       = true,
+            dismissOnClickOutside    = true,
+            usePlatformDefaultWidth  = false
         )
     ) {
         AnimatedVisibility(
             visible = true,
-            enter = fadeIn(tween(250)) + scaleIn(
-                initialScale = 0.9f,
-                animationSpec = tween(250, easing = FastOutSlowInEasing)
+            enter = fadeIn(tween(DialogTokens.AnimMs)) + scaleIn(
+                initialScale  = 0.92f,
+                animationSpec = tween(DialogTokens.AnimMs, easing = FastOutSlowInEasing)
             ),
             exit = fadeOut(tween(200)) + scaleOut(
-                targetScale = 0.9f,
+                targetScale   = 0.92f,
                 animationSpec = tween(200, easing = FastOutSlowInEasing)
             )
         ) {
             ContentDialog(
-                nameTextFieldValue = nameTextFieldValue,
-                nameFocusRequester = nameFocusRequester,
-                onNameChange = onNameChange,
+                nameTextFieldValue        = nameTextFieldValue,
+                nameFocusRequester        = nameFocusRequester,
+                onNameChange              = onNameChange,
                 descriptionTextFieldValue = descriptionTextFieldValue,
                 descriptionFocusRequester = descriptionFocusRequester,
-                onDescriptionChange = onDescriptionChange,
-                enabledButton = enabledButton,
-                onDismiss = onDismissRequest,
-                onSave = onSave,
-                showSuccessAnimation = showSuccessAnimation
+                onDescriptionChange       = onDescriptionChange,
+                enabledButton             = enabledButton,
+                onDismiss                 = onDismissRequest,
+                onSave                    = onSave,
+                showSuccessAnimation      = showSuccessAnimation
             )
         }
     }
 }
 
+// ─── ContentDialog ────────────────────────────────────────────────────────────
 @Composable
 private fun ContentDialog(
     nameTextFieldValue: TextFieldValue,
@@ -178,239 +201,251 @@ private fun ContentDialog(
 ) {
     Card(
         modifier = Modifier
-            .padding(DialogDesignTokens.DialogPadding)
+            .padding(DialogTokens.DialogPadding)
             .sizeIn(
-                minWidth = DialogDesignTokens.DialogMinWidth,
-                maxWidth = DialogDesignTokens.DialogMaxWidth
+                minWidth = DialogTokens.DialogMinWidth,
+                maxWidth = DialogTokens.DialogMaxWidth
             ),
-        shape = MaterialTheme.shapes.extraLarge,
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = DialogDesignTokens.DialogElevation
-        ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        shape     = MaterialTheme.shapes.extraLarge, // coherente con shapes.large del sistema
+        elevation = CardDefaults.cardElevation(defaultElevation = DialogTokens.DialogElevation),
+        colors    = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(DialogDesignTokens.DialogPadding)
-        ) {
-            // Header mejorado con icono decorativo
+        Column(modifier = Modifier.fillMaxWidth()) {
+
+            // ── Cabecera con degradado (igual que SectionCard) ────────────
             DialogHeader(onDismiss = onDismiss)
 
-            Spacer(modifier = Modifier.height(DialogDesignTokens.SpacingLarge))
+            HorizontalDivider(
+                thickness = 0.5.dp,
+                color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            )
 
-            // Contenido scrolleable
+            // ── Cuerpo scrolleable ────────────────────────────────────────
             Column(
                 modifier = Modifier
                     .weight(1f, fill = false)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(DialogDesignTokens.SpacingMedium)
+                    .verticalScroll(rememberScrollState())
+                    .padding(DialogTokens.Spacing.M),
+                verticalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.M)
             ) {
-                // Información contextual
                 InfoCard()
 
-                Spacer(modifier = Modifier.height(DialogDesignTokens.SpacingSmall))
-
-                // Campos de entrada
                 NameSection(
                     nameTextFieldValue = nameTextFieldValue,
-                    focusRequester = nameFocusRequester,
-                    onNameChange = onNameChange
+                    focusRequester     = nameFocusRequester,
+                    onNameChange       = onNameChange
                 )
 
                 DescriptionSection(
                     descriptionTextFieldValue = descriptionTextFieldValue,
-                    focusRequester = descriptionFocusRequester,
-                    onDescriptionChange = onDescriptionChange
+                    focusRequester            = descriptionFocusRequester,
+                    onDescriptionChange       = onDescriptionChange
                 )
 
-                // Contador de caracteres para el nombre
                 AnimatedVisibility(visible = nameTextFieldValue.text.isNotEmpty()) {
                     CharacterCounter(
                         current = nameTextFieldValue.text.length,
-                        max = 50,
-                        label = "nombre"
+                        max     = 50,
+                        label   = "nombre"
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(DialogDesignTokens.SpacingLarge))
-
-            // Botones de acción mejorados
-            ActionButtons(
-                enabled = enabledButton,
-                onSave = onSave,
-                onCancel = onDismiss,
-                showSuccessAnimation = showSuccessAnimation
+            HorizontalDivider(
+                thickness = 0.5.dp,
+                color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
+
+            // ── Acciones ──────────────────────────────────────────────────
+            Column(
+                modifier = Modifier.padding(
+                    horizontal = DialogTokens.Spacing.M,
+                    vertical   = DialogTokens.Spacing.M
+                )
+            ) {
+                ActionButtons(
+                    enabled              = enabledButton,
+                    onSave               = onSave,
+                    onCancel             = onDismiss,
+                    showSuccessAnimation = showSuccessAnimation
+                )
+            }
         }
     }
 }
 
+// ─── DialogHeader ─────────────────────────────────────────────────────────────
+/**
+ * Cabecera con el mismo degradado horizontal de SectionCard.
+ * Icono envuelto en contenedor con fondo primary.copy(alpha=0.12f),
+ * igual que el GardenSelector en PlantSeedScreen.
+ */
 @Composable
 private fun DialogHeader(onDismiss: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(DialogDesignTokens.SpacingSmall)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(dialogHeaderGradient())
+            .padding(
+                start  = DialogTokens.Spacing.M,
+                end    = DialogTokens.Spacing.XS,
+                top    = DialogTokens.Spacing.M,
+                bottom = DialogTokens.Spacing.M
+            )
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier              = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment     = Alignment.CenterVertically
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(DialogDesignTokens.SpacingMedium),
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.M),
+                verticalAlignment     = Alignment.CenterVertically
             ) {
-                // Icono decorativo
-                Surface(
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.size(DialogDesignTokens.HeaderIconSize)
+                // Icono decorativo — mismo patrón que GardenSelector
+                Box(
+                    modifier         = Modifier
+                        .size(DialogTokens.HeaderIconSize)
+                        .background(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                            shape = MaterialTheme.shapes.medium
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.LocalFlorist,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(DialogDesignTokens.IconSize)
-                        )
-                    }
+                    Icon(
+                        imageVector      = Icons.Default.LocalFlorist,
+                        contentDescription = null,
+                        tint             = MaterialTheme.colorScheme.primary,
+                        modifier         = Modifier.size(DialogTokens.IconSize)
+                    )
                 }
 
-                Column {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        text = "Nuevo Jardín",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        text       = "Nuevo Jardín",
+                        style      = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Organiza tus enlaces",
-                        style = MaterialTheme.typography.bodyMedium,
+                        text  = "Organiza tus enlaces",
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            IconButton(
-                onClick = onDismiss,
-                colors = IconButtonDefaults.iconButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            ) {
+            IconButton(onClick = onDismiss) {
                 Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Cerrar diálogo"
+                    imageVector      = Icons.Default.Close,
+                    contentDescription = "Cerrar",
+                    tint             = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
     }
 }
 
+// ─── InfoCard ─────────────────────────────────────────────────────────────────
+/**
+ * Bloque informativo con trazo de acento lateral (mismo patrón que ExpandablePanel).
+ */
 @Composable
 private fun InfoCard() {
     Surface(
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium),
+        color    = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(DialogDesignTokens.SpacingMedium),
-            horizontalArrangement = Arrangement.spacedBy(DialogDesignTokens.SpacingMedium),
-            verticalAlignment = Alignment.Top
-        ) {
-            Icon(
-                imageVector = Icons.Default.Info,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier.size(20.dp)
+        Row(modifier = Modifier.fillMaxWidth()) {
+            // Trazo de acento lateral
+            Box(
+                modifier = Modifier
+                    .width(DialogTokens.AccentStrokeWidth)
+                    .height(72.dp)
+                    .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f))
             )
-            Column(
-                verticalArrangement = Arrangement.spacedBy(DialogDesignTokens.SpacingXSmall)
+            Row(
+                modifier              = Modifier
+                    .fillMaxWidth()
+                    .padding(DialogTokens.Spacing.M),
+                horizontalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.M),
+                verticalAlignment     = Alignment.Top
             ) {
-                Text(
-                    text = "¿Qué es un jardín?",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                Icon(
+                    imageVector      = Icons.Default.Info,
+                    contentDescription = null,
+                    tint             = MaterialTheme.colorScheme.secondary,
+                    modifier         = Modifier.size(18.dp)
                 )
-                Text(
-                    text = "Los jardines te permiten categorizar y organizar tus semillas de enlaces. Por ejemplo: 'Trabajo', 'Personal', 'Aprendizaje'.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.XS)) {
+                    Text(
+                        text       = "¿Qué es un jardín?",
+                        style      = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color      = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text  = "Los jardines te permiten categorizar tus semillas de enlaces. Por ejemplo: 'Trabajo', 'Personal', 'Aprendizaje'.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
 }
 
+// ─── NameSection ──────────────────────────────────────────────────────────────
 @Composable
 private fun NameSection(
     nameTextFieldValue: TextFieldValue,
     focusRequester: FocusRequester,
     onNameChange: (TextFieldValue) -> Unit = {}
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(DialogDesignTokens.SpacingXSmall)
-    ) {
+    Column(verticalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.XS)) {
         val config = rememberAkariTextFieldConfig {
             slots {
-                label = {
-                    Text(
-                        text = "Nombre del jardín",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(start = DialogDesignTokens.SpacingXSmall)
-                    )
-                }
+                label       = { Text("Nombre del jardín") }
                 placeholder = { Text("Ej: Mis Enlaces Favoritos") }
                 leadingIcon = {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Label,
+                        imageVector      = Icons.AutoMirrored.Filled.Label,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint             = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-            behavior {
-                singleLine = true
-            }
+            behavior { singleLine = true }
         }
-
         AkariTextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = nameTextFieldValue,
-            onValueChange = onNameChange,
-            config = config,
+            modifier       = Modifier.fillMaxWidth(),
+            value          = nameTextFieldValue,
+            onValueChange  = onNameChange,
+            config         = config,
             focusRequester = focusRequester
         )
 
-        // Sugerencias
-        AnimatedVisibility(visible = nameTextFieldValue.text.isEmpty()) {
+        // Sugerencias cuando el campo está vacío
+        AnimatedVisibility(
+            visible = nameTextFieldValue.text.isEmpty(),
+            enter   = fadeIn(tween(DialogTokens.AnimMs)),
+            exit    = fadeOut(tween(DialogTokens.AnimMs))
+        ) {
             Row(
-                modifier = Modifier.padding(
-                    start = DialogDesignTokens.SpacingMedium,
-                    top = DialogDesignTokens.SpacingXSmall
-                ),
-                horizontalArrangement = Arrangement.spacedBy(DialogDesignTokens.SpacingSmall)
+                modifier              = Modifier.padding(start = DialogTokens.Spacing.M),
+                horizontalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.XS),
+                verticalAlignment     = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Default.Lightbulb,
+                    imageVector      = Icons.Default.Lightbulb,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(16.dp)
+                    tint             = MaterialTheme.colorScheme.primary,
+                    modifier         = Modifier.size(14.dp)
                 )
                 Text(
-                    text = "Sugerencias: Trabajo, Personal, Recursos de Estudio",
-                    style = MaterialTheme.typography.bodySmall,
+                    text  = "Sugerencias: Trabajo, Personal, Recursos de Estudio",
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -418,38 +453,34 @@ private fun NameSection(
     }
 }
 
+// ─── DescriptionSection ───────────────────────────────────────────────────────
 @Composable
 private fun DescriptionSection(
     descriptionTextFieldValue: TextFieldValue,
     focusRequester: FocusRequester,
     onDescriptionChange: (TextFieldValue) -> Unit = {}
 ) {
-
     val config = rememberAkariTextFieldConfig {
         slots {
             label = {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(DialogDesignTokens.SpacingXSmall),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(start = DialogDesignTokens.SpacingXSmall)
+                    horizontalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.S),
+                    verticalAlignment     = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Descripción",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Surface(
-                        shape = MaterialTheme.shapes.small,
-                        color = MaterialTheme.colorScheme.tertiaryContainer
+                    Text("Descripción")
+                    // Chip "Opcional" — mismo estilo que el chip de tipo en ItemSeed
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                MaterialTheme.colorScheme.tertiaryContainer,
+                                shape = MaterialTheme.shapes.extraLarge
+                            )
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "Opcional",
+                            text  = "Opcional",
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer,
-                            modifier = Modifier.padding(
-                                horizontal = DialogDesignTokens.SpacingSmall,
-                                vertical = 2.dp
-                            )
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
                     }
                 }
@@ -457,64 +488,57 @@ private fun DescriptionSection(
             placeholder = { Text("Añade una descripción para este jardín...") }
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Default.Description,
+                    imageVector      = Icons.Default.Description,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint             = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
-        behavior {
-            maxLines = 5
-            minLines = 2
-        }
+        behavior { maxLines = 5; minLines = 2 }
     }
 
     AkariTextField(
-        modifier = Modifier.fillMaxWidth(),
-        value = descriptionTextFieldValue,
-        onValueChange = onDescriptionChange,
-        config = config,
+        modifier       = Modifier.fillMaxWidth(),
+        value          = descriptionTextFieldValue,
+        onValueChange  = onDescriptionChange,
+        config         = config,
         focusRequester = focusRequester
     )
 }
 
+// ─── CharacterCounter ─────────────────────────────────────────────────────────
 @Composable
-private fun CharacterCounter(
-    current: Int,
-    max: Int,
-    label: String
-) {
+private fun CharacterCounter(current: Int, max: Int, label: String) {
     val progress = (current.toFloat() / max.toFloat()).coerceIn(0f, 1f)
-    val color = when {
+    val color    = when {
         progress >= 0.9f -> MaterialTheme.colorScheme.error
         progress >= 0.7f -> MaterialTheme.colorScheme.tertiary
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
+        else             -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = DialogDesignTokens.SpacingMedium),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        modifier              = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.S),
+        verticalAlignment     = Alignment.CenterVertically
     ) {
         LinearProgressIndicator(
-            progress = { progress },
-            modifier = Modifier
+            progress   = { progress },
+            modifier   = Modifier
                 .weight(1f)
-                .height(4.dp),
-            color = color,
-            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                .height(3.dp)
+                .clip(MaterialTheme.shapes.extraLarge),
+            color      = color,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant
         )
-        Spacer(modifier = Modifier.width(DialogDesignTokens.SpacingSmall))
         Text(
-            text = "$current/$max",
+            text  = "$current/$max",
             style = MaterialTheme.typography.labelSmall,
             color = color
         )
     }
 }
 
+// ─── ActionButtons ────────────────────────────────────────────────────────────
 @Composable
 private fun ActionButtons(
     enabled: Boolean,
@@ -522,144 +546,119 @@ private fun ActionButtons(
     onCancel: () -> Unit,
     showSuccessAnimation: Boolean
 ) {
-    // Estado de carga simulado
     var isLoading by remember { mutableStateOf(false) }
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Botón cancelar
-        OutlinedButton(
-            onClick = onCancel,
-            contentPadding = PaddingValues(
-                horizontal = DialogDesignTokens.SpacingLarge,
-                vertical = 12.dp
-            ),
-            shape = MaterialTheme.shapes.medium
+    Column(verticalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.S)) {
+        Row(
+            modifier              = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.S),
+            verticalAlignment     = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(DialogDesignTokens.SpacingSmall))
-            Text(
-                text = "Cancelar",
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
+            // Cancelar
+            OutlinedButton(
+                modifier       = Modifier.weight(1f),
+                onClick        = onCancel,
+                shape          = MaterialTheme.shapes.large, // consistente con el sistema
+                contentPadding = PaddingValues(vertical = 12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = null,
+                    modifier    = Modifier.size(16.dp)
+                )
+                Spacer(Modifier.width(DialogTokens.Spacing.XS))
+                Text("Cancelar", style = MaterialTheme.typography.labelLarge)
+            }
 
-        // Botón crear con animación
-        Button(
-            onClick = {
-                isLoading = true
-                onSave()
-            },
-            enabled = enabled && !isLoading,
-            contentPadding = PaddingValues(
-                horizontal = DialogDesignTokens.SpacingLarge,
-                vertical = 12.dp
-            ),
-            shape = MaterialTheme.shapes.medium,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) {
-            AnimatedContent(
-                targetState = when {
-                    showSuccessAnimation -> "success"
-                    isLoading -> "loading"
-                    else -> "idle"
-                },
-                transitionSpec = {
-                    fadeIn(tween(200)) togetherWith fadeOut(tween(200))
-                },
-                label = "button_state"
-            ) { state ->
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(DialogDesignTokens.SpacingSmall),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    when (state) {
-                        "loading" -> {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                            Text(
-                                text = "Creando...",
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
-
-                        "success" -> {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Text(
-                                text = "¡Creado!",
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
-
-                        else -> {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Text(
-                                text = "Crear Jardín",
-                                style = MaterialTheme.typography.labelLarge
-                            )
+            // Crear jardín — con estados animados
+            Button(
+                modifier       = Modifier.weight(1f),
+                onClick        = { isLoading = true; onSave() },
+                enabled        = enabled && !isLoading,
+                shape          = MaterialTheme.shapes.large,
+                contentPadding = PaddingValues(vertical = 12.dp),
+                colors         = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor   = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                AnimatedContent(
+                    targetState = when {
+                        showSuccessAnimation -> "success"
+                        isLoading            -> "loading"
+                        else                 -> "idle"
+                    },
+                    transitionSpec = {
+                        fadeIn(tween(DialogTokens.AnimMs)) togetherWith fadeOut(tween(DialogTokens.AnimMs))
+                    },
+                    label = "ButtonState"
+                ) { state ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.XS),
+                        verticalAlignment     = Alignment.CenterVertically
+                    ) {
+                        when (state) {
+                            "loading" -> {
+                                CircularProgressIndicator(
+                                    modifier    = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color       = MaterialTheme.colorScheme.onPrimary
+                                )
+                                Text("Creando...", style = MaterialTheme.typography.labelLarge)
+                            }
+                            "success" -> {
+                                Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Text("¡Creado!", style = MaterialTheme.typography.labelLarge)
+                            }
+                            else -> {
+                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Text("Crear Jardín", style = MaterialTheme.typography.labelLarge)
+                            }
                         }
                     }
                 }
             }
         }
-    }
 
-    // Mensaje de ayuda cuando el botón está deshabilitado
-    AnimatedVisibility(
-        visible = !enabled && !isLoading,
-        enter = fadeIn() + expandVertically(),
-        exit = fadeOut() + shrinkVertically()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = DialogDesignTokens.SpacingSmall),
-            horizontalArrangement = Arrangement.End
+        // Aviso de validación — mismo patrón de trazo lateral que InfoCard
+        AnimatedVisibility(
+            visible = !enabled && !isLoading,
+            enter   = fadeIn(tween(DialogTokens.AnimMs)) + expandVertically(),
+            exit    = fadeOut(tween(DialogTokens.AnimMs)) + shrinkVertically()
         ) {
             Surface(
-                shape = MaterialTheme.shapes.small,
-                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(MaterialTheme.shapes.medium),
+                color    = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.45f)
             ) {
-                Row(
-                    modifier = Modifier.padding(
-                        horizontal = DialogDesignTokens.SpacingSmall,
-                        vertical = DialogDesignTokens.SpacingXSmall
-                    ),
-                    horizontalArrangement = Arrangement.spacedBy(DialogDesignTokens.SpacingXSmall),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.size(14.dp)
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Box(
+                        modifier = Modifier
+                            .width(DialogTokens.AccentStrokeWidth)
+                            .height(32.dp)
+                            .background(MaterialTheme.colorScheme.error)
                     )
-                    Text(
-                        text = "El nombre es requerido",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
+                    Row(
+                        modifier              = Modifier.padding(
+                            horizontal = DialogTokens.Spacing.S,
+                            vertical   = DialogTokens.Spacing.XS
+                        ),
+                        horizontalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.XS),
+                        verticalAlignment     = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector      = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint             = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier         = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text  = "El nombre es requerido",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
                 }
             }
         }
