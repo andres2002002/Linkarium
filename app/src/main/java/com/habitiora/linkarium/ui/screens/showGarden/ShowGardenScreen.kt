@@ -4,23 +4,31 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.LocalFlorist
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +48,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.paging.compose.LazyPagingItems
@@ -159,30 +168,21 @@ private fun GardenContent(
 }
 
 // ─── TabRowGardens ────────────────────────────────────────────────────────────
-/**
- * Fila de tabs con botón de nuevo jardín.
- * El botón usa el mismo contenedor primary sólido que AddNewGarden en GardensScreen
- * para señalizar que es un CTA.
- * El TabRow usa edgePadding = 0.dp para alinearse limpiamente con el botón.
- */
 @Composable
-fun TabRowGardens(
+private fun TabRowGardens(
     selectedTabIndex: Int,
     collections: List<LinkGarden>,
     onCollectionSelected: (Int) -> Unit,
     navigateToAddGarden: () -> Unit
 ) {
-    Row(
-        modifier              = Modifier.fillMaxWidth(),
-        verticalAlignment     = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(0.dp)
-    ) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         AddGardenButton(navigateToAddGarden = navigateToAddGarden)
 
         PrimaryScrollableTabRow(
             modifier         = Modifier.weight(1f),
             selectedTabIndex = selectedTabIndex,
-            edgePadding      = 0.dp
+            edgePadding      = 0.dp,
+            divider          = {}
         ) {
             collections.forEachIndexed { index, collection ->
                 Tab(
@@ -191,10 +191,10 @@ fun TabRowGardens(
                     text     = {
                         Text(
                             text       = collection.name,
-                            style      = MaterialTheme.typography.labelLarge,
+                            maxLines   = 1,
+                            overflow   = TextOverflow.Ellipsis,
                             fontWeight = if (index == selectedTabIndex) FontWeight.SemiBold
-                            else FontWeight.Normal,
-                            maxLines   = 1
+                            else FontWeight.Normal
                         )
                     }
                 )
@@ -205,62 +205,56 @@ fun TabRowGardens(
 
 // ─── AddGardenButton ──────────────────────────────────────────────────────────
 /**
- * Botón compacto de "Nuevo jardín".
- * Icono con fondo primary sólido — mismo patrón que AddNewGarden en GardensScreen
- * para mantener coherencia de CTA en toda la app.
+ * Icono + etiqueta compacto.
+ * Mismo contenedor primary.copy(alpha=0.12f) + shapes.medium que GardenSelector,
+ * DialogHeader y GardenItem.
  */
 @Composable
-fun AddGardenButton(
+private fun AddGardenButton(
     modifier: Modifier = Modifier,
     navigateToAddGarden: () -> Unit
 ) {
-    // Usamos Surface clickeable para obtener el ripple correcto sobre el fondo
-    Surface(
-        modifier       = modifier,
-        onClick        = navigateToAddGarden,
-        shape          = MaterialTheme.shapes.medium,
-        color          = Color.Transparent,
-        tonalElevation = 0.dp
+    Column(
+        modifier            = modifier
+            .width(56.dp)
+            .clip(MaterialTheme.shapes.medium)
+            .clickable { navigateToAddGarden() }
+            .padding(vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Column(
-            modifier            = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(3.dp)
+        Box(
+            modifier         = Modifier
+                .size(32.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                    shape = MaterialTheme.shapes.medium
+                ),
+            contentAlignment = Alignment.Center
         ) {
-            // Icono con fondo primary sólido — diferenciador de CTA
-            Box(
-                modifier         = Modifier
-                    .size(28.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector      = Icons.Default.Add,
-                    contentDescription = "Nuevo jardín",
-                    tint             = MaterialTheme.colorScheme.onPrimary,
-                    modifier         = Modifier.size(18.dp)
-                )
-            }
-            Text(
-                text  = "Nuevo",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Medium
+            Icon(
+                imageVector        = Icons.Default.Add,
+                contentDescription = "Nuevo jardín",
+                tint               = MaterialTheme.colorScheme.primary,
+                modifier           = Modifier.size(18.dp)
             )
         }
+        Text(
+            text  = "Nuevo",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary
+        )
     }
 }
 
 // ─── EmptyGardensMessage ──────────────────────────────────────────────────────
 /**
- * Estado vacío premium:
- * - Icono LocalFlorist (coherente con el lenguaje de iconos del sistema)
- * - Tarjeta CTA con el mismo degradado horizontal de AddNewGarden / SectionCard
- * - AnimatedVisibility para entrada suave
+ * Empty state premium con entrada animada.
+ * Doble capa de fondo radial + icono LocalFlorist — mismo lenguaje visual
+ * que el resto del sistema.
  */
 @Composable
-fun EmptyGardensMessage(
+private fun EmptyGardensMessage(
     navigateToAddGarden: () -> Unit
 ) {
     Box(
@@ -269,94 +263,87 @@ fun EmptyGardensMessage(
     ) {
         AnimatedVisibility(
             visible = true,
-            enter   = fadeIn(tween(280)),
-            exit    = fadeOut(tween(280))
+            enter   = fadeIn(tween(280)) + scaleIn(
+                initialScale  = 0.92f,
+                animationSpec = tween(280)
+            ),
+            exit    = fadeOut(tween(200)) + scaleOut(
+                targetScale   = 0.92f,
+                animationSpec = tween(200)
+            )
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(24.dp),
-                modifier            = Modifier.padding(32.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Icono decorativo grande con fondo primary.copy(0.12f)
+                // Icono con halo radial + contenedor cuadrado
                 Box(
                     modifier         = Modifier
                         .size(80.dp)
                         .background(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                            brush = Brush.radialGradient(
+                                listOf(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
+                                    Color.Transparent
+                                )
+                            ),
                             shape = MaterialTheme.shapes.extraLarge
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector      = Icons.Default.LocalFlorist,
-                        contentDescription = null,
-                        tint             = MaterialTheme.colorScheme.primary,
-                        modifier         = Modifier.size(40.dp)
-                    )
+                    Box(
+                        modifier         = Modifier
+                            .size(56.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                shape = MaterialTheme.shapes.large
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector        = Icons.Default.LocalFlorist,
+                            contentDescription = null,
+                            tint               = MaterialTheme.colorScheme.primary,
+                            modifier           = Modifier.size(30.dp)
+                        )
+                    }
                 }
 
-                // Textos descriptivos
+                // Textos
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text       = "Sin jardines aún",
+                        text       = "Sin jardines todavía",
                         style      = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color      = MaterialTheme.colorScheme.onSurface
+                        fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text  = "Crea tu primer jardín para empezar\na organizar tus enlaces.",
+                        text  = "Crea tu primer jardín para empezar\na organizar tus enlaces",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                // Botón CTA — mismo estilo que AddNewGarden en GardensScreen
-                Card(
-                    onClick   = navigateToAddGarden,
-                    shape     = MaterialTheme.shapes.large,
-                    colors    = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                // Botón CTA — coherente con ActionButtons del diálogo
+                Button(
+                    onClick        = navigateToAddGarden,
+                    shape          = MaterialTheme.shapes.large,
+                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                 ) {
-                    Row(
-                        modifier              = Modifier
-                            .background(
-                                Brush.horizontalGradient(
-                                    listOf(
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
-                                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.07f),
-                                        Color.Transparent
-                                    )
-                                )
-                            )
-                            .padding(horizontal = 20.dp, vertical = 12.dp),
-                        verticalAlignment     = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(
-                            modifier         = Modifier
-                                .size(36.dp)
-                                .clip(MaterialTheme.shapes.medium)
-                                .background(MaterialTheme.colorScheme.primary),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector      = Icons.Default.Add,
-                                contentDescription = null,
-                                tint             = MaterialTheme.colorScheme.onPrimary,
-                                modifier         = Modifier.size(20.dp)
-                            )
-                        }
-                        Text(
-                            text       = "Crear primer jardín",
-                            style      = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+                    Icon(
+                        imageVector        = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier           = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text       = "Nuevo jardín",
+                        style      = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         }
