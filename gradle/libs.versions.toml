@@ -7,7 +7,7 @@ junitVersion = "1.3.0"
 espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.12.4"
-composeBom = "2026.02.00"
+composeBom = "2026.02.01"
 
 navigation = "2.9.7"
 
@@ -31,7 +31,7 @@ pagin = "3.4.1"
 testCore = "1.7.0"
 testCoreKtx = "1.7.0"
 
-mockito = "5.21.0"
+mockito = "5.22.0"
 mockitoKotlin = "6.2.3"
 
 timber = "5.0.1"
@@ -41,7 +41,7 @@ pluginKotlinSerialization = "2.3.10"
 
 apachePdfBox = "2.0.27.0"
 
-coil = "3.3.0"
+coil = "3.4.0"
 
 jsoup = "1.22.1"
 
