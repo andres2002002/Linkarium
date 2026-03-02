@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,10 +18,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
-import com.habitiora.linkarium.core.ProcessStatus
+import com.habitiora.linkarium.R
 import com.habitiora.linkarium.domain.model.LinkSeed
 import com.habitiora.linkarium.ui.components.EmptyMessage
 import com.habitiora.linkarium.ui.utils.clipBoardHelper.rememberClipboardHelper
@@ -78,7 +77,7 @@ fun ShowSeedsScreen(
                 item {
                     EmptyMessage(
                         modifier = Modifier.fillParentMaxSize(),
-                        message = error.localizedMessage ?: "Error al cargar"
+                        message = error.localizedMessage ?: stringResource(R.string.error_load)
                     )
                 }
             }
@@ -86,7 +85,7 @@ fun ShowSeedsScreen(
                 item {
                     EmptyMessage(
                         modifier = Modifier.fillParentMaxSize(),
-                        message = "No hay Seeds disponibles"
+                        message = stringResource(R.string.no_seeds_available)
                     )
                 }
             }
@@ -123,7 +122,7 @@ fun ShowSeedsScreen(
                     is LoadState.Error -> {
                         item {
                             Text(
-                                "Error al cargar más items",
+                                stringResource(R.string.error_load_more),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(16.dp)

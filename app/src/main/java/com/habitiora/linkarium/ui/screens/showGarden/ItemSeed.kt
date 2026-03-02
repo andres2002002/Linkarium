@@ -60,6 +60,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -285,9 +287,9 @@ private fun PremiumHeader(
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 val mainText = when (seed.links.size) {
-                    0 -> "No links"
+                    0 -> stringResource(R.string.no_links)
                     1 -> seed.links.first().uri.toString()
-                    else -> "${seed.links.size} links"
+                    else -> stringResource(R.string.multiple_links, seed.links.size)
                 }
 
                 Text(
@@ -322,7 +324,6 @@ private fun PremiumHeader(
         }
 
         // 5. Chip de tipo (esquina superior derecha) — accesorio visual premium
-        val chipLabel = if (isSingleLink) "Link" else "${seed.links.size} Links"
         val chipIcon = if (isSingleLink) R.drawable.round_link_24 else R.drawable.round_view_list_24
 
         Row(
@@ -344,7 +345,11 @@ private fun PremiumHeader(
                 tint = Color.White
             )
             Text(
-                text = chipLabel,
+                text = pluralStringResource(
+                    id = R.plurals.link_count_label,
+                    count = seed.links.size,
+                    seed.links.size
+                ),
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.White,
                 fontWeight = FontWeight.Medium
@@ -367,23 +372,23 @@ private fun TrailButtons(
     onDarkBackground: Boolean = false // Nuevo: ajusta el tinte para fondos oscuros
 ) {
     val iconRes: Int
-    val contentDesc: String
+    val contentDescId: Int
     val onClick: () -> Unit
 
     when {
         isSingleLink -> {
             iconRes = R.drawable.round_content_copy_24
-            contentDesc = "Copy link"
+            contentDescId = R.string.copy_link
             onClick = onSingleLink
         }
         showContent -> {
             iconRes = R.drawable.round_unfold_less_24
-            contentDesc = "Hide more links"
+            contentDescId = R.string.hide_more_links
             onClick = onMultiLink
         }
         else -> {
             iconRes = R.drawable.round_unfold_more_24
-            contentDesc = "Show more links"
+            contentDescId = R.string.show_more_links
             onClick = onMultiLink
         }
     }
@@ -398,6 +403,7 @@ private fun TrailButtons(
     val iconSize = ItemSeedDefaults.IconSizeMedium
     val tintColor = if (onDarkBackground) Color.White else MaterialTheme.colorScheme.primary
 
+    val contentDesc = stringResource(contentDescId)
     Row(
         modifier = modifier.semantics { contentDescription = contentDesc },
         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -440,12 +446,12 @@ private fun MoreOptions(
 
     if (widthSizeClass == WindowWidthSizeClass.Compact) {
         Box(modifier = Modifier.wrapContentSize()) {
-            AkariTooltip(text = "Options") {
+            AkariTooltip(text = stringResource(R.string.options)) {
                 IconButton(onClick = { showMenu = !showMenu }) {
                     Icon(
                         modifier = Modifier.size(iconSize),
                         imageVector = Icons.Default.MoreVert,
-                        contentDescription = "More options",
+                        contentDescription = stringResource(R.string.more_options),
                         tint = iconTint
                     )
                 }
@@ -456,38 +462,38 @@ private fun MoreOptions(
             ) {
                 DropdownMenuItem(
                     leadingIcon = {
-                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
+                        Icon(imageVector = Icons.Default.Edit, contentDescription = stringResource(R.string.edit))
                     },
-                    text = { Text("Edit") },
+                    text = { Text(stringResource(R.string.edit)) },
                     onClick = { onEdit(); showMenu = false }
                 )
                 DropdownMenuItem(
                     leadingIcon = {
-                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
+                        Icon(imageVector = Icons.Default.Delete, contentDescription = stringResource(R.string.delete))
                     },
-                    text = { Text("Delete") },
+                    text = { Text(stringResource(R.string.delete)) },
                     onClick = { onDelete(); showMenu = false }
                 )
             }
         }
     } else {
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            AkariTooltip(text = "Edit") {
+            AkariTooltip(text = stringResource(R.string.edit)) {
                 IconButton(onClick = onEdit) {
                     Icon(
                         modifier = Modifier.size(iconSize),
                         imageVector = Icons.Default.Edit,
-                        contentDescription = "Edit",
+                        contentDescription = stringResource(R.string.edit),
                         tint = iconTint
                     )
                 }
             }
-            AkariTooltip(text = "Delete") {
+            AkariTooltip(text = stringResource(R.string.delete)) {
                 IconButton(onClick = onDelete) {
                     Icon(
                         modifier = Modifier.size(iconSize),
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete",
+                        contentDescription = stringResource(R.string.delete),
                         tint = if (onDarkBackground) Color.White.copy(alpha = 0.85f)
                         else MaterialTheme.colorScheme.error
                     )
@@ -587,7 +593,7 @@ private fun ItemLink(
                 Icon(
                     modifier = Modifier.size(ItemSeedDefaults.IconSizeMedium),
                     imageVector = ImageVector.vectorResource(R.drawable.round_content_copy_24),
-                    contentDescription = "Copy",
+                    contentDescription = stringResource(R.string.copy),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             }

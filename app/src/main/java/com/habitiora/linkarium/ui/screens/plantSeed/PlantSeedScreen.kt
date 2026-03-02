@@ -78,6 +78,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
@@ -90,6 +91,7 @@ import com.akari.uicomponents.reorderableComponents.rememberAkariReorderableColu
 import com.akari.uicomponents.textFields.AkariTextField
 import com.akari.uicomponents.textFields.internalConfig.AkariTextFieldDefaults
 import com.akari.uicomponents.textFields.rememberAkariTextFieldConfig
+import com.habitiora.linkarium.R
 import com.habitiora.linkarium.core.DataValidator
 import com.habitiora.linkarium.domain.model.LinkEntry
 import com.habitiora.linkarium.domain.model.LinkGarden
@@ -101,14 +103,14 @@ private object PlantSeedTokens {
 
     object Spacing {
         val XS = 4.dp
-        val S  = 8.dp
-        val M  = 16.dp
-        val L  = 24.dp
+        val S = 8.dp
+        val M = 16.dp
+        val L = 24.dp
         val XL = 32.dp
     }
 
     val ContentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-    val BottomPadding  = PaddingValues(bottom = 80.dp)
+    val BottomPadding = PaddingValues(bottom = 80.dp)
 
     /** Grosor del trazo de acento lateral en ExpandablePanel */
     val AccentStrokeWidth = 3.dp
@@ -133,9 +135,9 @@ private fun sectionHeaderGradient(alpha: Float = 0.18f): Brush =
 
 @Composable
 private fun getAkariTextFieldColors() = AkariTextFieldDefaults.colors().copy(
-    focusedLabelColor   = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+    focusedLabelColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
     unfocusedLabelColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-    disabledLabelColor  = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+    disabledLabelColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
 )
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -160,27 +162,27 @@ private fun PlantSeedContent(
     onEvent: (PlantSeedEvent) -> Unit
 ) {
     val focusRequesters = remember { List(5) { FocusRequester() } }
-    val colorsTxtFld    = getAkariTextFieldColors()
+    val colorsTxtFld = getAkariTextFieldColors()
 
     LazyColumn(
-        modifier            = Modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(PlantSeedTokens.ContentPadding),
-        contentPadding      = PlantSeedTokens.BottomPadding,
+        contentPadding = PlantSeedTokens.BottomPadding,
         verticalArrangement = Arrangement.spacedBy(PlantSeedTokens.Spacing.M)
     ) {
 
         // ── Jardín ──────────────────────────────────────────────────────────
         item {
             SectionCard(
-                icon     = Icons.Default.LocalFlorist,
-                title    = "Jardín",
-                subtitle = "Selecciona el jardín destino"
+                icon = Icons.Default.LocalFlorist,
+                title = stringResource(R.string.garden),
+                subtitle = stringResource(R.string.select_target_garden)
             ) {
                 GardenSelector(
                     currentGarden = uiState.selectedGarden,
-                    gardens       = uiState.gardens,
-                    onClick       = { onEvent(PlantSeedEvent.OnGardenChange(it)) }
+                    gardens = uiState.gardens,
+                    onClick = { onEvent(PlantSeedEvent.OnGardenChange(it)) }
                 )
             }
         }
@@ -188,14 +190,14 @@ private fun PlantSeedContent(
         // ── Información Básica ───────────────────────────────────────────────
         item {
             SectionCard(
-                icon     = Icons.Default.Info,
-                title    = "Información Básica",
-                subtitle = "Nombre e imagen de portada"
+                icon = Icons.Default.Info,
+                title = stringResource(R.string.basic_info),
+                subtitle = stringResource(R.string.basic_info_description)
             ) {
                 NameField(
-                    nameTextFieldValue         = uiState.nameNotes.label,
-                    focusRequester             = focusRequesters[0],
-                    colorsTxtFld               = colorsTxtFld,
+                    nameTextFieldValue = uiState.nameNotes.label,
+                    focusRequester = focusRequesters[0],
+                    colorsTxtFld = colorsTxtFld,
                     onNameTextFieldValueChange = {
                         onEvent(
                             PlantSeedEvent.OnNameNotesTextFieldValueChange(
@@ -206,10 +208,16 @@ private fun PlantSeedContent(
                 )
                 Spacer(Modifier.height(PlantSeedTokens.Spacing.S))
                 CoverComponent(
-                    coverImageUri               = uiState.coverImageUri,
-                    coverTextFieldValue         = uiState.cover,
-                    onCoverTextFieldValueChange = { onEvent(PlantSeedEvent.OnCoverTextFieldValueChange(it)) },
-                    colorsTxtFld                = colorsTxtFld
+                    coverImageUri = uiState.coverImageUri,
+                    coverTextFieldValue = uiState.cover,
+                    onCoverTextFieldValueChange = {
+                        onEvent(
+                            PlantSeedEvent.OnCoverTextFieldValueChange(
+                                it
+                            )
+                        )
+                    },
+                    colorsTxtFld = colorsTxtFld
                 )
             }
         }
@@ -217,12 +225,16 @@ private fun PlantSeedContent(
         // ── Enlaces ──────────────────────────────────────────────────────────
         item {
             SectionCard(
-                icon     = Icons.Default.Link,
-                title    = "Enlaces",
-                subtitle = "${uiState.entries.size} enlace(s) agregado(s)"
+                icon = Icons.Default.Link,
+                title = stringResource(R.string.links),
+                subtitle = pluralStringResource(
+                    R.plurals.add_link_count_label,
+                    uiState.entries.size,
+                    uiState.entries.size
+                )
             ) {
                 LinksComponent(
-                    entryTextFieldValues          = uiState.newEntry,
+                    entryTextFieldValues = uiState.newEntry,
                     updateNewEntryTextFieldValues = { key, value ->
                         onEvent(PlantSeedEvent.OnNewEntryTextFieldValueChange(key, value))
                     },
@@ -230,11 +242,11 @@ private fun PlantSeedContent(
                         focusRequesters[1], focusRequesters[2], focusRequesters[3]
                     ),
                     colorsTxtFld = colorsTxtFld,
-                    entries      = uiState.entries,
-                    addLink      = { onEvent(PlantSeedEvent.OnAddLink) },
-                    editLink     = { onEvent(PlantSeedEvent.OnEditLink(it)) },
-                    removeLink   = { onEvent(PlantSeedEvent.OnRemoveLink(it)) },
-                    onMove       = { f, t -> onEvent(PlantSeedEvent.OnMoveLink(f, t)) }
+                    entries = uiState.entries,
+                    addLink = { onEvent(PlantSeedEvent.OnAddLink) },
+                    editLink = { onEvent(PlantSeedEvent.OnEditLink(it)) },
+                    removeLink = { onEvent(PlantSeedEvent.OnRemoveLink(it)) },
+                    onMove = { f, t -> onEvent(PlantSeedEvent.OnMoveLink(f, t)) }
                 )
             }
         }
@@ -242,14 +254,14 @@ private fun PlantSeedContent(
         // ── Notas ────────────────────────────────────────────────────────────
         item {
             SectionCard(
-                icon     = Icons.Default.Notes,
-                title    = "Notas",
-                subtitle = "Contexto adicional sobre esta semilla"
+                icon = Icons.Default.Notes,
+                title = stringResource(R.string.notes),
+                subtitle = stringResource(R.string.notes_description)
             ) {
                 NotesField(
-                    notesTextFieldValue         = uiState.nameNotes.description,
-                    focusRequester              = focusRequesters[4],
-                    colorsTxtFld                = colorsTxtFld,
+                    notesTextFieldValue = uiState.nameNotes.description,
+                    focusRequester = focusRequesters[4],
+                    colorsTxtFld = colorsTxtFld,
                     onNotesTextFieldValueChange = {
                         onEvent(
                             PlantSeedEvent.OnNameNotesTextFieldValueChange(
@@ -281,9 +293,9 @@ private fun SectionCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
-        modifier  = Modifier.fillMaxWidth(),
-        shape     = MaterialTheme.shapes.large,
-        colors    = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -297,25 +309,25 @@ private fun SectionCard(
                     .padding(horizontal = PlantSeedTokens.Spacing.M)
             ) {
                 Row(
-                    modifier              = Modifier.fillMaxSize(),
-                    verticalAlignment     = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(PlantSeedTokens.Spacing.S)
                 ) {
                     Icon(
-                        imageVector      = icon,
+                        imageVector = icon,
                         contentDescription = null,
-                        tint             = MaterialTheme.colorScheme.primary,
-                        modifier         = Modifier.size(20.dp)
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
                     )
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text       = title,
-                            style      = MaterialTheme.typography.titleSmall,
+                            text = title,
+                            style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold
                         )
                         subtitle?.let {
                             Text(
-                                text  = it,
+                                text = it,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -326,16 +338,16 @@ private fun SectionCard(
 
             HorizontalDivider(
                 thickness = 0.5.dp,
-                color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
 
             // Cuerpo
             Column(
-                modifier            = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(PlantSeedTokens.Spacing.M),
                 verticalArrangement = Arrangement.spacedBy(PlantSeedTokens.Spacing.S),
-                content             = content
+                content = content
             )
         }
     }
@@ -355,35 +367,35 @@ private fun ExpandablePanel(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val bgColor by animateColorAsState(
-        targetValue    = if (expanded)
+        targetValue = if (expanded)
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.12f)
         else
             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f),
-        animationSpec  = tween(PlantSeedTokens.AnimMs),
-        label          = "PanelBg"
+        animationSpec = tween(PlantSeedTokens.AnimMs),
+        label = "PanelBg"
     )
     val accentAlpha by animateColorAsState(
-        targetValue    = if (expanded) MaterialTheme.colorScheme.primary
+        targetValue = if (expanded) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
-        animationSpec  = tween(PlantSeedTokens.AnimMs),
-        label          = "AccentAlpha"
+        animationSpec = tween(PlantSeedTokens.AnimMs),
+        label = "AccentAlpha"
     )
     val arrowTint by animateColorAsState(
-        targetValue    = if (expanded) MaterialTheme.colorScheme.primary
+        targetValue = if (expanded) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.onSurfaceVariant,
-        animationSpec  = tween(PlantSeedTokens.AnimMs),
-        label          = "ArrowTint"
+        animationSpec = tween(PlantSeedTokens.AnimMs),
+        label = "ArrowTint"
     )
 
     Column {
         // Header row
         Surface(
-            modifier       = Modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .clip(MaterialTheme.shapes.medium),
-            color          = bgColor,
+            color = bgColor,
             tonalElevation = 0.dp,
-            onClick        = onToggle
+            onClick = onToggle
         ) {
             Row(modifier = Modifier.fillMaxWidth()) {
                 // Trazo de acento lateral
@@ -394,32 +406,32 @@ private fun ExpandablePanel(
                         .background(accentAlpha)
                 )
                 Row(
-                    modifier              = Modifier
+                    modifier = Modifier
                         .fillMaxWidth()
                         .padding(
                             horizontal = PlantSeedTokens.Spacing.M,
-                            vertical   = PlantSeedTokens.Spacing.S
+                            vertical = PlantSeedTokens.Spacing.S
                         ),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment     = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text       = title,
-                            style      = MaterialTheme.typography.titleSmall,
+                            text = title,
+                            style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text  = subtitle,
+                            text = subtitle,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Icon(
-                        imageVector      = Icons.Default.KeyboardArrowDown,
-                        contentDescription = if (expanded) "Ocultar" else "Mostrar",
-                        tint             = arrowTint,
-                        modifier         = Modifier.rotate(if (expanded) 180f else 0f)
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = stringResource(if (expanded) R.string.hide else R.string.show),
+                        tint = arrowTint,
+                        modifier = Modifier.rotate(if (expanded) 180f else 0f)
                     )
                 }
             }
@@ -428,20 +440,20 @@ private fun ExpandablePanel(
         // Contenido expandible
         AnimatedVisibility(
             visible = expanded,
-            enter   = fadeIn(tween(PlantSeedTokens.AnimMs)) + expandVertically(),
-            exit    = fadeOut(tween(PlantSeedTokens.AnimMs)) + shrinkVertically()
+            enter = fadeIn(tween(PlantSeedTokens.AnimMs)) + expandVertically(),
+            exit = fadeOut(tween(PlantSeedTokens.AnimMs)) + shrinkVertically()
         ) {
             Column(
-                modifier            = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        top    = PlantSeedTokens.Spacing.S,
-                        start  = PlantSeedTokens.AccentStrokeWidth + PlantSeedTokens.Spacing.M,
-                        end    = PlantSeedTokens.Spacing.XS,
+                        top = PlantSeedTokens.Spacing.S,
+                        start = PlantSeedTokens.AccentStrokeWidth + PlantSeedTokens.Spacing.M,
+                        end = PlantSeedTokens.Spacing.XS,
                         bottom = PlantSeedTokens.Spacing.XS
                     ),
                 verticalArrangement = Arrangement.spacedBy(PlantSeedTokens.Spacing.S),
-                content             = content
+                content = content
             )
         }
     }
@@ -454,34 +466,34 @@ private fun GardenSelector(
     gardens: List<LinkGarden>,
     onClick: (Int) -> Unit
 ) {
-    var expanded    by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
     val accountValid = gardens.any { it.id == currentGarden.id }
 
     Box(modifier = Modifier.fillMaxWidth()) {
         Surface(
-            modifier       = Modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .clip(MaterialTheme.shapes.medium),
-            color          = if (expanded)
+            color = if (expanded)
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
             else
                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
             tonalElevation = 0.dp,
-            onClick        = { expanded = !expanded }
+            onClick = { expanded = !expanded }
         ) {
             Row(
-                modifier              = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(
                         horizontal = PlantSeedTokens.Spacing.M,
-                        vertical   = PlantSeedTokens.Spacing.S
+                        vertical = PlantSeedTokens.Spacing.S
                     ),
-                verticalAlignment     = Alignment.CenterVertically,
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(PlantSeedTokens.Spacing.M)
             ) {
                 // Icono envuelto en fondo circular sutil
                 Box(
-                    modifier         = Modifier
+                    modifier = Modifier
                         .size(40.dp)
                         .background(
                             MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
@@ -490,34 +502,34 @@ private fun GardenSelector(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector      = Icons.Default.LocalFlorist,
+                        imageVector = Icons.Default.LocalFlorist,
                         contentDescription = null,
-                        tint             = MaterialTheme.colorScheme.primary,
-                        modifier         = Modifier.size(22.dp)
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp)
                     )
                 }
 
                 Column(modifier = Modifier.weight(1f)) {
                     if (accountValid) {
                         Text(
-                            text       = currentGarden.name,
-                            style      = MaterialTheme.typography.titleMedium,
+                            text = currentGarden.name,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
-                            maxLines   = 1,
-                            overflow   = TextOverflow.Ellipsis
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         currentGarden.description.takeIf { it.isNotBlank() }?.let {
                             Text(
-                                text     = it,
-                                style    = MaterialTheme.typography.bodySmall,
-                                color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                                text = it,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
                     } else {
                         Text(
-                            text  = "Seleccionar jardín",
+                            text = stringResource(R.string.select_garden),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -525,18 +537,18 @@ private fun GardenSelector(
                 }
 
                 Icon(
-                    imageVector      = Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (expanded) "Contraer" else "Expandir",
-                    tint             = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier         = Modifier.rotate(if (expanded) 180f else 0f)
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = stringResource(if (expanded) R.string.hide else R.string.show),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.rotate(if (expanded) 180f else 0f)
                 )
             }
         }
 
         DropdownMenu(
-            expanded         = expanded,
+            expanded = expanded,
             onDismissRequest = { expanded = false },
-            shape            = MaterialTheme.shapes.large
+            shape = MaterialTheme.shapes.large
         ) {
             gardens.forEachIndexed { index, item ->
                 val isSelected = item.id == currentGarden.id
@@ -552,24 +564,24 @@ private fun GardenSelector(
                     text = {
                         Column {
                             Text(
-                                text       = item.name,
-                                style      = MaterialTheme.typography.bodyLarge,
+                                text = item.name,
+                                style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                             )
                             item.description.takeIf { it.isNotBlank() }?.let {
                                 Text(
-                                    text     = it,
-                                    style    = MaterialTheme.typography.labelMedium,
-                                    color    = MaterialTheme.colorScheme.secondary,
+                                    text = it,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.secondary,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
                     },
-                    onClick      = { onClick(index); expanded = false },
+                    onClick = { onClick(index); expanded = false },
                     trailingIcon = if (isSelected) {
-                        { Icon(Icons.Default.Check, contentDescription = "Seleccionado") }
+                        { Icon(Icons.Default.Check, contentDescription = stringResource(R.string.selected_item)) }
                     } else null
                 )
             }
@@ -587,16 +599,16 @@ private fun NameField(
 ) {
     val config = rememberAkariTextFieldConfig {
         slots {
-            label       = { Text("Nombre de la semilla") }
-            placeholder = { Text("Ej: Recursos de aprendizaje") }
+            label = { Text(stringResource(R.string.seed_name_label)) }
+            placeholder = { Text(stringResource(R.string.seed_name_placeholder)) }
         }
         behavior { singleLine = true }
-        style    { colors = colorsTxtFld }
+        style { colors = colorsTxtFld }
     }
     AkariTextField(
-        value          = nameTextFieldValue,
-        onValueChange  = onNameTextFieldValueChange,
-        config         = config,
+        value = nameTextFieldValue,
+        onValueChange = onNameTextFieldValueChange,
+        config = config,
         focusRequester = focusRequester
     )
 }
@@ -611,16 +623,16 @@ private fun NotesField(
 ) {
     val config = rememberAkariTextFieldConfig {
         slots {
-            label       = { Text("Notas generales") }
-            placeholder = { Text("Añade contexto o recordatorios...") }
+            label = { Text(stringResource(R.string.notes_label)) }
+            placeholder = { Text(stringResource(R.string.notes_placeholder)) }
         }
         behavior { minLines = 2 }
-        style    { colors = colorsTxtFld }
+        style { colors = colorsTxtFld }
     }
     AkariTextField(
-        value          = notesTextFieldValue,
-        onValueChange  = onNotesTextFieldValueChange,
-        config         = config,
+        value = notesTextFieldValue,
+        onValueChange = onNotesTextFieldValueChange,
+        config = config,
         focusRequester = focusRequester
     )
 }
@@ -636,18 +648,18 @@ private fun CoverComponent(
     var expanded by rememberSaveable { mutableStateOf(false) }
 
     ExpandablePanel(
-        title    = "Cover de la semilla",
-        subtitle = "Imagen decorativa para la tarjeta",
+        title = stringResource(R.string.cover_title),
+        subtitle = stringResource(R.string.cover_description),
         expanded = expanded,
         onToggle = { expanded = !expanded }
     ) {
         // Preview
         if (coverImageUri != null) {
             AsyncImage(
-                model              = coverImageUri.toString(),
+                model = coverImageUri.toString(),
                 contentDescription = null,
-                contentScale       = ContentScale.Crop,
-                modifier           = Modifier
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
                     .fillMaxWidth()
                     .height(180.dp)
                     .clip(MaterialTheme.shapes.medium)
@@ -655,7 +667,7 @@ private fun CoverComponent(
         } else {
             // Placeholder premium
             Box(
-                modifier         = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .height(96.dp)
                     .background(
@@ -669,13 +681,13 @@ private fun CoverComponent(
                     verticalArrangement = Arrangement.spacedBy(PlantSeedTokens.Spacing.XS)
                 ) {
                     Icon(
-                        imageVector      = Icons.Default.Image,
+                        imageVector = Icons.Default.Image,
                         contentDescription = null,
-                        tint             = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
-                        modifier         = Modifier.size(28.dp)
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
+                        modifier = Modifier.size(28.dp)
                     )
                     Text(
-                        text  = "Sin imagen",
+                        text = stringResource(R.string.no_cover),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
                     )
@@ -685,17 +697,17 @@ private fun CoverComponent(
 
         val config = rememberAkariTextFieldConfig {
             slots {
-                label       = { Text("URL de imagen") }
-                placeholder = { Text("https://ejemplo.com/imagen.jpg") }
+                label = { Text(stringResource(R.string.cover_label)) }
+                placeholder = { Text(stringResource(R.string.cover_placeholder)) }
                 leadingIcon = { Icon(Icons.Default.Link, contentDescription = null) }
             }
             behavior { singleLine = true }
-            style    { colors = colorsTxtFld }
+            style { colors = colorsTxtFld }
         }
         AkariTextField(
-            value         = coverTextFieldValue,
+            value = coverTextFieldValue,
             onValueChange = onCoverTextFieldValueChange,
-            config        = config
+            config = config
         )
     }
 }
@@ -722,36 +734,52 @@ private fun LinksComponent(
     Column(verticalArrangement = Arrangement.spacedBy(PlantSeedTokens.Spacing.S)) {
 
         LinksMetaData(
-            labelTextFieldValue       = entryTextFieldValues.label,
-            notesTextFieldValue       = entryTextFieldValues.note,
-            labelFocusRequester       = focusRequesters.second,
-            notesFocusRequester       = focusRequesters.third,
-            colorsTxtFld              = colorsTxtFld,
-            onLabelTextFieldValueChange = { updateNewEntryTextFieldValues(LinkEntryInput.Key.LABEL, it) },
-            onNotesTextFieldValueChange = { updateNewEntryTextFieldValues(LinkEntryInput.Key.NOTE,  it) }
+            labelTextFieldValue = entryTextFieldValues.label,
+            notesTextFieldValue = entryTextFieldValues.note,
+            labelFocusRequester = focusRequesters.second,
+            notesFocusRequester = focusRequesters.third,
+            colorsTxtFld = colorsTxtFld,
+            onLabelTextFieldValueChange = {
+                updateNewEntryTextFieldValues(
+                    LinkEntryInput.Key.LABEL,
+                    it
+                )
+            },
+            onNotesTextFieldValueChange = {
+                updateNewEntryTextFieldValues(
+                    LinkEntryInput.Key.NOTE,
+                    it
+                )
+            }
         )
 
         Column {
             LinksTextField(
-                modifier                     = Modifier.fillMaxWidth(),
-                newUrlTextFieldValue         = entryTextFieldValues.url,
-                focusRequester               = focusRequesters.first,
-                colorsTxtFld                 = colorsTxtFld,
-                onNewUrlTextFieldValueChange = { updateNewEntryTextFieldValues(LinkEntryInput.Key.URL, it) },
-                enabledAddIcon               = isUrlValid,
-                onAddLink                    = { addLink(); showSuccessAnimation = true }
+                modifier = Modifier.fillMaxWidth(),
+                newUrlTextFieldValue = entryTextFieldValues.url,
+                focusRequester = focusRequesters.first,
+                colorsTxtFld = colorsTxtFld,
+                onNewUrlTextFieldValueChange = {
+                    updateNewEntryTextFieldValues(
+                        LinkEntryInput.Key.URL,
+                        it
+                    )
+                },
+                enabledAddIcon = isUrlValid,
+                onAddLink = { addLink(); showSuccessAnimation = true }
             )
 
             AnimatedVisibility(
                 visible = !urlValidation.isValid && entryTextFieldValues.url.text.isNotBlank()
             ) {
                 Text(
-                    text     = urlValidation.errorMessageRes?.let { stringResource(id = it) } ?: "URL inválida",
-                    style    = MaterialTheme.typography.bodySmall,
-                    color    = MaterialTheme.colorScheme.error,
+                    text = urlValidation.errorMessageRes?.let { stringResource(id = it) }
+                        ?: stringResource(R.string.invalid_url),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(
                         start = PlantSeedTokens.Spacing.M,
-                        top   = PlantSeedTokens.Spacing.XS
+                        top = PlantSeedTokens.Spacing.XS
                     )
                 )
             }
@@ -760,36 +788,41 @@ private fun LinksComponent(
         // Lista de enlaces
         AnimatedVisibility(
             visible = entries.isNotEmpty(),
-            enter   = fadeIn() + expandVertically()
+            enter = fadeIn() + expandVertically()
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(PlantSeedTokens.Spacing.S)) {
                 HorizontalDivider(
-                    modifier  = Modifier.padding(bottom = PlantSeedTokens.Spacing.XS),
+                    modifier = Modifier.padding(bottom = PlantSeedTokens.Spacing.XS),
                     thickness = 0.5.dp,
-                    color     = MaterialTheme.colorScheme.outlineVariant
+                    color = MaterialTheme.colorScheme.outlineVariant
                 )
-                LinksList(entries = entries, editLink = editLink, removeLink = removeLink, onMove = onMove)
+                LinksList(
+                    entries = entries,
+                    editLink = editLink,
+                    removeLink = removeLink,
+                    onMove = onMove
+                )
             }
         }
 
         // Empty state
         AnimatedVisibility(visible = entries.isEmpty()) {
             Row(
-                modifier              = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = PlantSeedTokens.Spacing.L),
                 horizontalArrangement = Arrangement.Center,
-                verticalAlignment     = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector      = Icons.Default.LinkOff,
+                    imageVector = Icons.Default.LinkOff,
                     contentDescription = null,
-                    tint             = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                    modifier         = Modifier.size(16.dp)
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                    modifier = Modifier.size(16.dp)
                 )
                 Spacer(Modifier.width(PlantSeedTokens.Spacing.XS))
                 Text(
-                    text  = "Sin enlaces agregados",
+                    text = stringResource(R.string.no_links_added),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                 )
@@ -819,37 +852,37 @@ private fun LinksMetaData(
     var expanded by rememberSaveable { mutableStateOf(false) }
 
     ExpandablePanel(
-        title    = "Metadatos del enlace",
-        subtitle = "Etiqueta y notas opcionales",
+        title = stringResource(R.string.link_metadata),
+        subtitle = stringResource(R.string.link_metadata_description),
         expanded = expanded,
         onToggle = { expanded = !expanded }
     ) {
         val labelConfig = rememberAkariTextFieldConfig {
             slots {
-                label       = { Text("Etiqueta") }
-                placeholder = { Text("Ej: Documentación oficial") }
+                label = { Text(stringResource(R.string.link_tag_label)) }
+                placeholder = { Text(stringResource(R.string.link_tag_placeholder)) }
             }
             behavior { singleLine = true }
-            style    { colors = colorsTxtFld }
+            style { colors = colorsTxtFld }
         }
         val notesConfig = rememberAkariTextFieldConfig {
             slots {
-                label       = { Text("Notas del enlace") }
-                placeholder = { Text("Información adicional...") }
+                label = { Text(stringResource(R.string.link_notes_label)) }
+                placeholder = { Text(stringResource(R.string.link_notes_placeholder)) }
             }
             behavior { minLines = 2; maxLines = 4 }
-            style    { colors = colorsTxtFld }
+            style { colors = colorsTxtFld }
         }
         AkariTextField(
-            value          = labelTextFieldValue,
-            onValueChange  = onLabelTextFieldValueChange,
-            config         = labelConfig,
+            value = labelTextFieldValue,
+            onValueChange = onLabelTextFieldValueChange,
+            config = labelConfig,
             focusRequester = labelFocusRequester
         )
         AkariTextField(
-            value          = notesTextFieldValue,
-            onValueChange  = onNotesTextFieldValueChange,
-            config         = notesConfig,
+            value = notesTextFieldValue,
+            onValueChange = onNotesTextFieldValueChange,
+            config = notesConfig,
             focusRequester = notesFocusRequester
         )
     }
@@ -868,23 +901,23 @@ private fun LinksTextField(
 ) {
     val config = rememberAkariTextFieldConfig(enabledAddIcon) {
         slots {
-            label        = { Text("URL") }
-            placeholder  = { Text("https://ejemplo.com") }
-            leadingIcon  = { Icon(Icons.Default.Link, contentDescription = null) }
+            label = { Text(stringResource(R.string.link_url_label)) }
+            placeholder = { Text(stringResource(R.string.link_url_placeholder)) }
+            leadingIcon = { Icon(Icons.Default.Link, contentDescription = null) }
             trailingIcon = {
                 IconButton(onClick = onAddLink, enabled = enabledAddIcon) {
-                    Icon(Icons.Default.Add, contentDescription = "Agregar enlace")
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_link))
                 }
             }
         }
         behavior { singleLine = true }
-        style    { colors = colorsTxtFld }
+        style { colors = colorsTxtFld }
     }
     AkariTextField(
-        modifier       = modifier,
-        value          = newUrlTextFieldValue,
-        onValueChange  = onNewUrlTextFieldValueChange,
-        config         = config,
+        modifier = modifier,
+        value = newUrlTextFieldValue,
+        onValueChange = onNewUrlTextFieldValueChange,
+        config = config,
         focusRequester = focusRequester
     )
 }
@@ -899,20 +932,20 @@ private fun LinksList(
 ) {
     val state = rememberAkariReorderableColumnState<LinkEntry> { from, to -> onMove(from, to) }
     AkariReorderableColumn(
-        items               = entries,
-        state               = state,
-        modifier            = Modifier.fillMaxWidth(),
+        items = entries,
+        state = state,
+        modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(PlantSeedTokens.Spacing.S),
         horizontalAlignment = Alignment.CenterHorizontally
     ) { entry, isDragging ->
         LinkItem(
-            modifier   = Modifier
+            modifier = Modifier
                 .clip(MaterialTheme.shapes.medium)
                 .akariDragHandle(),
             isDragging = isDragging,
-            entry      = entry,
-            onEdit     = { editLink(entry) },
-            onClear    = { removeLink(entry) }
+            entry = entry,
+            onEdit = { editLink(entry) },
+            onClear = { removeLink(entry) }
         )
     }
 }
@@ -928,36 +961,36 @@ private fun LinkItem(
 ) {
     val elevation by animateDpAsState(
         targetValue = if (isDragging) 8.dp else 0.dp,
-        label       = "LinkItemElevation"
+        label = "LinkItemElevation"
     )
     val bgColor by animateColorAsState(
-        targetValue   = if (isDragging)
+        targetValue = if (isDragging)
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
         else
             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
-        label         = "LinkItemBg"
+        label = "LinkItemBg"
     )
 
     Card(
-        modifier  = modifier,
-        colors    = CardDefaults.cardColors(containerColor = bgColor),
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = bgColor),
         elevation = CardDefaults.cardElevation(defaultElevation = elevation),
-        shape     = MaterialTheme.shapes.medium
+        shape = MaterialTheme.shapes.medium
     ) {
         ListItem(
-            colors          = ListItemDefaults.colors(containerColor = Color.Transparent),
-            leadingContent  = {
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            leadingContent = {
                 Icon(
-                    imageVector      = Icons.Default.DragIndicator,
-                    contentDescription = "Reordenar",
-                    tint             = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier         = Modifier.size(24.dp)
+                    imageVector = Icons.Default.DragIndicator,
+                    contentDescription = stringResource(R.string.reorder),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
                 )
             },
             overlineContent = entry.label?.let { label ->
                 {
                     Text(
-                        text  = label,
+                        text = label,
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -965,8 +998,8 @@ private fun LinkItem(
             },
             headlineContent = {
                 Text(
-                    text     = entry.uri.toString(),
-                    style    = MaterialTheme.typography.bodyMedium,
+                    text = entry.uri.toString(),
+                    style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -974,9 +1007,9 @@ private fun LinkItem(
             supportingContent = entry.note?.let { note ->
                 {
                     Text(
-                        text     = note,
-                        style    = MaterialTheme.typography.bodySmall,
-                        color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = note,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -987,15 +1020,15 @@ private fun LinkItem(
                     IconButton(onClick = onEdit) {
                         Icon(
                             Icons.Default.Edit,
-                            contentDescription = "Editar",
-                            tint               = MaterialTheme.colorScheme.onSurfaceVariant
+                            contentDescription = stringResource(R.string.edit),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     IconButton(onClick = onClear) {
                         Icon(
                             Icons.Default.Delete,
-                            contentDescription = "Eliminar",
-                            tint               = MaterialTheme.colorScheme.error
+                            contentDescription = stringResource(R.string.delete),
+                            tint = MaterialTheme.colorScheme.error
                         )
                     }
                 }
@@ -1008,12 +1041,12 @@ private fun LinkItem(
 @Composable
 private fun TagsComponent() {
     SectionCard(
-        icon     = Icons.Default.Tag,
-        title    = "Etiquetas",
-        subtitle = "Próximamente — organiza por categorías"
+        icon = Icons.Default.Tag,
+        title = stringResource(R.string.tags_title),
+        subtitle = stringResource(R.string.tags_subtitle)
     ) {
         Box(
-            modifier         = Modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
                 .background(
@@ -1023,7 +1056,7 @@ private fun TagsComponent() {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text  = "Función en desarrollo",
+                text = stringResource(R.string.feature_develop),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )

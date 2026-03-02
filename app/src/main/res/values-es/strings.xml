@@ -1,0 +1,182 @@
+<resources>
+
+    <!-- ==================== APP ==================== -->
+    <string name="app_name">Linkarium</string>
+    <string name="app_description">Linkarium es tu espacio personal para organizar y hacer crecer tu jardín digital de enlaces e ideas.</string>
+
+
+    <!-- ==================== NAVEGACIÓN / PANTALLAS ==================== -->
+    <string name="link_garden">Inicio</string>
+    <string name="settings">Ajustes</string>
+    <string name="plant">Agregar enlace</string>
+    <string name="gardens">Colecciones</string>
+    <string name="export">Exportar</string>
+
+
+    <!-- ==================== GENERAL / COMÚN ==================== -->
+    <string name="close">Cerrar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="edit">Editar</string>
+    <string name="delete">Eliminar</string>
+    <string name="copy">Copiar</string>
+    <string name="name">Nombre</string>
+    <string name="show">Mostrar</string>
+    <string name="hide">Ocultar</string>
+    <string name="optional">Opcional</string>
+    <string name="advanced">Avanzado</string>
+    <string name="reorder">Reordenar</string>
+    <string name="options">Opciones</string>
+    <string name="more_options">Más opciones</string>
+    <string name="expand">Expandir</string>
+    <string name="contract">Contraer</string>
+    <string name="selected_item">Seleccionado</string>
+    <string name="placeholder_dash">—</string>
+
+    <!-- Estados -->
+    <string name="loading">Cargando</string>
+    <string name="creating">Creando…</string>
+    <string name="idle">Inactivo</string>
+    <string name="success">Éxito</string>
+
+    <!-- Errores -->
+    <string name="error_unknown">Error desconocido</string>
+    <string name="error_load">Error al cargar</string>
+    <string name="error_load_more">Error al cargar más elementos</string>
+
+
+    <!-- ==================== VALIDACIÓN ==================== -->
+    <string name="name_required">El nombre es obligatorio</string>
+    <string name="name_no_empty">El nombre no puede estar vacío</string>
+    <string name="name_characters">El nombre debe tener al menos 3 caracteres</string>
+    <string name="invalid_url">URL inválida</string>
+
+
+    <!-- ==================== PANTALLA DE AJUSTES ==================== -->
+    <string name="about">Acerca de</string>
+    <string name="app_version">Versión</string>
+    <string name="developer">Desarrollador</string>
+    <string name="andres2002002">andres2002002</string>
+    <string name="terms_and_conditions">Términos y condiciones</string>
+    <string name="privacy_policy">Política de privacidad</string>
+    <string name="contact_us">Contáctanos</string>
+    <string name="email">Correo electrónico</string>
+    <string name="github">GitHub</string>
+    <string name="open_source_licenses">Licencias de código abierto</string>
+
+    <!-- Grupos de ajustes -->
+    <string name="settings_group_security">Seguridad</string>
+    <string name="settings_group_export_import">Exportar / Importar</string>
+
+    <!-- Seguridad -->
+    <string name="biometric_lock_title">Usar huella dactilar</string>
+    <string name="biometric_lock_subtitle">Desbloquea la app con biometría</string>
+
+    <!-- Exportar / Importar -->
+    <string name="export_subtitle">Guarda una copia de tus jardines y semillas</string>
+
+    <!-- Footer -->
+    <string name="footer_copyright">© 2025 Habitiora</string>
+
+
+    <!-- ==================== PANTALLA DE EXPORTACIÓN ==================== -->
+    <string name="export_data">Exportar datos</string>
+    <string name="select_export_format">Seleccionar formato de exportación</string>
+    <string name="select_export_format_option">Seleccionar formato</string>
+    <string name="export_format_label">Exportar %1$s</string>
+    <string name="backup">Respaldo</string>
+    <string name="json">JSON</string>
+    <string name="exporting_data">Exportando datos</string>
+    <string name="processing_status_export_in_progress">Procesando %1$d de %2$d elementos…</string>
+    <string name="export_success">¡Exportación completada exitosamente!</string>
+    <string name="content_selection">Selección de contenido</string>
+    <string name="filter_list">Filtrar lista</string>
+    <string name="all_gardens">Todos los jardines</string>
+    <string name="selected_gardens">%1$d / %2$d jardines</string>
+    <string name="select_export_gardens">Seleccionar jardines para exportar</string>
+
+
+    <!-- ==================== PANTALLA DE JARDINES ==================== -->
+    <string name="new_garden">Nuevo jardín</string>
+    <string name="new_garden_button">Nuevo</string>
+    <string name="without_gardens">Aún no hay jardines</string>
+    <string name="create_first_garden">Crea tu primer <b>jardín</b> para empezar\na organizar tus enlaces</string>
+    <string name="no_seeds_available">No hay semillas disponibles</string>
+    <string name="no_links">Sin enlaces</string>
+    <string name="multiple_links">%1$d enlaces</string>
+    <string name="add_new_garden_description">Crea una nueva colección de enlaces</string>
+    <plurals name="link_count_label">
+        <item quantity="one">Enlace</item>
+        <item quantity="other">%1$d enlaces</item>
+    </plurals>
+
+    <!-- Acciones de enlace -->
+    <string name="copy_link">Copiar enlace</string>
+    <string name="edit_link">Editar enlace</string>
+    <string name="delete_link">Eliminar enlace</string>
+    <string name="show_more_links">Mostrar más enlaces</string>
+    <string name="hide_more_links">Ocultar enlaces</string>
+
+
+    <!-- ==================== GESTOR DE JARDINES (Crear / Editar) ==================== -->
+    <string name="select_garden">Seleccionar un jardín</string>
+    <string name="garden_name">Nombre del jardín</string>
+    <string name="garden_name_placeholder">Ej. Favoritos</string>
+    <string name="garden_name_hint">Sugerencias: Trabajo, Personal, Recursos de estudio</string>
+    <string name="garden_description">Descripción</string>
+    <string name="garden_description_placeholder">Añade una descripción para este jardín…</string>
+    <string name="new_garden_note">Organiza tus enlaces</string>
+    <string name="whats_garden">¿Qué es un jardín?</string>
+    <string name="whats_garden_answer">Los jardines te permiten categorizar tus semillas de enlaces. Por ejemplo: \'Trabajo\', \'Personal\', \'Aprendizaje\'.</string>
+    <string name="create_garden">Crear jardín</string>
+    <string name="creation_success">¡Crear!</string>
+
+
+    <!-- ==================== PLANTAR SEMILLA (Agregar / Editar enlace) ==================== -->
+    <string name="garden">Jardín</string>
+    <string name="select_target_garden">Seleccionar jardín destino</string>
+
+    <!-- Sección de información básica -->
+    <string name="basic_info">Información básica</string>
+    <string name="basic_info_description">Nombre e imagen de portada</string>
+    <string name="seed_name_label">Nombre de la semilla</string>
+    <string name="seed_name_placeholder">Ej: Recursos de aprendizaje</string>
+
+    <!-- Sección de portada -->
+    <string name="cover_title">Portada de la semilla</string>
+    <string name="cover_description">Imagen decorativa para la tarjeta</string>
+    <string name="no_cover">Sin portada</string>
+    <string name="cover_label">URL de la imagen</string>
+    <string name="cover_placeholder">Ej: https://example.com/image.jpg</string>
+
+    <!-- Sección de enlaces -->
+    <string name="links">Enlaces</string>
+    <string name="add_link">Agregar enlace</string>
+    <string name="remove_link">Eliminar enlace</string>
+    <string name="no_links_added">Sin enlaces agregados</string>
+    <string name="link_url_label">URL</string>
+    <string name="link_url_placeholder">Ej: https://example.com</string>
+    <plurals name="add_link_count_label">
+        <item quantity="one">%1$d enlace agregado</item>
+        <item quantity="other">%1$d enlaces agregados</item>
+    </plurals>
+
+    <!-- Sección de metadatos del enlace -->
+    <string name="link_metadata">Metadatos del enlace</string>
+    <string name="link_metadata_description">Etiqueta y notas opcionales</string>
+    <string name="link_tag_label">Etiqueta del enlace</string>
+    <string name="link_tag_placeholder">Ej: Aprendizaje</string>
+    <string name="link_notes_label">Notas del enlace</string>
+    <string name="link_notes_placeholder">Información adicional…</string>
+
+    <!-- Sección de notas -->
+    <string name="notes">Notas</string>
+    <string name="notes_description">Contexto adicional sobre esta semilla</string>
+    <string name="notes_label">Notas generales</string>
+    <string name="notes_placeholder">Añade contexto o recordatorios…</string>
+
+    <!-- Sección de etiquetas -->
+    <string name="tags_title">Etiquetas</string>
+    <string name="tags_subtitle">Próximamente — organiza por categorías</string>
+    <string name="feature_develop">Función en desarrollo</string>
+
+</resources>

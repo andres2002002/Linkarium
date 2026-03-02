@@ -47,12 +47,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.habitiora.linkarium.R
 import com.habitiora.linkarium.domain.model.LinkGarden
 import com.habitiora.linkarium.domain.model.LinkSeed
 
@@ -88,19 +90,18 @@ private fun ContentScreen(
     navigateToAddGarden: () -> Unit,
     onEdit: (LinkSeed) -> Unit,
     onDelete: (LinkSeed) -> Unit,
-){
+) {
 
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
-    ){
+    ) {
         if (collections.isEmpty()) {
             EmptyGardensMessage(
                 navigateToAddGarden = navigateToAddGarden
             )
-        }
-        else {
+        } else {
             TabRowGardens(
                 selectedTabIndex = selectedPageIndex,
                 collections = collections,
@@ -129,7 +130,7 @@ private fun GardenContent(
     onUserSwipedToPage: (Int) -> Unit,
     onEdit: (LinkSeed) -> Unit,
     onDelete: (LinkSeed) -> Unit
-){
+) {
 
     val pagerState = rememberPagerState { pages }
 
@@ -179,20 +180,20 @@ private fun TabRowGardens(
         AddGardenButton(navigateToAddGarden = navigateToAddGarden)
 
         PrimaryScrollableTabRow(
-            modifier         = Modifier.weight(1f),
+            modifier = Modifier.weight(1f),
             selectedTabIndex = selectedTabIndex,
-            edgePadding      = 0.dp,
-            divider          = {}
+            edgePadding = 0.dp,
+            divider = {}
         ) {
             collections.forEachIndexed { index, collection ->
                 Tab(
                     selected = index == selectedTabIndex,
-                    onClick  = { onCollectionSelected(index) },
-                    text     = {
+                    onClick = { onCollectionSelected(index) },
+                    text = {
                         Text(
-                            text       = collection.name,
-                            maxLines   = 1,
-                            overflow   = TextOverflow.Ellipsis,
+                            text = collection.name,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             fontWeight = if (index == selectedTabIndex) FontWeight.SemiBold
                             else FontWeight.Normal
                         )
@@ -215,7 +216,7 @@ private fun AddGardenButton(
     navigateToAddGarden: () -> Unit
 ) {
     Column(
-        modifier            = modifier
+        modifier = modifier
             .width(56.dp)
             .clip(MaterialTheme.shapes.medium)
             .clickable { navigateToAddGarden() }
@@ -224,7 +225,7 @@ private fun AddGardenButton(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Box(
-            modifier         = Modifier
+            modifier = Modifier
                 .size(32.dp)
                 .background(
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
@@ -233,14 +234,14 @@ private fun AddGardenButton(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector        = Icons.Default.Add,
-                contentDescription = "Nuevo jardín",
-                tint               = MaterialTheme.colorScheme.primary,
-                modifier           = Modifier.size(18.dp)
+                imageVector = Icons.Default.Add,
+                contentDescription = stringResource(R.string.new_garden),
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(18.dp)
             )
         }
         Text(
-            text  = "Nuevo",
+            text = stringResource(R.string.new_garden_button),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.primary
         )
@@ -258,17 +259,17 @@ private fun EmptyGardensMessage(
     navigateToAddGarden: () -> Unit
 ) {
     Box(
-        modifier         = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         AnimatedVisibility(
             visible = true,
-            enter   = fadeIn(tween(280)) + scaleIn(
-                initialScale  = 0.92f,
+            enter = fadeIn(tween(280)) + scaleIn(
+                initialScale = 0.92f,
                 animationSpec = tween(280)
             ),
-            exit    = fadeOut(tween(200)) + scaleOut(
-                targetScale   = 0.92f,
+            exit = fadeOut(tween(200)) + scaleOut(
+                targetScale = 0.92f,
                 animationSpec = tween(200)
             )
         ) {
@@ -278,7 +279,7 @@ private fun EmptyGardensMessage(
             ) {
                 // Icono con halo radial + contenedor cuadrado
                 Box(
-                    modifier         = Modifier
+                    modifier = Modifier
                         .size(80.dp)
                         .background(
                             brush = Brush.radialGradient(
@@ -293,7 +294,7 @@ private fun EmptyGardensMessage(
                     contentAlignment = Alignment.Center
                 ) {
                     Box(
-                        modifier         = Modifier
+                        modifier = Modifier
                             .size(56.dp)
                             .background(
                                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
@@ -302,10 +303,10 @@ private fun EmptyGardensMessage(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector        = Icons.Default.LocalFlorist,
+                            imageVector = Icons.Default.LocalFlorist,
                             contentDescription = null,
-                            tint               = MaterialTheme.colorScheme.primary,
-                            modifier           = Modifier.size(30.dp)
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(30.dp)
                         )
                     }
                 }
@@ -316,12 +317,12 @@ private fun EmptyGardensMessage(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text       = "Sin jardines todavía",
-                        style      = MaterialTheme.typography.titleMedium,
+                        text = stringResource(R.string.without_gardens),
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text  = "Crea tu primer jardín para empezar\na organizar tus enlaces",
+                        text = stringResource(R.string.create_first_garden),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -329,19 +330,19 @@ private fun EmptyGardensMessage(
 
                 // Botón CTA — coherente con ActionButtons del diálogo
                 Button(
-                    onClick        = navigateToAddGarden,
-                    shape          = MaterialTheme.shapes.large,
+                    onClick = navigateToAddGarden,
+                    shape = MaterialTheme.shapes.large,
                     contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                 ) {
                     Icon(
-                        imageVector        = Icons.Default.Add,
+                        imageVector = Icons.Default.Add,
                         contentDescription = null,
-                        modifier           = Modifier.size(18.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        text       = "Nuevo jardín",
-                        style      = MaterialTheme.typography.labelLarge,
+                        text = stringResource(R.string.new_garden),
+                        style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold
                     )
                 }

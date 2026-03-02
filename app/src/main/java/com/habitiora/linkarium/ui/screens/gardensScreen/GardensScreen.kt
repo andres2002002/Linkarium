@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -40,6 +41,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.akari.uicomponents.reorderableComponents.AkariReorderableLazyColumn
 import com.akari.uicomponents.reorderableComponents.DragActivation
 import com.akari.uicomponents.reorderableComponents.rememberAkariReorderableLazyState
+import com.habitiora.linkarium.R
 import com.habitiora.linkarium.domain.model.LinkGarden
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -209,7 +211,7 @@ private fun GardenItem(
             IconButton(onClick = onEdit) {
                 Icon(
                     imageVector      = Icons.Filled.MoreVert,
-                    contentDescription = "Más opciones",
+                    contentDescription = stringResource(R.string.more_options),
                     tint             = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -272,13 +274,13 @@ private fun AddNewGarden(
 
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text       = "Nuevo jardín",
+                    text       = stringResource(R.string.new_garden),
                     style      = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color      = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text  = "Crea una nueva colección de enlaces",
+                    text  = stringResource(R.string.add_new_garden_description),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

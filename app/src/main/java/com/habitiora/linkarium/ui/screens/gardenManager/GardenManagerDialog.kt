@@ -65,6 +65,7 @@ import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -73,6 +74,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.akari.uicomponents.textFields.AkariTextField
 import com.akari.uicomponents.textFields.rememberAkariTextFieldConfig
+import com.habitiora.linkarium.R
+import com.habitiora.linkarium.core.ProcessStatus
 
 // Design tokens para consistencia
 // ─── Design Tokens ────────────────────────────────────────────────────────────
@@ -80,25 +83,25 @@ import com.akari.uicomponents.textFields.rememberAkariTextFieldConfig
 private object DialogTokens {
     object Spacing {
         val XS = 4.dp
-        val S  = 8.dp
-        val M  = 16.dp
-        val L  = 24.dp
+        val S = 8.dp
+        val M = 16.dp
+        val L = 24.dp
         val XL = 32.dp
     }
 
-    val DialogPadding    = 20.dp
-    val DialogMinWidth   = 320.dp
-    val DialogMaxWidth   = 560.dp
-    val DialogElevation  = 6.dp
+    val DialogPadding = 20.dp
+    val DialogMinWidth = 320.dp
+    val DialogMaxWidth = 560.dp
+    val DialogElevation = 6.dp
 
-    val IconSize         = 22.dp
-    val HeaderIconSize   = 40.dp
+    val IconSize = 22.dp
+    val HeaderIconSize = 40.dp
 
     /** Grosor trazo de acento lateral — igual que ExpandablePanel */
     val AccentStrokeWidth = 3.dp
 
     /** Duración estándar — igual que ItemSeed / PlantSeed */
-    const val AnimMs     = 280
+    const val AnimMs = 280
 }
 
 // ─── Gradient helpers (mismo sistema que SectionCard) ─────────────────────────
@@ -118,21 +121,21 @@ fun GardenManagerDialog(
     viewModel: GardenManagerViewModel = hiltViewModel(),
     onDismiss: () -> Unit
 ) {
-    val nameTextFieldValue        by viewModel.nameTextFieldValue.collectAsState()
+    val nameTextFieldValue by viewModel.nameTextFieldValue.collectAsState()
     val descriptionTextFieldValue by viewModel.descriptionTextFieldValue.collectAsState()
-    val enabledButton             by viewModel.isValidGarden.collectAsState()
+    val enabledButton by viewModel.isValidGarden.collectAsState()
 
     var showSuccessAnimation by remember { mutableStateOf(false) }
 
     ContentScreen(
-        nameTextFieldValue        = nameTextFieldValue,
-        onNameChange              = viewModel::setNameTextFieldValue,
+        nameTextFieldValue = nameTextFieldValue,
+        onNameChange = viewModel::setNameTextFieldValue,
         descriptionTextFieldValue = descriptionTextFieldValue,
-        onDescriptionChange       = viewModel::setDescriptionTextFieldValue,
-        onDismissRequest          = onDismiss,
-        enabledButton             = enabledButton,
-        onSave                    = { viewModel.saveGarden(); showSuccessAnimation = true },
-        showSuccessAnimation      = showSuccessAnimation
+        onDescriptionChange = viewModel::setDescriptionTextFieldValue,
+        onDismissRequest = onDismiss,
+        enabledButton = enabledButton,
+        onSave = { viewModel.saveGarden(); showSuccessAnimation = true },
+        showSuccessAnimation = showSuccessAnimation
     )
 }
 
@@ -153,33 +156,33 @@ private fun ContentScreen(
     Dialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(
-            dismissOnBackPress       = true,
-            dismissOnClickOutside    = true,
-            usePlatformDefaultWidth  = false
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true,
+            usePlatformDefaultWidth = false
         )
     ) {
         AnimatedVisibility(
             visible = true,
             enter = fadeIn(tween(DialogTokens.AnimMs)) + scaleIn(
-                initialScale  = 0.92f,
+                initialScale = 0.92f,
                 animationSpec = tween(DialogTokens.AnimMs, easing = FastOutSlowInEasing)
             ),
             exit = fadeOut(tween(200)) + scaleOut(
-                targetScale   = 0.92f,
+                targetScale = 0.92f,
                 animationSpec = tween(200, easing = FastOutSlowInEasing)
             )
         ) {
             ContentDialog(
-                nameTextFieldValue        = nameTextFieldValue,
-                nameFocusRequester        = nameFocusRequester,
-                onNameChange              = onNameChange,
+                nameTextFieldValue = nameTextFieldValue,
+                nameFocusRequester = nameFocusRequester,
+                onNameChange = onNameChange,
                 descriptionTextFieldValue = descriptionTextFieldValue,
                 descriptionFocusRequester = descriptionFocusRequester,
-                onDescriptionChange       = onDescriptionChange,
-                enabledButton             = enabledButton,
-                onDismiss                 = onDismissRequest,
-                onSave                    = onSave,
-                showSuccessAnimation      = showSuccessAnimation
+                onDescriptionChange = onDescriptionChange,
+                enabledButton = enabledButton,
+                onDismiss = onDismissRequest,
+                onSave = onSave,
+                showSuccessAnimation = showSuccessAnimation
             )
         }
     }
@@ -206,9 +209,9 @@ private fun ContentDialog(
                 minWidth = DialogTokens.DialogMinWidth,
                 maxWidth = DialogTokens.DialogMaxWidth
             ),
-        shape     = MaterialTheme.shapes.extraLarge, // coherente con shapes.large del sistema
+        shape = MaterialTheme.shapes.extraLarge, // coherente con shapes.large del sistema
         elevation = CardDefaults.cardElevation(defaultElevation = DialogTokens.DialogElevation),
-        colors    = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
 
@@ -217,7 +220,7 @@ private fun ContentDialog(
 
             HorizontalDivider(
                 thickness = 0.5.dp,
-                color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
 
             // ── Cuerpo scrolleable ────────────────────────────────────────
@@ -232,41 +235,41 @@ private fun ContentDialog(
 
                 NameSection(
                     nameTextFieldValue = nameTextFieldValue,
-                    focusRequester     = nameFocusRequester,
-                    onNameChange       = onNameChange
+                    focusRequester = nameFocusRequester,
+                    onNameChange = onNameChange
                 )
 
                 DescriptionSection(
                     descriptionTextFieldValue = descriptionTextFieldValue,
-                    focusRequester            = descriptionFocusRequester,
-                    onDescriptionChange       = onDescriptionChange
+                    focusRequester = descriptionFocusRequester,
+                    onDescriptionChange = onDescriptionChange
                 )
 
                 AnimatedVisibility(visible = nameTextFieldValue.text.isNotEmpty()) {
                     CharacterCounter(
                         current = nameTextFieldValue.text.length,
-                        max     = 50,
-                        label   = "nombre"
+                        max = 50,
+                        label = stringResource(R.string.name)
                     )
                 }
             }
 
             HorizontalDivider(
                 thickness = 0.5.dp,
-                color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
 
             // ── Acciones ──────────────────────────────────────────────────
             Column(
                 modifier = Modifier.padding(
                     horizontal = DialogTokens.Spacing.M,
-                    vertical   = DialogTokens.Spacing.M
+                    vertical = DialogTokens.Spacing.M
                 )
             ) {
                 ActionButtons(
-                    enabled              = enabledButton,
-                    onSave               = onSave,
-                    onCancel             = onDismiss,
+                    enabled = enabledButton,
+                    onSave = onSave,
+                    onCancel = onDismiss,
                     showSuccessAnimation = showSuccessAnimation
                 )
             }
@@ -287,24 +290,24 @@ private fun DialogHeader(onDismiss: () -> Unit) {
             .fillMaxWidth()
             .background(dialogHeaderGradient())
             .padding(
-                start  = DialogTokens.Spacing.M,
-                end    = DialogTokens.Spacing.XS,
-                top    = DialogTokens.Spacing.M,
+                start = DialogTokens.Spacing.M,
+                end = DialogTokens.Spacing.XS,
+                top = DialogTokens.Spacing.M,
                 bottom = DialogTokens.Spacing.M
             )
     ) {
         Row(
-            modifier              = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment     = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.M),
-                verticalAlignment     = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 // Icono decorativo — mismo patrón que GardenSelector
                 Box(
-                    modifier         = Modifier
+                    modifier = Modifier
                         .size(DialogTokens.HeaderIconSize)
                         .background(
                             MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
@@ -313,21 +316,21 @@ private fun DialogHeader(onDismiss: () -> Unit) {
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector      = Icons.Default.LocalFlorist,
+                        imageVector = Icons.Default.LocalFlorist,
                         contentDescription = null,
-                        tint             = MaterialTheme.colorScheme.primary,
-                        modifier         = Modifier.size(DialogTokens.IconSize)
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(DialogTokens.IconSize)
                     )
                 }
 
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        text       = "Nuevo Jardín",
-                        style      = MaterialTheme.typography.titleMedium,
+                        text = stringResource(R.string.new_garden),
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text  = "Organiza tus enlaces",
+                        text = stringResource(R.string.new_garden_note),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -336,9 +339,9 @@ private fun DialogHeader(onDismiss: () -> Unit) {
 
             IconButton(onClick = onDismiss) {
                 Icon(
-                    imageVector      = Icons.Default.Close,
-                    contentDescription = "Cerrar",
-                    tint             = MaterialTheme.colorScheme.onSurfaceVariant
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.close),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -355,7 +358,7 @@ private fun InfoCard() {
         modifier = Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium),
-        color    = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
             // Trazo de acento lateral
@@ -366,27 +369,27 @@ private fun InfoCard() {
                     .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f))
             )
             Row(
-                modifier              = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(DialogTokens.Spacing.M),
                 horizontalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.M),
-                verticalAlignment     = Alignment.Top
+                verticalAlignment = Alignment.Top
             ) {
                 Icon(
-                    imageVector      = Icons.Default.Info,
+                    imageVector = Icons.Default.Info,
                     contentDescription = null,
-                    tint             = MaterialTheme.colorScheme.secondary,
-                    modifier         = Modifier.size(18.dp)
+                    tint = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.size(18.dp)
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.XS)) {
                     Text(
-                        text       = "¿Qué es un jardín?",
-                        style      = MaterialTheme.typography.labelLarge,
+                        text = stringResource(R.string.whats_garden),
+                        style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
-                        color      = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text  = "Los jardines te permiten categorizar tus semillas de enlaces. Por ejemplo: 'Trabajo', 'Personal', 'Aprendizaje'.",
+                        text = stringResource(R.string.whats_garden_answer),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -406,45 +409,45 @@ private fun NameSection(
     Column(verticalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.XS)) {
         val config = rememberAkariTextFieldConfig {
             slots {
-                label       = { Text("Nombre del jardín") }
-                placeholder = { Text("Ej: Mis Enlaces Favoritos") }
+                label = { Text(stringResource(R.string.garden_name)) }
+                placeholder = { Text(stringResource(R.string.garden_name_placeholder)) }
                 leadingIcon = {
                     Icon(
-                        imageVector      = Icons.AutoMirrored.Filled.Label,
+                        imageVector = Icons.AutoMirrored.Filled.Label,
                         contentDescription = null,
-                        tint             = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
             behavior { singleLine = true }
         }
         AkariTextField(
-            modifier       = Modifier.fillMaxWidth(),
-            value          = nameTextFieldValue,
-            onValueChange  = onNameChange,
-            config         = config,
+            modifier = Modifier.fillMaxWidth(),
+            value = nameTextFieldValue,
+            onValueChange = onNameChange,
+            config = config,
             focusRequester = focusRequester
         )
 
         // Sugerencias cuando el campo está vacío
         AnimatedVisibility(
             visible = nameTextFieldValue.text.isEmpty(),
-            enter   = fadeIn(tween(DialogTokens.AnimMs)),
-            exit    = fadeOut(tween(DialogTokens.AnimMs))
+            enter = fadeIn(tween(DialogTokens.AnimMs)),
+            exit = fadeOut(tween(DialogTokens.AnimMs))
         ) {
             Row(
-                modifier              = Modifier.padding(start = DialogTokens.Spacing.M),
+                modifier = Modifier.padding(start = DialogTokens.Spacing.M),
                 horizontalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.XS),
-                verticalAlignment     = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector      = Icons.Default.Lightbulb,
+                    imageVector = Icons.Default.Lightbulb,
                     contentDescription = null,
-                    tint             = MaterialTheme.colorScheme.primary,
-                    modifier         = Modifier.size(14.dp)
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(14.dp)
                 )
                 Text(
-                    text  = "Sugerencias: Trabajo, Personal, Recursos de Estudio",
+                    text = stringResource(R.string.garden_name_hint),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -465,9 +468,9 @@ private fun DescriptionSection(
             label = {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.S),
-                    verticalAlignment     = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Descripción")
+                    Text(stringResource(R.string.garden_description))
                     // Chip "Opcional" — mismo estilo que el chip de tipo en ItemSeed
                     Box(
                         modifier = Modifier
@@ -478,19 +481,19 @@ private fun DescriptionSection(
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text  = "Opcional",
+                            text = stringResource(R.string.optional),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
                     }
                 }
             }
-            placeholder = { Text("Añade una descripción para este jardín...") }
+            placeholder = { Text(stringResource(R.string.garden_description_placeholder)) }
             leadingIcon = {
                 Icon(
-                    imageVector      = Icons.Default.Description,
+                    imageVector = Icons.Default.Description,
                     contentDescription = null,
-                    tint             = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -498,10 +501,10 @@ private fun DescriptionSection(
     }
 
     AkariTextField(
-        modifier       = Modifier.fillMaxWidth(),
-        value          = descriptionTextFieldValue,
-        onValueChange  = onDescriptionChange,
-        config         = config,
+        modifier = Modifier.fillMaxWidth(),
+        value = descriptionTextFieldValue,
+        onValueChange = onDescriptionChange,
+        config = config,
         focusRequester = focusRequester
     )
 }
@@ -510,28 +513,28 @@ private fun DescriptionSection(
 @Composable
 private fun CharacterCounter(current: Int, max: Int, label: String) {
     val progress = (current.toFloat() / max.toFloat()).coerceIn(0f, 1f)
-    val color    = when {
+    val color = when {
         progress >= 0.9f -> MaterialTheme.colorScheme.error
         progress >= 0.7f -> MaterialTheme.colorScheme.tertiary
-        else             -> MaterialTheme.colorScheme.onSurfaceVariant
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Row(
-        modifier              = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.S),
-        verticalAlignment     = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically
     ) {
         LinearProgressIndicator(
-            progress   = { progress },
-            modifier   = Modifier
+            progress = { progress },
+            modifier = Modifier
                 .weight(1f)
                 .height(3.dp)
                 .clip(MaterialTheme.shapes.extraLarge),
-            color      = color,
+            color = color,
             trackColor = MaterialTheme.colorScheme.surfaceVariant
         )
         Text(
-            text  = "$current/$max",
+            text = "$current/$max",
             style = MaterialTheme.typography.labelSmall,
             color = color
         )
@@ -550,43 +553,43 @@ private fun ActionButtons(
 
     Column(verticalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.S)) {
         Row(
-            modifier              = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.S),
-            verticalAlignment     = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically
         ) {
             // Cancelar
             OutlinedButton(
-                modifier       = Modifier.weight(1f),
-                onClick        = onCancel,
-                shape          = MaterialTheme.shapes.large, // consistente con el sistema
+                modifier = Modifier.weight(1f),
+                onClick = onCancel,
+                shape = MaterialTheme.shapes.large, // consistente con el sistema
                 contentPadding = PaddingValues(vertical = 12.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = null,
-                    modifier    = Modifier.size(16.dp)
+                    modifier = Modifier.size(16.dp)
                 )
                 Spacer(Modifier.width(DialogTokens.Spacing.XS))
-                Text("Cancelar", style = MaterialTheme.typography.labelLarge)
+                Text(text = stringResource(R.string.cancel), style = MaterialTheme.typography.labelLarge)
             }
 
             // Crear jardín — con estados animados
             Button(
-                modifier       = Modifier.weight(1f),
-                onClick        = { isLoading = true; onSave() },
-                enabled        = enabled && !isLoading,
-                shape          = MaterialTheme.shapes.large,
+                modifier = Modifier.weight(1f),
+                onClick = { isLoading = true; onSave() },
+                enabled = enabled && !isLoading,
+                shape = MaterialTheme.shapes.large,
                 contentPadding = PaddingValues(vertical = 12.dp),
-                colors         = ButtonDefaults.buttonColors(
+                colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor   = MaterialTheme.colorScheme.onPrimary
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
                 AnimatedContent(
                     targetState = when {
-                        showSuccessAnimation -> "success"
-                        isLoading            -> "loading"
-                        else                 -> "idle"
+                        showSuccessAnimation -> ProcessStatus.Success(true)
+                        isLoading -> ProcessStatus.Loading
+                        else -> ProcessStatus.Waiting
                     },
                     transitionSpec = {
                         fadeIn(tween(DialogTokens.AnimMs)) togetherWith fadeOut(tween(DialogTokens.AnimMs))
@@ -595,24 +598,34 @@ private fun ActionButtons(
                 ) { state ->
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.XS),
-                        verticalAlignment     = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         when (state) {
-                            "loading" -> {
+                            is ProcessStatus.Loading -> {
                                 CircularProgressIndicator(
-                                    modifier    = Modifier.size(16.dp),
+                                    modifier = Modifier.size(16.dp),
                                     strokeWidth = 2.dp,
-                                    color       = MaterialTheme.colorScheme.onPrimary
+                                    color = MaterialTheme.colorScheme.onPrimary
                                 )
-                                Text("Creando...", style = MaterialTheme.typography.labelLarge)
+                                Text(text = stringResource(R.string.creating), style = MaterialTheme.typography.labelLarge)
                             }
-                            "success" -> {
-                                Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Text("¡Creado!", style = MaterialTheme.typography.labelLarge)
+
+                            is ProcessStatus.Success -> {
+                                Icon(
+                                    Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(stringResource(R.string.creation_success), style = MaterialTheme.typography.labelLarge)
                             }
+
                             else -> {
-                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Text("Crear Jardín", style = MaterialTheme.typography.labelLarge)
+                                Icon(
+                                    Icons.Default.Add,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(stringResource(R.string.create_garden), style = MaterialTheme.typography.labelLarge)
                             }
                         }
                     }
@@ -623,14 +636,14 @@ private fun ActionButtons(
         // Aviso de validación — mismo patrón de trazo lateral que InfoCard
         AnimatedVisibility(
             visible = !enabled && !isLoading,
-            enter   = fadeIn(tween(DialogTokens.AnimMs)) + expandVertically(),
-            exit    = fadeOut(tween(DialogTokens.AnimMs)) + shrinkVertically()
+            enter = fadeIn(tween(DialogTokens.AnimMs)) + expandVertically(),
+            exit = fadeOut(tween(DialogTokens.AnimMs)) + shrinkVertically()
         ) {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(MaterialTheme.shapes.medium),
-                color    = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.45f)
+                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.45f)
             ) {
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Box(
@@ -640,21 +653,21 @@ private fun ActionButtons(
                             .background(MaterialTheme.colorScheme.error)
                     )
                     Row(
-                        modifier              = Modifier.padding(
+                        modifier = Modifier.padding(
                             horizontal = DialogTokens.Spacing.S,
-                            vertical   = DialogTokens.Spacing.XS
+                            vertical = DialogTokens.Spacing.XS
                         ),
                         horizontalArrangement = Arrangement.spacedBy(DialogTokens.Spacing.XS),
-                        verticalAlignment     = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector      = Icons.Default.Warning,
+                            imageVector = Icons.Default.Warning,
                             contentDescription = null,
-                            tint             = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier         = Modifier.size(14.dp)
+                            tint = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.size(14.dp)
                         )
                         Text(
-                            text  = "El nombre es requerido",
+                            text = stringResource(R.string.name_required),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )

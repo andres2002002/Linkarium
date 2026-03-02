@@ -35,12 +35,12 @@ fun SettingsScreen(
     ) {
 
         // ── Seguridad ────────────────────────────────────────────────────────
-        item { SettingsGroupHeader(title = "Seguridad", icon = Icons.Outlined.Lock) }
+        item { SettingsGroupHeader(stringResource(R.string.settings_group_security), Icons.Outlined.Lock) }
         item {
             SettingsCard {
                 SettingsItemToggle(
-                    title     = "Usar huella dactilar",
-                    subtitle  = "Desbloquea la app con biometría",
+                    title    = stringResource(R.string.biometric_lock_title),
+                    subtitle = stringResource(R.string.biometric_lock_subtitle),
                     isChecked = isBiometricLockEnabled,
                     icon      = Icons.Outlined.Fingerprint,
                     onToggle  = { viewModel.updateBiometricLock(it) }
@@ -50,12 +50,12 @@ fun SettingsScreen(
 
         // ── Exportar / Importar ───────────────────────────────────────────────
         item { Spacer(Modifier.height(8.dp)) }
-        item { SettingsGroupHeader(title = "Exportar / Importar", icon = Icons.Outlined.SwapVert) }
+        item { SettingsGroupHeader(stringResource(R.string.settings_group_export_import), Icons.Outlined.SwapVert) }
         item {
             SettingsCard {
                 SettingsItem(
-                    title   = "Exportar datos",
-                    subtitle = "Guarda una copia de tus jardines y semillas",
+                    title    = stringResource(R.string.export_data),
+                    subtitle = stringResource(R.string.export_subtitle),
                     icon    = Icons.Outlined.FileDownload,
                     onClick = { viewModel.navigateTo(Screens.Export) }
                 )
@@ -360,7 +360,7 @@ private fun SettingsFooter() {
             color      = MaterialTheme.colorScheme.primary
         )
         Text(
-            text  = "© 2025 Habitiora",
+            stringResource(R.string.footer_copyright),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

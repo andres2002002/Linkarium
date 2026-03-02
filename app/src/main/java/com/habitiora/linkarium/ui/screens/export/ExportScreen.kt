@@ -29,11 +29,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.akari.uicomponents.checkbox.AkariCheckBox
+import com.habitiora.linkarium.R
 import com.habitiora.linkarium.core.exporters.ExportFormat
 import com.habitiora.linkarium.core.exporters.ExportStatus
 import com.habitiora.linkarium.domain.model.LinkGarden
@@ -43,11 +45,12 @@ import com.habitiora.linkarium.ui.utils.ExportSelectionMode
 private object ExportTokens {
     object Spacing {
         val XS = 4.dp
-        val S  = 8.dp
-        val M  = 16.dp
-        val L  = 24.dp
+        val S = 8.dp
+        val M = 16.dp
+        val L = 24.dp
         val XL = 32.dp
     }
+
     const val AnimMs = 280
 }
 
@@ -69,11 +72,11 @@ private fun sectionGradient() = Brush.horizontalGradient(
 fun ExportScreen(
     viewModel: ExportViewModel = hiltViewModel()
 ) {
-    val exportStatus       by viewModel.exportStatus.collectAsState()
-    val exportFormat       by viewModel.exportFormat.collectAsState()
+    val exportStatus by viewModel.exportStatus.collectAsState()
+    val exportFormat by viewModel.exportFormat.collectAsState()
     val exportSelectionMode by viewModel.exportSelectionMode.collectAsState()
-    val gardens            by viewModel.gardens.collectAsState()
-    val gardensSelected    by viewModel.gardensSelected.collectAsState()
+    val gardens by viewModel.gardens.collectAsState()
+    val gardensSelected by viewModel.gardensSelected.collectAsState()
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/octet-stream")
@@ -83,19 +86,19 @@ fun ExportScreen(
     }
 
     ExportProgressDialog(
-        status    = exportStatus,
+        status = exportStatus,
         onDismiss = { viewModel.resetStatus() }
     )
 
     ExportContentScreen(
-        format              = exportFormat,
+        format = exportFormat,
         exportSelectionMode = exportSelectionMode,
-        onExport            = { launcher.launch(exportFormat.createFileName()) },
-        onFormatSelected    = viewModel::setExportFormat,
-        gardens             = gardens,
-        gardensSelected     = gardensSelected,
-        onSelectionChange   = viewModel::selectionChange,
-        onSelectGarden      = viewModel::selectGarden
+        onExport = { launcher.launch(exportFormat.createFileName()) },
+        onFormatSelected = viewModel::setExportFormat,
+        gardens = gardens,
+        gardensSelected = gardensSelected,
+        onSelectionChange = viewModel::selectionChange,
+        onSelectGarden = viewModel::selectGarden
     )
 }
 
@@ -114,15 +117,15 @@ fun ExportProgressDialog(
 
     AlertDialog(
         onDismissRequest = {},
-        shape            = MaterialTheme.shapes.extraLarge,
+        shape = MaterialTheme.shapes.extraLarge,
         title = {
             Row(
-                verticalAlignment     = Alignment.CenterVertically,
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(ExportTokens.Spacing.M)
             ) {
                 // Icono de estado animado
                 AnimatedContent(
-                    targetState    = status,
+                    targetState = status,
                     transitionSpec = {
                         fadeIn(tween(ExportTokens.AnimMs)) togetherWith
                                 fadeOut(tween(ExportTokens.AnimMs))
@@ -130,13 +133,19 @@ fun ExportProgressDialog(
                     label = "DialogIcon"
                 ) { s ->
                     Box(
-                        modifier         = Modifier
+                        modifier = Modifier
                             .size(40.dp)
                             .background(
                                 color = when (s) {
-                                    is ExportStatus.Success -> MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                                    is ExportStatus.Error   -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
-                                    else                    -> MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                                    is ExportStatus.Success -> MaterialTheme.colorScheme.primary.copy(
+                                        alpha = 0.12f
+                                    )
+
+                                    is ExportStatus.Error -> MaterialTheme.colorScheme.errorContainer.copy(
+                                        alpha = 0.4f
+                                    )
+
+                                    else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
                                 },
                                 shape = MaterialTheme.shapes.medium
                             ),
@@ -144,28 +153,31 @@ fun ExportProgressDialog(
                     ) {
                         when (s) {
                             is ExportStatus.InProgress -> CircularProgressIndicator(
-                                modifier    = Modifier.size(20.dp),
+                                modifier = Modifier.size(20.dp),
                                 strokeWidth = 2.dp
                             )
-                            is ExportStatus.Success    -> Icon(
+
+                            is ExportStatus.Success -> Icon(
                                 Icons.Default.CheckCircle,
                                 contentDescription = null,
-                                tint     = MaterialTheme.colorScheme.primary,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp)
                             )
-                            is ExportStatus.Error      -> Icon(
+
+                            is ExportStatus.Error -> Icon(
                                 Icons.Default.Error,
                                 contentDescription = null,
-                                tint     = MaterialTheme.colorScheme.error,
+                                tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(20.dp)
                             )
+
                             else -> {}
                         }
                     }
                 }
                 Text(
-                    text       = "Exportando datos",
-                    style      = MaterialTheme.typography.titleMedium,
+                    text = stringResource(R.string.exporting_data),
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -175,25 +187,30 @@ fun ExportProgressDialog(
                 when (status) {
                     is ExportStatus.InProgress -> {
                         Text(
-                            text  = "Procesando ${status.current} de ${status.total} elementos…",
+                            text = stringResource(
+                                id = R.string.processing_status_export_in_progress,
+                                status.current,
+                                status.total
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         LinearProgressIndicator(
-                            progress  = { status.percentage },
-                            modifier  = Modifier
+                            progress = { status.percentage },
+                            modifier = Modifier
                                 .fillMaxWidth()
                                 .height(4.dp)
                                 .clip(MaterialTheme.shapes.extraLarge)
                         )
                     }
+
                     is ExportStatus.Success -> {
                         // Trazo de acento lateral verde (éxito) — mismo patrón InfoCard
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(MaterialTheme.shapes.medium),
-                            color    = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
                         ) {
                             Row(modifier = Modifier.fillMaxWidth()) {
                                 Box(
@@ -203,19 +220,20 @@ fun ExportProgressDialog(
                                         .background(MaterialTheme.colorScheme.primary)
                                 )
                                 Text(
-                                    text     = "¡Exportación completada exitosamente!",
-                                    style    = MaterialTheme.typography.bodyMedium,
+                                    text = stringResource(R.string.export_success),
+                                    style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(ExportTokens.Spacing.S)
                                 )
                             }
                         }
                     }
+
                     is ExportStatus.Error -> {
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(MaterialTheme.shapes.medium),
-                            color    = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f)
+                            color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f)
                         ) {
                             Row(modifier = Modifier.fillMaxWidth()) {
                                 Box(
@@ -225,14 +243,15 @@ fun ExportProgressDialog(
                                         .background(MaterialTheme.colorScheme.error)
                                 )
                                 Text(
-                                    text     = status.exception.localizedMessage ?: "Error desconocido",
-                                    style    = MaterialTheme.typography.bodySmall,
-                                    color    = MaterialTheme.colorScheme.onErrorContainer,
+                                    text = status.exception.localizedMessage ?: stringResource(R.string.error_unknown),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
                                     modifier = Modifier.padding(ExportTokens.Spacing.S)
                                 )
                             }
                         }
                     }
+
                     else -> {}
                 }
             }
@@ -241,9 +260,9 @@ fun ExportProgressDialog(
             if (status !is ExportStatus.InProgress) {
                 Button(
                     onClick = onDismiss,
-                    shape   = MaterialTheme.shapes.large
+                    shape = MaterialTheme.shapes.large
                 ) {
-                    Text("Cerrar", style = MaterialTheme.typography.labelLarge)
+                    Text(text = stringResource(R.string.close), style = MaterialTheme.typography.labelLarge)
                 }
             }
         }
@@ -265,14 +284,14 @@ private fun ExportContentScreen(
     var isExpanded by remember { mutableStateOf(false) }
 
     LazyColumn(
-        modifier            = Modifier.padding(ExportTokens.Spacing.M),
+        modifier = Modifier.padding(ExportTokens.Spacing.M),
         verticalArrangement = Arrangement.spacedBy(ExportTokens.Spacing.M)
     ) {
         item {
             MainSection(
-                selectedFormat   = format,
+                selectedFormat = format,
                 onFormatSelected = onFormatSelected,
-                onExport         = onExport
+                onExport = onExport
             )
         }
 
@@ -280,7 +299,7 @@ private fun ExportContentScreen(
             AnimatedVisibility(visible = format != ExportFormat.Backup) {
                 AdvancedDivider(
                     isExpanded = isExpanded,
-                    onClick    = { isExpanded = !isExpanded }
+                    onClick = { isExpanded = !isExpanded }
                 )
             }
         }
@@ -288,14 +307,14 @@ private fun ExportContentScreen(
         item {
             AnimatedVisibility(
                 visible = isExpanded && format != ExportFormat.Backup,
-                enter   = fadeIn(tween(ExportTokens.AnimMs)) + expandVertically(),
-                exit    = fadeOut(tween(ExportTokens.AnimMs)) + shrinkVertically()
+                enter = fadeIn(tween(ExportTokens.AnimMs)) + expandVertically(),
+                exit = fadeOut(tween(ExportTokens.AnimMs)) + shrinkVertically()
             ) {
                 SelectContentExport(
-                    gardensSelected   = gardensSelected,
-                    gardens           = gardens,
-                    onSelectGarden    = onSelectGarden,
-                    selection         = exportSelectionMode,
+                    gardensSelected = gardensSelected,
+                    gardens = gardens,
+                    onSelectGarden = onSelectGarden,
+                    selection = exportSelectionMode,
                     onSelectionChange = onSelectionChange
                 )
             }
@@ -314,9 +333,9 @@ private fun MainSection(
     onExport: () -> Unit = {}
 ) {
     Card(
-        modifier  = Modifier.fillMaxWidth(),
-        shape     = MaterialTheme.shapes.large,
-        colors    = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -329,23 +348,23 @@ private fun MainSection(
                     .padding(horizontal = ExportTokens.Spacing.M, vertical = 14.dp)
             ) {
                 Row(
-                    verticalAlignment     = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(ExportTokens.Spacing.S)
                 ) {
                     Icon(
-                        imageVector        = Icons.Outlined.FileDownload,
+                        imageVector = Icons.Outlined.FileDownload,
                         contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.primary,
-                        modifier           = Modifier.size(20.dp)
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
                     )
                     Column {
                         Text(
-                            text       = "Exportar datos",
-                            style      = MaterialTheme.typography.titleSmall,
+                            text = stringResource(R.string.export_data),
+                            style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            text  = "Elige el formato de exportación",
+                            text = stringResource(R.string.select_export_format),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -355,39 +374,41 @@ private fun MainSection(
 
             HorizontalDivider(
                 thickness = 0.5.dp,
-                color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
 
             // Cuerpo
             Column(
-                modifier            = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(ExportTokens.Spacing.M),
                 verticalArrangement = Arrangement.spacedBy(ExportTokens.Spacing.M)
             ) {
                 FormatSelector(
-                    formats          = ExportFormat.allFormats,
-                    selectedFormat   = selectedFormat,
+                    formats = ExportFormat.allFormats,
+                    selectedFormat = selectedFormat,
                     onFormatSelected = onFormatSelected
                 )
 
                 // Botón de exportar — coherente con ActionButtons del diálogo
                 Button(
-                    modifier       = Modifier.fillMaxWidth(),
-                    onClick        = onExport,
-                    enabled        = selectedFormat != null,
-                    shape          = MaterialTheme.shapes.large,
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onExport,
+                    enabled = selectedFormat != null,
+                    shape = MaterialTheme.shapes.large,
                     contentPadding = PaddingValues(vertical = 12.dp)
                 ) {
                     Icon(
-                        imageVector        = Icons.Default.FileDownload,
+                        imageVector = Icons.Default.FileDownload,
                         contentDescription = null,
-                        modifier           = Modifier.size(18.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                     Spacer(Modifier.width(ExportTokens.Spacing.S))
+                    val formatName = selectedFormat?.name ?: stringResource(id = R.string.placeholder_dash)
+
                     Text(
-                        text       = "Exportar ${selectedFormat?.name ?: "—"}",
-                        style      = MaterialTheme.typography.labelLarge,
+                        text = stringResource(id = R.string.export_format_label, formatName),
+                        style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -411,26 +432,29 @@ private fun FormatSelector(
 
     Box(modifier = Modifier.fillMaxWidth()) {
         Surface(
-            modifier       = Modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .clip(MaterialTheme.shapes.medium),
-            color          = if (expanded)
+            color = if (expanded)
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
             else
                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
             tonalElevation = 0.dp,
-            onClick        = { expanded = !expanded }
+            onClick = { expanded = !expanded }
         ) {
             Row(
-                modifier              = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = ExportTokens.Spacing.M, vertical = ExportTokens.Spacing.S),
-                verticalAlignment     = Alignment.CenterVertically,
+                    .padding(
+                        horizontal = ExportTokens.Spacing.M,
+                        vertical = ExportTokens.Spacing.S
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(ExportTokens.Spacing.M)
             ) {
                 // Icono en contenedor — mismo patrón de todo el sistema
                 Box(
-                    modifier         = Modifier
+                    modifier = Modifier
                         .size(40.dp)
                         .background(
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
@@ -439,26 +463,26 @@ private fun FormatSelector(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector        = Icons.Outlined.Description,
+                        imageVector = Icons.Outlined.Description,
                         contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.primary,
-                        modifier           = Modifier.size(20.dp)
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text       = selectedFormat?.name ?: "Selecciona un formato",
-                        style      = MaterialTheme.typography.titleSmall,
+                        text = selectedFormat?.name ?: stringResource(R.string.select_export_format_option),
+                        style = MaterialTheme.typography.titleSmall,
                         fontWeight = if (selectedFormat != null) FontWeight.SemiBold else FontWeight.Normal,
-                        color      = if (selectedFormat != null) MaterialTheme.colorScheme.onSurface
+                        color = if (selectedFormat != null) MaterialTheme.colorScheme.onSurface
                         else MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines   = 1,
-                        overflow   = TextOverflow.Ellipsis
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     selectedFormat?.let {
                         Text(
-                            text  = ".${it.extension}",
+                            text = ".${it.extension}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -466,33 +490,33 @@ private fun FormatSelector(
                 }
 
                 Icon(
-                    imageVector        = Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (expanded) "Contraer" else "Expandir",
-                    tint               = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier           = Modifier.rotate(if (expanded) 180f else 0f)
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = stringResource(if (expanded) R.string.contract else R.string.expand),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.rotate(if (expanded) 180f else 0f)
                 )
             }
         }
 
         DropdownMenu(
-            expanded         = expanded,
+            expanded = expanded,
             onDismissRequest = { expanded = false },
-            shape            = MaterialTheme.shapes.large
+            shape = MaterialTheme.shapes.large
         ) {
             formats.forEach { format ->
                 val isSelected = format == selectedFormat
                 DropdownMenuItem(
                     leadingIcon = {
                         Icon(
-                            imageVector        = Icons.Outlined.Description,
+                            imageVector = Icons.Outlined.Description,
                             contentDescription = null,
-                            tint               = if (isSelected) MaterialTheme.colorScheme.primary
+                            tint = if (isSelected) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
                     text = {
                         Text(
-                            text       = format.name,
+                            text = format.name,
                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                         )
                     },
@@ -517,36 +541,36 @@ private fun AdvancedDivider(
     onClick: () -> Unit
 ) {
     Row(
-        modifier              = Modifier
+        modifier = Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
             .clickable { onClick() }
             .padding(vertical = ExportTokens.Spacing.S, horizontal = ExportTokens.Spacing.XS),
-        verticalAlignment     = Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ExportTokens.Spacing.S)
     ) {
         Icon(
-            imageVector        = Icons.Outlined.Tune,
+            imageVector = Icons.Outlined.Tune,
             contentDescription = null,
-            tint               = MaterialTheme.colorScheme.primary,
-            modifier           = Modifier.size(16.dp)
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(16.dp)
         )
         Text(
-            text       = "Avanzado",
-            style      = MaterialTheme.typography.labelLarge,
+            text = stringResource(R.string.advanced),
+            style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
-            color      = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary
         )
         HorizontalDivider(
-            modifier  = Modifier.weight(1f),
+            modifier = Modifier.weight(1f),
             thickness = 0.5.dp,
-            color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
         )
         Icon(
-            imageVector        = Icons.Default.KeyboardArrowDown,
+            imageVector = Icons.Default.KeyboardArrowDown,
             contentDescription = null,
-            tint               = MaterialTheme.colorScheme.primary,
-            modifier           = Modifier
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
                 .size(18.dp)
                 .rotate(if (isExpanded) 180f else 0f)
         )
@@ -567,9 +591,9 @@ private fun SelectContentExport(
     onSelectionChange: (ExportSelectionMode) -> Unit
 ) {
     Card(
-        modifier  = Modifier.fillMaxWidth(),
-        shape     = MaterialTheme.shapes.large,
-        colors    = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -582,18 +606,18 @@ private fun SelectContentExport(
                     .padding(horizontal = ExportTokens.Spacing.M, vertical = 10.dp)
             ) {
                 Row(
-                    verticalAlignment     = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(ExportTokens.Spacing.S)
                 ) {
                     Icon(
-                        imageVector        = Icons.Outlined.FilterList,
+                        imageVector = Icons.Outlined.FilterList,
                         contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.primary,
-                        modifier           = Modifier.size(18.dp)
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
                     )
                     Text(
-                        text       = "Selección de contenido",
-                        style      = MaterialTheme.typography.titleSmall,
+                        text = stringResource(R.string.content_selection),
+                        style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -601,56 +625,59 @@ private fun SelectContentExport(
 
             HorizontalDivider(
                 thickness = 0.5.dp,
-                color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
 
             Column(
-                modifier            = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(ExportTokens.Spacing.M),
                 verticalArrangement = Arrangement.spacedBy(ExportTokens.Spacing.S)
             ) {
                 // Radio buttons
                 Row(
-                    modifier              = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(ExportTokens.Spacing.S)
                 ) {
                     SelectionChip(
-                        modifier  = Modifier.weight(1f),
-                        selected  = selection == ExportSelectionMode.AllGardens,
-                        onClick   = { onSelectionChange(ExportSelectionMode.AllGardens) },
-                        text      = "Todos los jardines",
-                        icon      = Icons.Outlined.SelectAll
+                        modifier = Modifier.weight(1f),
+                        selected = selection == ExportSelectionMode.AllGardens,
+                        onClick = { onSelectionChange(ExportSelectionMode.AllGardens) },
+                        text = stringResource(R.string.all_gardens),
+                        icon = Icons.Outlined.SelectAll
                     )
                     SelectionChip(
-                        modifier  = Modifier.weight(1f),
-                        selected  = selection == ExportSelectionMode.SelectedGardens,
-                        onClick   = { onSelectionChange(ExportSelectionMode.SelectedGardens) },
-                        text      = "${gardensSelected.size} / ${gardens.size} jardines",
-                        icon      = Icons.Outlined.FilterList
+                        modifier = Modifier.weight(1f),
+                        selected = selection == ExportSelectionMode.SelectedGardens,
+                        onClick = { onSelectionChange(ExportSelectionMode.SelectedGardens) },
+                        text = stringResource(R.string.selected_gardens,
+                            gardensSelected.size,
+                            gardens.size
+                        ),
+                        icon = Icons.Outlined.FilterList
                     )
                 }
 
                 // Grilla de jardines
                 AnimatedVisibility(
                     visible = selection == ExportSelectionMode.SelectedGardens,
-                    enter   = fadeIn(tween(ExportTokens.AnimMs)) + expandVertically(),
-                    exit    = fadeOut(tween(ExportTokens.AnimMs)) + shrinkVertically()
+                    enter = fadeIn(tween(ExportTokens.AnimMs)) + expandVertically(),
+                    exit = fadeOut(tween(ExportTokens.AnimMs)) + shrinkVertically()
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(ExportTokens.Spacing.S)) {
                         HorizontalDivider(
                             thickness = 0.5.dp,
-                            color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                         )
                         Text(
-                            text  = "Selecciona los jardines a exportar",
+                            text = stringResource(R.string.select_export_gardens),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         LazyHorizontalGrid(
-                            rows                = GridCells.Fixed(3),
-                            contentPadding      = PaddingValues(ExportTokens.Spacing.XS),
-                            modifier            = Modifier
+                            rows = GridCells.Fixed(3),
+                            contentPadding = PaddingValues(ExportTokens.Spacing.XS),
+                            modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(max = 150.dp),
                             verticalArrangement = Arrangement.spacedBy(ExportTokens.Spacing.XS),
@@ -658,9 +685,9 @@ private fun SelectContentExport(
                         ) {
                             items(gardens, key = { it.id }) { item ->
                                 GardenSelectionItem(
-                                    garden   = item,
+                                    garden = item,
                                     selected = gardensSelected.contains(item.id),
-                                    onClick  = { onSelectGarden(item.id) }
+                                    onClick = { onSelectGarden(item.id) }
                                 )
                             }
                         }
@@ -685,37 +712,37 @@ private fun SelectionChip(
     icon: androidx.compose.ui.graphics.vector.ImageVector
 ) {
     Surface(
-        modifier       = modifier.clip(MaterialTheme.shapes.medium),
-        color          = if (selected)
+        modifier = modifier.clip(MaterialTheme.shapes.medium),
+        color = if (selected)
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
         else
             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
         tonalElevation = 0.dp,
-        onClick        = onClick
+        onClick = onClick
     ) {
         Row(
-            modifier              = Modifier.padding(
+            modifier = Modifier.padding(
                 horizontal = ExportTokens.Spacing.S,
-                vertical   = ExportTokens.Spacing.S
+                vertical = ExportTokens.Spacing.S
             ),
-            verticalAlignment     = Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(ExportTokens.Spacing.XS)
         ) {
             Icon(
-                imageVector        = if (selected) Icons.Default.CheckCircle else icon,
+                imageVector = if (selected) Icons.Default.CheckCircle else icon,
                 contentDescription = null,
-                tint               = if (selected) MaterialTheme.colorScheme.primary
+                tint = if (selected) MaterialTheme.colorScheme.primary
                 else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier           = Modifier.size(16.dp)
+                modifier = Modifier.size(16.dp)
             )
             Text(
-                text       = text,
-                style      = MaterialTheme.typography.labelSmall,
+                text = text,
+                style = MaterialTheme.typography.labelSmall,
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                color      = if (selected) MaterialTheme.colorScheme.primary
+                color = if (selected) MaterialTheme.colorScheme.primary
                 else MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines   = 1,
-                overflow   = TextOverflow.Ellipsis
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -730,36 +757,36 @@ private fun GardenSelectionItem(
     onClick: () -> Unit
 ) {
     Surface(
-        modifier       = modifier.clip(MaterialTheme.shapes.medium),
-        color          = if (selected)
+        modifier = modifier.clip(MaterialTheme.shapes.medium),
+        color = if (selected)
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
         else
             Color.Transparent,
         tonalElevation = 0.dp,
-        onClick        = onClick
+        onClick = onClick
     ) {
         Row(
-            modifier          = Modifier.padding(
+            modifier = Modifier.padding(
                 horizontal = ExportTokens.Spacing.S,
-                vertical   = ExportTokens.Spacing.XS
+                vertical = ExportTokens.Spacing.XS
             ),
             verticalAlignment = Alignment.CenterVertically
         ) {
             AkariCheckBox(
-                checked         = selected,
+                checked = selected,
                 onCheckedChange = { onClick() }
             ) {
                 Icon(Icons.Default.Check, contentDescription = null)
             }
             Text(
-                text       = garden.name,
-                style      = MaterialTheme.typography.bodySmall,
+                text = garden.name,
+                style = MaterialTheme.typography.bodySmall,
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                color      = if (selected) MaterialTheme.colorScheme.onSurface
+                color = if (selected) MaterialTheme.colorScheme.onSurface
                 else MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines   = 1,
-                overflow   = TextOverflow.Ellipsis,
-                modifier   = Modifier.padding(start = ExportTokens.Spacing.XS)
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(start = ExportTokens.Spacing.XS)
             )
         }
     }
