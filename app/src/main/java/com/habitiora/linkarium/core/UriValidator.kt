@@ -40,8 +40,6 @@ class UriValidatorImpl @Inject constructor() : UriValidator {
 
         // Validación estricta usando herramientas nativas de Android
         val uriString = resolvedUri.toString()
-        Timber.d("isNetworkUrl 3: $uriString")
-        Timber.d("isNetworkUrl 4: ${URLUtil.isNetworkUrl(uriString)} -> ${Patterns.WEB_URL.matcher(uriString).matches()}")
         return URLUtil.isNetworkUrl(uriString) && Patterns.WEB_URL.matcher(uriString).matches()
     }
 

@@ -1,28 +1,182 @@
 <resources>
-    <string name="app_name">Linkarium</string>
 
-    <!-- Screens -->
+    <!-- ==================== APP ==================== -->
+    <string name="app_name">Linkarium</string>
+    <string name="app_description">Linkarium is your personal space to organize and grow your digital garden of links and ideas.</string>
+
+
+    <!-- ==================== NAVIGATION / SCREENS ==================== -->
     <string name="link_garden">Home</string>
     <string name="settings">Settings</string>
     <string name="plant">Add Link</string>
     <string name="gardens">Collections</string>
     <string name="export">Export</string>
 
+
+    <!-- ==================== GENERAL / COMMON ==================== -->
+    <string name="close">Close</string>
+    <string name="cancel">Cancel</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="copy">Copy</string>
+    <string name="name">Name</string>
+    <string name="show">Show</string>
+    <string name="hide">Hide</string>
+    <string name="optional">Optional</string>
+    <string name="advanced">Advanced</string>
+    <string name="reorder">Reorder</string>
+    <string name="options">Options</string>
+    <string name="more_options">More options</string>
+    <string name="expand">Expand</string>
+    <string name="contract">Contract</string>
+    <string name="selected_item">Selected</string>
+    <string name="placeholder_dash">—</string>
+
+    <!-- States -->
+    <string name="loading">Loading</string>
+    <string name="creating">Creating…</string>
+    <string name="idle">Idle</string>
+    <string name="success">Success</string>
+
+    <!-- Errors -->
+    <string name="error_unknown">Unknown error</string>
+    <string name="error_load">Load error</string>
+    <string name="error_load_more">Error loading more items</string>
+
+
+    <!-- ==================== VALIDATION ==================== -->
+    <string name="name_required">Name is required</string>
     <string name="name_no_empty">Name cannot be empty</string>
     <string name="name_characters">Name must have at least 3 characters</string>
-    <string name="select_garden">Select a Garden</string>
+    <string name="invalid_url">Invalid URL</string>
 
-    <!-- Settings Screen -->
+
+    <!-- ==================== SETTINGS SCREEN ==================== -->
     <string name="about">About</string>
     <string name="app_version">Version</string>
+    <string name="developer">Developer</string>
+    <string name="andres2002002">andres2002002</string>
     <string name="terms_and_conditions">Terms and Conditions</string>
     <string name="privacy_policy">Privacy Policy</string>
     <string name="contact_us">Contact Us</string>
     <string name="email">Email</string>
     <string name="github">GitHub</string>
     <string name="open_source_licenses">Open Source Licenses</string>
-    <string name="app_description">Linkarium is your personal space to organize and grow your digital garden of links and ideas.</string>
-    <string name="developer">Developer</string>
-    <string name="andres2002002">andres2002002</string>
+
+    <!-- Settings groups -->
+    <string name="settings_group_security">Security</string>
+    <string name="settings_group_export_import">Export / Import</string>
+
+    <!-- Security -->
+    <string name="biometric_lock_title">Use Fingerprint</string>
+    <string name="biometric_lock_subtitle">Unlock the app with biometrics</string>
+
+    <!-- Export / Import -->
+    <string name="export_subtitle">Save a copy of your gardens and seeds</string>
+
+    <!-- Footer -->
+    <string name="footer_copyright">© 2025 Habitiora</string>
+
+
+    <!-- ==================== EXPORT SCREEN ==================== -->
+    <string name="export_data">Export Data</string>
+    <string name="select_export_format">Select Export Format</string>
+    <string name="select_export_format_option">Select Format</string>
+    <string name="export_format_label">Export %1$s</string>
+    <string name="backup">Backup</string>
+    <string name="json">JSON</string>
+    <string name="exporting_data">Exporting data</string>
+    <string name="processing_status_export_in_progress">Processing %1$d of %2$d items…</string>
+    <string name="export_success">Export completed successfully!</string>
+    <string name="content_selection">Content Selection</string>
+    <string name="filter_list">Filter List</string>
+    <string name="all_gardens">All Gardens</string>
+    <string name="selected_gardens">%1$d / %2$d Gardens</string>
+    <string name="select_export_gardens">Select Gardens for Export</string>
+
+
+    <!-- ==================== GARDENS SCREEN ==================== -->
+    <string name="new_garden">New Garden</string>
+    <string name="new_garden_button">New</string>
+    <string name="without_gardens">No gardens yet</string>
+    <string name="create_first_garden">Create your first <b>garden</b> to start\norganizing your links</string>
+    <string name="no_seeds_available">No seeds available</string>
+    <string name="no_links">No links</string>
+    <string name="multiple_links">%1$d links</string>
+    <string name="add_new_garden_description">Create a new link collection</string>
+    <plurals name="link_count_label">
+        <item quantity="one">Link</item>
+        <item quantity="other">%1$d Links</item>
+    </plurals>
+
+    <!-- Link actions -->
+    <string name="copy_link">Copy Link</string>
+    <string name="edit_link">Edit Link</string>
+    <string name="delete_link">Delete Link</string>
+    <string name="show_more_links">Show more links</string>
+    <string name="hide_more_links">Hide more links</string>
+
+
+    <!-- ==================== GARDEN MANAGER (Create / Edit Garden) ==================== -->
+    <string name="select_garden">Select a Garden</string>
+    <string name="garden_name">Garden Name</string>
+    <string name="garden_name_placeholder">Ex. Favorite Links</string>
+    <string name="garden_name_hint">Suggestions: Work, Personal, Study Resources</string>
+    <string name="garden_description">Description</string>
+    <string name="garden_description_placeholder">Add a description for this garden…</string>
+    <string name="new_garden_note">Organize your links</string>
+    <string name="whats_garden">What\'s a Garden?</string>
+    <string name="whats_garden_answer">Gardens let you categorize your link seeds. For example: \'Work\', \'Personal\', \'Learning\'.</string>
+    <string name="create_garden">Create Garden</string>
+    <string name="creation_success">Create!</string>
+
+
+    <!-- ==================== PLANT SEED SCREEN (Add / Edit Link) ==================== -->
+    <string name="garden">Garden</string>
+    <string name="select_target_garden">Select Target Garden</string>
+
+    <!-- Basic info section -->
+    <string name="basic_info">Basic Information</string>
+    <string name="basic_info_description">Name and Cover Image</string>
+    <string name="seed_name_label">Seed Name</string>
+    <string name="seed_name_placeholder">Ex: Learning Resources</string>
+
+    <!-- Cover section -->
+    <string name="cover_title">Seed Cover</string>
+    <string name="cover_description">Decorative image for the card</string>
+    <string name="no_cover">No cover</string>
+    <string name="cover_label">Image URL</string>
+    <string name="cover_placeholder">Ex: https://example.com/image.jpg</string>
+
+    <!-- Links section -->
+    <string name="links">Links</string>
+    <string name="add_link">Add Link</string>
+    <string name="remove_link">Remove Link</string>
+    <string name="no_links_added">No links added</string>
+    <string name="link_url_label">URL</string>
+    <string name="link_url_placeholder">Ex: https://example.com</string>
+    <plurals name="add_link_count_label">
+        <item quantity="one">%1$d Link Added</item>
+        <item quantity="other">%1$d Links Added</item>
+    </plurals>
+
+    <!-- Link metadata section -->
+    <string name="link_metadata">Link Metadata</string>
+    <string name="link_metadata_description">Optional tag and notes</string>
+    <string name="link_tag_label">Link Tag</string>
+    <string name="link_tag_placeholder">Ex: Learning</string>
+    <string name="link_notes_label">Link Notes</string>
+    <string name="link_notes_placeholder">Additional info…</string>
+
+    <!-- Notes section -->
+    <string name="notes">Notes</string>
+    <string name="notes_description">Additional context about this seed</string>
+    <string name="notes_label">General Notes</string>
+    <string name="notes_placeholder">Add context or reminders…</string>
+
+    <!-- Tags section -->
+    <string name="tags_title">Tags</string>
+    <string name="tags_subtitle">Coming soon — organize by categories</string>
+    <string name="feature_develop">Feature in development</string>
 
 </resources>

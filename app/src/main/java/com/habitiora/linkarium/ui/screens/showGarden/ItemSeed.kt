@@ -1,12 +1,17 @@
 package com.habitiora.linkarium.ui.screens.showGarden
 
 import android.net.Uri
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -14,6 +19,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -30,6 +36,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -39,7 +46,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,13 +55,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -80,114 +91,125 @@ fun ItemSeed(
     callbacks: ItemSeedCallbacks,
     showSelector: Boolean,
     checked: Boolean,
-    shape: Shape = MaterialTheme.shapes.small,
+    shape: Shape = MaterialTheme.shapes.large, // Más redondeado para look premium
     containerColor: Color = MaterialTheme.colorScheme.surface,
     contentColor: Color = MaterialTheme.colorScheme.onSurface
-){
+) {
     var showContent by remember { mutableStateOf(false) }
 
-    // Usar derivedStateOf para evitar recomposiciones innecesarias
-    val isSingleLink by remember { derivedStateOf { seed.links.size == 1 } }
-    val hasLinks by remember { derivedStateOf { seed.links.isNotEmpty() } }
+    val isSingleLink = seed.links.size == 1
+    val hasLinks = seed.links.isNotEmpty()
 
-    // Crear callbacks estables con remember
-    val onMainClick = remember(isSingleLink, hasLinks) {
-        {
-            if (hasLinks) {
-                if (isSingleLink) urlHelper.open(seed.links.first().uri)
-                else showContent = !showContent
+    val onMainClick: () -> Unit = {
+        if (hasLinks) {
+            if (isSingleLink) urlHelper.open(seed.links.first().uri)
+            else showContent = !showContent
+        }
+    }
+
+    val onCopyLink: () -> Unit = {
+        if (hasLinks && isSingleLink) {
+            scope.launch {
+                clipboardHelper.copyAsUri(seed.name, seed.links.first().uri)
             }
         }
     }
 
-    val onCopyLink = remember(seed.name, isSingleLink, hasLinks) {
-        {
-            if (hasLinks && isSingleLink) {
-                scope.launch {
-                    clipboardHelper.copyAsUri(seed.name, seed.links.first().uri)
-                }
-            }
-        }
+    val cardBorderWidth = when {
+        !showSelector -> ItemSeedDefaults.BorderWidthSelectModeOff
+        checked -> ItemSeedDefaults.BorderWidthSelected
+        else -> ItemSeedDefaults.BorderWidthUnselected
     }
 
-    val cardBorder = CardDefaults.outlinedCardBorder()
-    val cardBorderWidth = remember(showSelector, checked) {
-        when {
-            !showSelector -> ItemSeedDefaults.BorderWidthSelectModeOff
-            checked -> ItemSeedDefaults.BorderWidthSelected
-            else -> ItemSeedDefaults.BorderWidthUnselected
-        }
-    }
+    val dynamicElevation by animateDpAsState(
+        targetValue = if (checked) ItemSeedDefaults.CardElevationSelected else ItemSeedDefaults.CardElevation,
+        animationSpec = tween(ItemSeedDefaults.AnimationDuration),
+        label = "CardElevation"
+    )
+    val dynamicContainerColor by animateColorAsState(
+        targetValue = if (checked) MaterialTheme.colorScheme.primaryContainer else containerColor,
+        animationSpec = tween(ItemSeedDefaults.AnimationDuration),
+        label = "CardContainerColor"
+    )
 
     Card(
         modifier = modifier.animateContentSize(
             animationSpec = tween(ItemSeedDefaults.AnimationDuration)
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = ItemSeedDefaults.CardElevation
+            defaultElevation = dynamicElevation
         ),
-        border = cardBorder.copy(width = cardBorderWidth),
+        border = CardDefaults.outlinedCardBorder().copy(width = cardBorderWidth),
         shape = shape,
         colors = CardDefaults.cardColors(
-            containerColor = containerColor,
+            containerColor = dynamicContainerColor,
             contentColor = contentColor
         )
     ) {
-        Column(
-            modifier = Modifier
-        ) {
-            MainSection(
+        Column {
+
+            // ─── CABECERA PREMIUM: imagen + overlay gradient + info superpuesta ───
+            PremiumHeader(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(shape)
+                    .height(160.dp) // Más generosa para mayor impacto visual
+                    .clip(shape) // Clip que respeta el shape de la Card
                     .combinedClickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(color = MaterialTheme.colorScheme.primary),
+                        indication = ripple(color = Color.White.copy(alpha = 0.2f)),
                         onClick = onMainClick,
-                        onDoubleClick = callbacks.onDoubleTap,
-                        onLongClick = callbacks.onLongPress
+                        onDoubleClick = { callbacks.onDoubleTap() },
+                        onLongClick = { callbacks.onLongPress() }
                     )
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
                     .semantics { contentDescription = "Seed item: ${seed.name}" },
+                seed = seed,
                 showSelector = showSelector,
                 checked = checked,
-                onCheckedChange = callbacks.onCheckedChange,
+                onCheckedChange = { callbacks.onCheckedChange(it) },
                 isSingleLink = isSingleLink,
                 onSingleLink = onCopyLink,
                 onMultiLink = { showContent = !showContent },
-                seed = seed,
                 showContent = showContent,
                 onEdit = { callbacks.onEdit(seed) },
                 onDelete = { callbacks.onDelete(seed) },
                 widthSizeClass = widthSizeClass
             )
-            AsyncImage(
-                model = seed.coverUri?.toString()?: ItemSeedDefaults.defaultPreview,
-                contentDescription = "Thumbnail Preview",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
-            )
+
+            // ─── NOTAS (solo si existen) ───
+            seed.notes?.takeIf { it.isNotBlank() }?.let { notes ->
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    text = notes,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            // ─── MULTI-LINKS EXPANDIBLE ───
             MultiLinksContent(
-                modifier = Modifier.padding(start = 16.dp),
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
                 visible = showContent && !isSingleLink,
                 entries = seed.links,
-                onClick = { uri ->
-                    urlHelper.open(uri)
-                },
+                onClick = { uri -> urlHelper.open(uri) },
                 onCopy = { uri ->
-                    scope.launch {
-                        clipboardHelper.copyAsUri(seed.name, uri)
-                    }
+                    scope.launch { clipboardHelper.copyAsUri(seed.name, uri) }
                 }
             )
         }
     }
 }
 
+/**
+ * Cabecera premium: imagen de fondo con gradiente scrim oscuro en la parte inferior.
+ * El nombre, URL y botones de acción se superponen sobre el degradado,
+ * dando un look tipo "magazine card".
+ */
 @Composable
-private fun MainSection(
+private fun PremiumHeader(
     modifier: Modifier = Modifier,
     seed: LinkSeed,
     showSelector: Boolean,
@@ -200,118 +222,137 @@ private fun MainSection(
     onMultiLink: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
-){
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        LeadingSection(
-            isSingleLink = isSingleLink,
-            showSelector = showSelector,
-            checked = checked,
-            onCheckedChange = onCheckedChange
+) {
+    Box(modifier = modifier) {
+
+        // 1. Imagen de fondo
+        AsyncImage(
+            model = seed.coverUri?.toString() ?: ItemSeedDefaults.defaultPreview,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
         )
 
-        SeedInfo(
-            modifier = Modifier.weight(1f),
-            seed = seed
-        )
-        TrailButtons(
-            showContent = showContent,
-            isSingleLink = isSingleLink,
-            onSingleLink = onSingleLink,
-            onMultiLink = onMultiLink,
-            onEdit = onEdit,
-            onDelete = onDelete,
-            widthSizeClass = widthSizeClass
-        )
-    }
-}
-
-@Composable
-private fun LeadingSection(
-    modifier: Modifier = Modifier,
-    isSingleLink: Boolean,
-    showSelector: Boolean,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-){
-    val iconRes = if (isSingleLink) R.drawable.round_link_24 else R.drawable.round_view_list_24
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center
-    ){
-        AnimatedVisibility(
-            visible = showSelector,
-            enter = fadeIn(animationSpec = tween(ItemSeedDefaults.AnimationDuration)),
-            exit = fadeOut(animationSpec = tween(ItemSeedDefaults.AnimationDuration))
-        ) {
-            AkariCheckBox(
-                modifier = Modifier.padding(end = 8.dp),
-                checked = checked,
-                onCheckedChange = onCheckedChange
-            ) {
-                Icon(
-                    modifier = Modifier.size(ItemSeedDefaults.IconSizeLarge),
-                    imageVector = Icons.Default.Check,
-                    contentDescription = null
+        // 2. Gradient scrim: transparente arriba → negro semiopaco abajo
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0.0f to Color.Transparent,
+                            0.45f to Color.Black.copy(alpha = 0.15f),
+                            1.0f to Color.Black.copy(alpha = 0.72f)
+                        )
+                    )
                 )
+        )
+
+        // 3. Selector (esquina superior izquierda) — solo cuando está activo
+        if (showSelector) {
+            AnimatedVisibility(
+                visible = showSelector,
+                enter = fadeIn(tween(ItemSeedDefaults.AnimationDuration)),
+                exit = fadeOut(tween(ItemSeedDefaults.AnimationDuration)),
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(8.dp)
+            ) {
+                AkariCheckBox(
+                    checked = checked,
+                    onCheckedChange = onCheckedChange
+                ) {
+                    Icon(
+                        modifier = Modifier.size(ItemSeedDefaults.IconSizeLarge),
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                }
             }
         }
 
-        AnimatedVisibility(
-            visible = !showSelector,
-            enter = fadeIn(animationSpec = tween(ItemSeedDefaults.AnimationDuration)),
-            exit = fadeOut(animationSpec = tween(ItemSeedDefaults.AnimationDuration))
+        // 4. Contenido superpuesto en la parte inferior
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Icon(
-                modifier = Modifier.size(ItemSeedDefaults.IconSizeLarge),
-                imageVector = ImageVector.vectorResource(iconRes),
-                contentDescription = null
+            // Info: URL + Nombre
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                val mainText = when (seed.links.size) {
+                    0 -> stringResource(R.string.no_links)
+                    1 -> seed.links.first().uri.toString()
+                    else -> stringResource(R.string.multiple_links, seed.links.size)
+                }
+
+                Text(
+                    text = mainText,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White.copy(alpha = 0.75f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Text(
+                    text = seed.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            // Botones de acción (sobre el scrim)
+            TrailButtons(
+                showContent = showContent,
+                isSingleLink = isSingleLink,
+                onSingleLink = onSingleLink,
+                onMultiLink = onMultiLink,
+                onEdit = onEdit,
+                onDelete = onDelete,
+                widthSizeClass = widthSizeClass,
+                onDarkBackground = true
             )
         }
-    }
-}
 
-@Composable
-private fun SeedInfo(
-    modifier: Modifier = Modifier,
-    seed: LinkSeed
-){
-    val mainText = remember(seed.links.size) {
-        when(seed.links.size){
-            0 -> "No links"
-            1 -> seed.links.first().uri.toString()
-            else -> "${seed.links.size} links"
-        }
-    }
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        Text(
-            text = mainText,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+        // 5. Chip de tipo (esquina superior derecha) — accesorio visual premium
+        val chipIcon = if (isSingleLink) R.drawable.round_link_24 else R.drawable.round_view_list_24
 
-        Text(
-            text = seed.name,
-            style = MaterialTheme.typography.titleMedium,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-
-        seed.notes?.takeIf { it.isNotBlank() }?.let { notes ->
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(10.dp)
+                .background(
+                    color = Color.Black.copy(alpha = 0.40f),
+                    shape = MaterialTheme.shapes.extraLarge
+                )
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(
+                modifier = Modifier.size(12.dp),
+                imageVector = ImageVector.vectorResource(chipIcon),
+                contentDescription = null,
+                tint = Color.White
+            )
             Text(
-                text = notes,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                text = pluralStringResource(
+                    id = R.plurals.link_count_label,
+                    count = seed.links.size,
+                    seed.links.size
+                ),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White,
+                fontWeight = FontWeight.Medium
             )
         }
     }
@@ -327,58 +368,66 @@ private fun TrailButtons(
     onSingleLink: () -> Unit,
     onMultiLink: () -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onDarkBackground: Boolean = false // Nuevo: ajusta el tinte para fondos oscuros
 ) {
-    val (iconRes, contentDescription, onClick) = remember(isSingleLink, showContent) {
-        when {
-            isSingleLink ->
-                Triple(R.drawable.round_content_copy_24, "Copy link", onSingleLink)
+    val iconRes: Int
+    val contentDescId: Int
+    val onClick: () -> Unit
 
-            showContent ->
-                Triple(R.drawable.round_unfold_less_24, "Hide more links", onMultiLink)
-
-            else ->
-                Triple(R.drawable.round_unfold_more_24, "Show more links", onMultiLink)
+    when {
+        isSingleLink -> {
+            iconRes = R.drawable.round_content_copy_24
+            contentDescId = R.string.copy_link
+            onClick = onSingleLink
+        }
+        showContent -> {
+            iconRes = R.drawable.round_unfold_less_24
+            contentDescId = R.string.hide_more_links
+            onClick = onMultiLink
+        }
+        else -> {
+            iconRes = R.drawable.round_unfold_more_24
+            contentDescId = R.string.show_more_links
+            onClick = onMultiLink
         }
     }
 
+    val targetRotation = if (!isSingleLink && showContent) 180f else 0f
     val iconRotation by animateFloatAsState(
-        targetValue = if (showContent) 180f else 0f,
+        targetValue = targetRotation,
         animationSpec = tween(ItemSeedDefaults.AnimationDuration),
         label = "Trail Icon Rotation"
     )
 
-    val buttonSize = ItemSeedDefaults.IconSizeMedium + 8.dp
     val iconSize = ItemSeedDefaults.IconSizeMedium
+    val tintColor = if (onDarkBackground) Color.White else MaterialTheme.colorScheme.primary
 
+    val contentDesc = stringResource(contentDescId)
     Row(
-        modifier = modifier.semantics {
-            this.contentDescription = contentDescription
-        },
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = modifier.semantics { contentDescription = contentDesc },
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AkariTooltip(
-            text = contentDescription,
-        ) {
-            IconButton(
-                modifier = Modifier.size(buttonSize),
-                onClick = onClick
-            ) {
+        AkariTooltip(text = contentDesc) {
+            IconButton(onClick = onClick) {
                 Icon(
-                    modifier = Modifier.size(iconSize).rotate(iconRotation),
+                    modifier = Modifier
+                        .size(iconSize)
+                        .rotate(iconRotation),
                     imageVector = ImageVector.vectorResource(iconRes),
-                    contentDescription = contentDescription
+                    contentDescription = contentDesc,
+                    tint = tintColor
                 )
             }
         }
 
         MoreOptions(
             widthSizeClass = widthSizeClass,
-            buttonSize = buttonSize,
             iconSize = iconSize,
             onEdit = onEdit,
-            onDelete = onDelete
+            onDelete = onDelete,
+            onDarkBackground = onDarkBackground
         )
     }
 }
@@ -387,28 +436,23 @@ private fun TrailButtons(
 @Composable
 private fun MoreOptions(
     widthSizeClass: WindowWidthSizeClass,
-    buttonSize: Dp,
     iconSize: Dp,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
-){
+    onDelete: () -> Unit,
+    onDarkBackground: Boolean = false
+) {
     var showMenu by remember { mutableStateOf(false) }
+    val iconTint = if (onDarkBackground) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
 
     if (widthSizeClass == WindowWidthSizeClass.Compact) {
-        Box(
-            modifier = Modifier.wrapContentSize()
-        ) {
-            AkariTooltip(
-                text = "Options",
-            ) {
-                IconButton(
-                    modifier = Modifier.size(buttonSize),
-                    onClick = { showMenu = !showMenu }
-                ){
+        Box(modifier = Modifier.wrapContentSize()) {
+            AkariTooltip(text = stringResource(R.string.options)) {
+                IconButton(onClick = { showMenu = !showMenu }) {
                     Icon(
                         modifier = Modifier.size(iconSize),
                         imageVector = Icons.Default.MoreVert,
-                        contentDescription = "More options"
+                        contentDescription = stringResource(R.string.more_options),
+                        tint = iconTint
                     )
                 }
             }
@@ -418,45 +462,43 @@ private fun MoreOptions(
             ) {
                 DropdownMenuItem(
                     leadingIcon = {
-                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
+                        Icon(imageVector = Icons.Default.Edit, contentDescription = stringResource(R.string.edit))
                     },
-                    text = { Text("Edit") },
+                    text = { Text(stringResource(R.string.edit)) },
                     onClick = { onEdit(); showMenu = false }
                 )
                 DropdownMenuItem(
                     leadingIcon = {
-                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
+                        Icon(imageVector = Icons.Default.Delete, contentDescription = stringResource(R.string.delete))
                     },
-                    text = { Text("Delete") },
+                    text = { Text(stringResource(R.string.delete)) },
                     onClick = { onDelete(); showMenu = false }
                 )
             }
         }
     } else {
-        AkariTooltip(
-            text = "Edit"
-        ) {
-            IconButton(
-                modifier = Modifier.size(buttonSize),
-                onClick = onEdit
-            ){
-                Icon(
-                    modifier = Modifier.size(iconSize),
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit"
-                )
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            AkariTooltip(text = stringResource(R.string.edit)) {
+                IconButton(onClick = onEdit) {
+                    Icon(
+                        modifier = Modifier.size(iconSize),
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = stringResource(R.string.edit),
+                        tint = iconTint
+                    )
+                }
             }
-        }
-
-        AkariTooltip(
-            text = "Delete"
-        ) {
-            Icon(
-                modifier = Modifier.size(iconSize),
-                imageVector = Icons.Default.Delete,
-                tint = MaterialTheme.colorScheme.error,
-                contentDescription = "Delete"
-            )
+            AkariTooltip(text = stringResource(R.string.delete)) {
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        modifier = Modifier.size(iconSize),
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.delete),
+                        tint = if (onDarkBackground) Color.White.copy(alpha = 0.85f)
+                        else MaterialTheme.colorScheme.error
+                    )
+                }
+            }
         }
     }
 }
@@ -468,7 +510,7 @@ private fun MultiLinksContent(
     entries: List<LinkEntry>,
     onClick: (Uri) -> Unit,
     onCopy: (Uri) -> Unit
-){
+) {
     AnimatedVisibility(
         visible = visible,
         enter = fadeIn(),
@@ -478,12 +520,19 @@ private fun MultiLinksContent(
             modifier = modifier,
             verticalArrangement = Arrangement.Center
         ) {
-            entries.forEach { entry ->
+            entries.forEachIndexed { index, entry ->
                 ItemLink(
                     entry = entry,
                     onClick = { onClick(entry.uri) },
                     onCopy = { onCopy(entry.uri) }
                 )
+                if (index < entries.size - 1) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+                }
             }
         }
     }
@@ -495,16 +544,16 @@ private fun ItemLink(
     entry: LinkEntry,
     onClick: () -> Unit,
     onCopy: () -> Unit
-){
+) {
     ListItem(
         modifier = modifier
             .clip(MaterialTheme.shapes.small)
             .clickable(onClick = onClick),
-        overlineContent = entry.label?.let{ label ->
+        overlineContent = entry.label?.let { label ->
             {
                 Text(
                     text = label,
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelSmall,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -514,16 +563,18 @@ private fun ItemLink(
             SelectionContainer {
                 Text(
                     text = entry.uri.toString(),
+                    style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
         },
-        supportingContent = entry.note?.let{ note ->
+        supportingContent = entry.note?.let { note ->
             {
                 Text(
                     text = note,
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -534,7 +585,7 @@ private fun ItemLink(
                 modifier = Modifier.size(ItemSeedDefaults.IconSizeMedium),
                 imageVector = ImageVector.vectorResource(R.drawable.round_link_24),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
             )
         },
         trailingContent = {
@@ -542,8 +593,8 @@ private fun ItemLink(
                 Icon(
                     modifier = Modifier.size(ItemSeedDefaults.IconSizeMedium),
                     imageVector = ImageVector.vectorResource(R.drawable.round_content_copy_24),
-                    contentDescription = "Copy",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    contentDescription = stringResource(R.string.copy),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             }
         },
