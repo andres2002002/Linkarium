@@ -22,25 +22,31 @@ class UriValidatorImpl @Inject constructor() : UriValidator {
 
     private companion object {
         // Esquemas de red estrictos
-        val NETWORK_SCHEMES = setOf("http", "https")
+        val NETWORK_SCHEMES = setOf("http", "https", "mailto")
         // Esquemas locales soportados
         val LOCAL_SCHEMES = setOf("content", "file", "asset")
     }
 
     override fun isNetworkUrl(uri: Uri?): Boolean {
         if (uri == null) return false
-        val resolvedUri = uri.toHttpsUri() ?: return false
-        Timber.d("isNetworkUrl 0: $uri -> $resolvedUri")
+        Timber.d("Uri passed: $uri")
+        val resolvedUri = uri.toHttpsUri()
+        Timber.d("Uri resolved: $resolvedUri")
         val scheme = resolvedUri.scheme?.lowercase() ?: return false
-        Timber.d("isNetworkUrl 1: $scheme")
+        Timber.d("Uri scheme: $scheme")
 
         // Fail-fast: Si el esquema no es http/s, no gastamos tiempo en Regex
         if (scheme !in NETWORK_SCHEMES) return false
-        Timber.d("isNetworkUrl 2: $uri -> $resolvedUri")
+        Timber.d("Uri scheme is valid")
 
         // Validación estricta usando herramientas nativas de Android
         val uriString = resolvedUri.toString()
-        return URLUtil.isNetworkUrl(uriString) && Patterns.WEB_URL.matcher(uriString).matches()
+        val isNetworkUrl = URLUtil.isNetworkUrl(uriString)
+        val isPatternMatch = Patterns.WEB_URL.matcher(uriString).matches()
+        Timber.d("Uri is network URL: $isNetworkUrl")
+        Timber.d("Uri matches pattern: $isPatternMatch")
+
+        return isNetworkUrl && isPatternMatch
     }
 
     override fun isNetworkUrl(url: String?): Boolean {

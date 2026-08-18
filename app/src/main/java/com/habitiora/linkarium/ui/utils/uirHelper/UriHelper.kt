@@ -6,8 +6,13 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.core.net.toUri
+import com.habitiora.linkarium.core.UriUtils.toHttpsUri
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 
-class UriHelper(private val context: Context) {
+class UriHelper (
+    private val context: Context
+) {
     private fun validateUrl(uri: Uri): Boolean {
         val schemeValid = uri.scheme in listOf("http", "https")
         val hostValid = uri.host != null
@@ -30,7 +35,7 @@ class UriHelper(private val context: Context) {
 
     fun open(uri: Uri) {
         try {
-            val repairedUri = repairUri(uri)
+            val repairedUri = uri.toHttpsUri()
             val intent = Intent(Intent.ACTION_VIEW, repairedUri)
             context.startActivity(intent)
         } catch (e: ActivityNotFoundException) {
