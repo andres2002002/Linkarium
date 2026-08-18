@@ -51,7 +51,7 @@ splashscreen = "1.2.0"
 
 kspVersion = "2.3.6"
 
-uicomponents = "1.1.33"
+uicomponents = "1.1.34"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
