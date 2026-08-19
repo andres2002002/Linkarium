@@ -69,12 +69,6 @@ Linkarium allows you to **export your data in PDF or JSON format**.
 
 ---
 
-## 📄 License
-
-This project is licensed under the **MIT License**. See the [`LICENSE`](LICENSE) file for more details.
-
----
-
 ## 💬 Contributions
 
 Contributions are welcome! If you have an idea or improvement, open an *issue* or submit a *pull request*.
@@ -85,3 +79,31 @@ Contributions are welcome! If you have an idea or improvement, open an *issue* o
 
 **Developed by andres2002002**
 Project in constant evolution as part of **Linkarium Development** 🌿
+
+## License
+
+Copyright (C) 2026 andres2002002
+
+Linkarium is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published
+by the Free Software Foundation, either version 3 of the License,
+or (at your option) any later version.
+
+Linkarium is distributed under the GNU General Public License,
+version 3 or later (GPL-3.0-or-later).
+
+See [LICENSE](LICENSE) for the complete license text.
+
+### Third-Party Software
+
+Linkarium uses third-party open-source libraries. Their respective
+licenses remain applicable to those components.
+
+See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) for the
+runtime dependencies used by Linkarium.
+
+### Legal
+
+- [Privacy Policy](PRIVACY.md)
+- [Terms of Use](TERMS.md)
+- [Third-Party Licenses](THIRD_PARTY_LICENSES.md)
