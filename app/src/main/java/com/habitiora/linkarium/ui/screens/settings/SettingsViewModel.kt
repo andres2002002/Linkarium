@@ -5,23 +5,25 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.habitiora.linkarium.core.UriUtils.toUriSafe
 import com.habitiora.linkarium.core.UriValidator
+import com.habitiora.linkarium.data.local.usecase.ImportUseCase
 import com.habitiora.linkarium.data.repository.PreferencesRepository
 import com.habitiora.linkarium.ui.navigation.Screens
 import com.habitiora.linkarium.ui.utils.pubsAndSubs.NavigationEventBus
-import com.habitiora.linkarium.ui.utils.uirHelper.UriHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val navigationEventBus: NavigationEventBus,
     private val preferences: PreferencesRepository,
-    private val uriValidator: UriValidator
+    private val uriValidator: UriValidator,
+    private val importUseCase: ImportUseCase,
 ) : ViewModel() {
 
     val isBiometricLockEnabled: StateFlow<Boolean> = preferences.userPreferences.map { it.useBiometricLock }
@@ -38,6 +40,18 @@ class SettingsViewModel @Inject constructor(
         if (uriValidator.isValidResource(uri)) {
             uri.toUriSafe()?.let {
                 openUri(it)
+            }
+        }
+    }
+
+    fun import(uri: Uri) {
+        viewModelScope.launch {
+            try {
+                importUseCase(uri).collect { status ->
+                    Timber.i("$status")
+                }
+            } catch (e: Exception) {
+                Timber.e(e)
             }
         }
     }

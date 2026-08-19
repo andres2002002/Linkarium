@@ -94,7 +94,7 @@ The rights granted by the GNU General Public License remain unaffected by change
 
 The handling of information by Linkarium is described in the Linkarium Privacy Policy.
 
-**Privacy Policy:** https://github.com/andres2002002/Linkarium
+**Privacy Policy:** [https://andres2002002.github.io/Linkarium/privacy](https://andres2002002.github.io/Linkarium/privacy)
 
 The Privacy Policy may be updated independently when the application's data handling practices change.
 
@@ -112,4 +112,4 @@ For questions regarding Linkarium or these Terms of Use, contact:
 
 **Email:** [support@veneros.dev](mailto:support@veneros.dev)
 
-**Project:** https://github.com/andres2002002/Linkarium
+**Project:** [https://github.com/andres2002002/Linkarium](https://github.com/andres2002002/Linkarium)

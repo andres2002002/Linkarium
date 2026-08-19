@@ -181,7 +181,7 @@ AkariUi is a UI component library developed by the Linkarium developer
 and used by Linkarium for reusable Jetpack Compose UI components.
 
 Project:
-https://github.com/andres2002002
+https://github.com/andres2002002/AkariUI
 
 License:
 MIT License
