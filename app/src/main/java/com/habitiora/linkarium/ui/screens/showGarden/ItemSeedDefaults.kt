@@ -3,7 +3,6 @@ package com.habitiora.linkarium.ui.screens.showGarden
 import androidx.compose.ui.unit.dp
 
 object ItemSeedDefaults {
-    const val defaultPreview = "https://cdn.akamai.steamstatic.com/steam/apps/105600/header.jpg"
     const val AnimationDuration = 300
     val CardElevation = 4.dp
     val CardElevationSelected = 8.dp

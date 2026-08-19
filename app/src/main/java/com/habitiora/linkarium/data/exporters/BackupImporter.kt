@@ -3,7 +3,7 @@ package com.habitiora.linkarium.data.exporters
 import android.content.Context
 import android.net.Uri
 import androidx.room.withTransaction
-import com.habitiora.linkarium.core.exporters.ExportStatus
+import com.habitiora.linkarium.core.exporters.ImportStatus
 import com.habitiora.linkarium.data.local.room.AppDatabase
 import com.habitiora.linkarium.data.local.room.dao.LinkEntryEntityDao
 import com.habitiora.linkarium.data.local.room.dao.LinkGardenEntityDao
@@ -41,8 +41,8 @@ class BackupImporter @Inject constructor(
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 
-    fun execute(uri: Uri): Flow<ExportStatus> = flow {
-        emit(ExportStatus.InProgress(0, 0, 0f))
+    fun execute(uri: Uri): Flow<ImportStatus> = flow {
+        emit(ImportStatus.InProgress)
 
         try {
             val inputStream = context.contentResolver.openInputStream(uri)
@@ -81,10 +81,10 @@ class BackupImporter @Inject constructor(
                 entryDao.upsertAll(allEntries)
                 tagsDao.upsertAll(allTags)
             }
-            emit(ExportStatus.Success())
+            emit(ImportStatus.Success(uri))
 
         } catch (e: Exception) {
-            emit(ExportStatus.Error(e))
+            emit(ImportStatus.Error(e))
         }
     }.flowOn(Dispatchers.IO)
 }

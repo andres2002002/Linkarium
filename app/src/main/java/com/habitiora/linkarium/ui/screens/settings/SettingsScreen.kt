@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.FileDownload
@@ -114,8 +115,8 @@ fun SettingsScreen(
                     onClick = { viewModel.navigateTo(Screens.Export) }
                 )
                 SettingsItem(
-                    title = stringResource(R.string.export_data),
-                    subtitle = stringResource(R.string.export_subtitle),
+                    title = stringResource(R.string.import_data),
+                    subtitle = stringResource(R.string.import_subtitle),
                     icon = Icons.Outlined.FileDownload,
                     onClick = { importLauncher.launch(arrayOf("application/octet-stream", "application/json", "*/*")) }
                 )
@@ -203,6 +204,25 @@ fun SettingsScreen(
                             "https://github.com/andres2002002",
                             uriHelper::open
                         )
+                    }
+                )
+            }
+        }
+        item { Spacer(Modifier.height(8.dp)) }
+        item {
+            SettingsGroupHeader(
+                title = stringResource(R.string.delete_user_data_title),
+                icon = Icons.Outlined.DeleteForever
+            )
+        }
+        item {
+            SettingsCard {
+                SettingsItem(
+                    title = stringResource(R.string.delete_user_data_title),
+                    subtitle = stringResource(R.string.delete_user_data_subtitle),
+                    icon = Icons.Outlined.DeleteForever,
+                    onClick = {
+                        viewModel.deleteUserData()
                     }
                 )
             }

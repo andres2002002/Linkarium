@@ -7,7 +7,6 @@ import com.habitiora.linkarium.core.exporters.ExportFormat
 import com.habitiora.linkarium.core.exporters.ExportRequest
 import com.habitiora.linkarium.core.exporters.ExportStatus
 import com.habitiora.linkarium.data.local.usecase.ExportUseCase
-import com.habitiora.linkarium.data.local.usecase.ImportUseCase
 import com.habitiora.linkarium.data.repository.LinkGardenRepository
 import com.habitiora.linkarium.ui.utils.ExportSelectionMode
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,7 +24,6 @@ import javax.inject.Inject
 @HiltViewModel
 class ExportViewModel @Inject constructor(
     private val exportUseCase: ExportUseCase,
-    private val importUseCase: ImportUseCase,
     private val gardenRepository: LinkGardenRepository,
 ) : ViewModel() {
     private val _exportStatus = MutableStateFlow<ExportStatus>(ExportStatus.Idle)
@@ -72,19 +70,6 @@ class ExportViewModel @Inject constructor(
             }
         }
     }
-
-    fun import(uri: Uri) {
-        viewModelScope.launch {
-            try {
-                importUseCase(uri).collect { status ->
-                    _exportStatus.value = status
-                }
-            } catch (e: Exception) {
-                Timber.e(e)
-            }
-        }
-    }
-
     fun resetStatus(){
         _exportStatus.value = ExportStatus.Idle
     }

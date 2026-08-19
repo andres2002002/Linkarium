@@ -1,5 +1,8 @@
 package com.habitiora.linkarium.ui.screens.showGarden
 
+import android.content.Context
+import android.net.Uri
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,8 +21,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import com.habitiora.linkarium.R
@@ -40,6 +45,9 @@ fun ShowSeedsScreen(
     val uriHelper = rememberUriHelper()
     val windowSizeClass = LocalWindowSizeClass.current
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val defaultCover = getLocalDrawableUri(context, R.drawable.linkarium_logo_24)
 
     var showSelector by remember { mutableStateOf(false) }
 
@@ -98,6 +106,7 @@ fun ShowSeedsScreen(
                     if (seed != null) {
                         ItemSeed(
                             seed = seed,
+                            defaultCoverUri = defaultCover,
                             clipboardHelper = clipboardHelper,
                             urlHelper = uriHelper,
                             scope = scope,
@@ -135,6 +144,10 @@ fun ShowSeedsScreen(
             }
         }
     }
+}
+
+fun getLocalDrawableUri(context: Context, @DrawableRes resId: Int): Uri {
+    return "android.resource://${context.packageName}/$resId".toUri()
 }
 
 @Composable
