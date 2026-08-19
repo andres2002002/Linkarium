@@ -161,13 +161,23 @@ fun SettingsScreen(
                 SettingsItem(
                     title = stringResource(R.string.terms_and_conditions),
                     icon = Icons.Outlined.Gavel,
-                    onClick = {}
+                    onClick = {
+                        viewModel.openUri(
+                            "https://andres2002002.github.io/Linkarium/terms",
+                            uriHelper::open
+                        )
+                    }
                 )
                 SettingsDivider()
                 SettingsItem(
                     title = stringResource(R.string.privacy_policy),
                     icon = Icons.Outlined.Policy,
-                    onClick = {}
+                    onClick = {
+                        viewModel.openUri(
+                            "https://andres2002002.github.io/Linkarium/privacy",
+                            uriHelper::open
+                        )
+                    }
                 )
             }
         }
@@ -466,7 +476,7 @@ private fun SettingsFooter() {
             color = MaterialTheme.colorScheme.primary
         )
         Text(
-            stringResource(R.string.footer_copyright),
+            stringResource(R.string.footer_copyright, "2026"),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

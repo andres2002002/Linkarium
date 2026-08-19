@@ -80,7 +80,7 @@
     <string name="delete_user_data_subtitle">Esta acción es irreversible</string>
 
     <!-- Footer -->
-    <string name="footer_copyright">© 2025 Habitiora</string>
+    <string name="footer_copyright">© %1$s Habitiora</string>
 
 
     <!-- ==================== PANTALLA DE EXPORTACIÓN ==================== -->
