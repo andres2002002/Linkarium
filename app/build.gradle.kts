@@ -28,11 +28,21 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(providers.gradleProperty("LINKARIUM_KEYSTORE").get())
+            storePassword = providers.gradleProperty("LINKARIUM_KEYSTORE_PASSWORD").get()
+            keyAlias = providers.gradleProperty("LINKARIUM_KEY_ALIAS").get()
+            keyPassword = providers.gradleProperty("LINKARIUM_KEY_PASSWORD").get()
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             isDebuggable = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
