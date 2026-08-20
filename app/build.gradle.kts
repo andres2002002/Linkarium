@@ -16,16 +16,25 @@ kotlin {
 
 android {
     namespace = "com.habitiora.linkarium"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.habitiora.linkarium"
         minSdk = 28
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file(providers.gradleProperty("LINKARIUM_KEYSTORE").get())
+            storePassword = providers.gradleProperty("LINKARIUM_KEYSTORE_PASSWORD").get()
+            keyAlias = providers.gradleProperty("LINKARIUM_KEY_ALIAS").get()
+            keyPassword = providers.gradleProperty("LINKARIUM_KEY_PASSWORD").get()
+        }
     }
 
     buildTypes {
@@ -33,6 +42,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             isDebuggable = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

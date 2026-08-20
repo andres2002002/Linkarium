@@ -73,13 +73,19 @@
 
     <!-- Exportar / Importar -->
     <string name="export_subtitle">Guarda una copia de tus jardines y semillas</string>
+    <string name="import_subtitle">Carga un Backup local</string>
+
+    <!-- Delete Data -->
+    <string name="delete_user_data_title">Borrar Datos de Usuario</string>
+    <string name="delete_user_data_subtitle">Esta acción es irreversible</string>
 
     <!-- Footer -->
-    <string name="footer_copyright">© 2025 Habitiora</string>
+    <string name="footer_copyright">© %1$s Habitiora</string>
 
 
     <!-- ==================== PANTALLA DE EXPORTACIÓN ==================== -->
     <string name="export_data">Exportar datos</string>
+    <string name="import_data">Importar datos</string>
     <string name="select_export_format">Seleccionar formato de exportación</string>
     <string name="select_export_format_option">Seleccionar formato</string>
     <string name="export_format_label">Exportar %1$s</string>

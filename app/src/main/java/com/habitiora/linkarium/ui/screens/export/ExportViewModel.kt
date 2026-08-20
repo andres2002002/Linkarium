@@ -70,7 +70,6 @@ class ExportViewModel @Inject constructor(
             }
         }
     }
-
     fun resetStatus(){
         _exportStatus.value = ExportStatus.Idle
     }

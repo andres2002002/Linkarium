@@ -73,13 +73,19 @@
 
     <!-- Export / Import -->
     <string name="export_subtitle">Save a copy of your gardens and seeds</string>
+    <string name="import_subtitle">Load Local Backup</string>
+
+    <!-- Delete Data -->
+    <string name="delete_user_data_title">Delete User Data</string>
+    <string name="delete_user_data_subtitle">This action is Irreversible</string>
 
     <!-- Footer -->
-    <string name="footer_copyright">© 2025 Habitiora</string>
+    <string name="footer_copyright">© %1$s Habitiora</string>
 
 
     <!-- ==================== EXPORT SCREEN ==================== -->
     <string name="export_data">Export Data</string>
+    <string name="import_data">Import Data</string>
     <string name="select_export_format">Select Export Format</string>
     <string name="select_export_format_option">Select Format</string>
     <string name="export_format_label">Export %1$s</string>

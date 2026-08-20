@@ -7,6 +7,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Upsert
 import com.habitiora.linkarium.data.local.room.DatabaseContract
 import com.habitiora.linkarium.data.local.room.entity.LinkSeedEntity
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +19,8 @@ interface LinkSeedEntityDao {
         const val COLUMN_ID = DatabaseContract.LinkSeed.COLUMN_ID
         const val COLUMN_GARDEN_ID = DatabaseContract.LinkSeed.COLUMN_GARDEN_ID
     }
+    @Upsert
+    suspend fun upsertAll(entries: List<LinkSeedEntity>)
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(linkSeed: LinkSeedEntity): Long
     @Update

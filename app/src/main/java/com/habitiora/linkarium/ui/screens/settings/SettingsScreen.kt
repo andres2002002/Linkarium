@@ -1,13 +1,48 @@
 package com.habitiora.linkarium.ui.screens.settings
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.DeleteForever
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material.icons.outlined.Fingerprint
+import androidx.compose.material.icons.outlined.Gavel
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Policy
+import androidx.compose.material.icons.outlined.SwapVert
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -15,11 +50,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.habitiora.linkarium.R
+import com.habitiora.linkarium.core.UriUtils.toUriSafe
 import com.habitiora.linkarium.ui.navigation.Screens
+import com.habitiora.linkarium.ui.utils.uirHelper.rememberUriHelper
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 @Composable
@@ -27,56 +65,84 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val isBiometricLockEnabled by viewModel.isBiometricLockEnabled.collectAsState()
+    val uriHelper = rememberUriHelper()
+    val importLauncher  = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        viewModel.import(uri)
+    }
 
     LazyColumn(
-        modifier       = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
 
         // ── Seguridad ────────────────────────────────────────────────────────
-        item { SettingsGroupHeader(stringResource(R.string.settings_group_security), Icons.Outlined.Lock) }
+        item {
+            SettingsGroupHeader(
+                stringResource(R.string.settings_group_security),
+                Icons.Outlined.Lock
+            )
+        }
         item {
             SettingsCard {
                 SettingsItemToggle(
-                    title    = stringResource(R.string.biometric_lock_title),
+                    title = stringResource(R.string.biometric_lock_title),
                     subtitle = stringResource(R.string.biometric_lock_subtitle),
                     isChecked = isBiometricLockEnabled,
-                    icon      = Icons.Outlined.Fingerprint,
-                    onToggle  = { viewModel.updateBiometricLock(it) }
+                    icon = Icons.Outlined.Fingerprint,
+                    onToggle = { viewModel.updateBiometricLock(it) }
                 )
             }
         }
 
         // ── Exportar / Importar ───────────────────────────────────────────────
         item { Spacer(Modifier.height(8.dp)) }
-        item { SettingsGroupHeader(stringResource(R.string.settings_group_export_import), Icons.Outlined.SwapVert) }
+        item {
+            SettingsGroupHeader(
+                stringResource(R.string.settings_group_export_import),
+                Icons.Outlined.SwapVert
+            )
+        }
         item {
             SettingsCard {
                 SettingsItem(
-                    title    = stringResource(R.string.export_data),
+                    title = stringResource(R.string.export_data),
                     subtitle = stringResource(R.string.export_subtitle),
-                    icon    = Icons.Outlined.FileDownload,
+                    icon = Icons.Outlined.FileDownload,
                     onClick = { viewModel.navigateTo(Screens.Export) }
+                )
+                SettingsItem(
+                    title = stringResource(R.string.import_data),
+                    subtitle = stringResource(R.string.import_subtitle),
+                    icon = Icons.Outlined.FileDownload,
+                    onClick = { importLauncher.launch(arrayOf("application/octet-stream", "application/json", "*/*")) }
                 )
             }
         }
 
         // ── Acerca de ─────────────────────────────────────────────────────────
         item { Spacer(Modifier.height(8.dp)) }
-        item { SettingsGroupHeader(title = stringResource(R.string.about), icon = Icons.Outlined.Info) }
+        item {
+            SettingsGroupHeader(
+                title = stringResource(R.string.about),
+                icon = Icons.Outlined.Info
+            )
+        }
         item {
             SettingsCard {
                 SettingsItem(
-                    title   = stringResource(R.string.app_version),
+                    title = stringResource(R.string.app_version),
                     subtitle = "1.0.0",
-                    icon    = Icons.Outlined.Info,
+                    icon = Icons.Outlined.Info,
                     onClick = {}
                 )
                 SettingsDivider()
                 SettingsItem(
-                    title   = stringResource(R.string.app_description),
-                    icon    = Icons.Outlined.Description,
+                    title = stringResource(R.string.app_description),
+                    icon = Icons.Outlined.Description,
                     onClick = {}
                 )
             }
@@ -84,40 +150,90 @@ fun SettingsScreen(
 
         // ── Términos y condiciones ────────────────────────────────────────────
         item { Spacer(Modifier.height(8.dp)) }
-        item { SettingsGroupHeader(title = stringResource(R.string.terms_and_conditions), icon = Icons.Outlined.Gavel) }
+        item {
+            SettingsGroupHeader(
+                title = stringResource(R.string.terms_and_conditions),
+                icon = Icons.Outlined.Gavel
+            )
+        }
         item {
             SettingsCard {
                 SettingsItem(
-                    title   = stringResource(R.string.terms_and_conditions),
-                    icon    = Icons.Outlined.Gavel,
-                    onClick = {}
+                    title = stringResource(R.string.terms_and_conditions),
+                    icon = Icons.Outlined.Gavel,
+                    onClick = {
+                        viewModel.openUri(
+                            "https://andres2002002.github.io/Linkarium/terms",
+                            uriHelper::open
+                        )
+                    }
                 )
                 SettingsDivider()
                 SettingsItem(
-                    title   = stringResource(R.string.privacy_policy),
-                    icon    = Icons.Outlined.Policy,
-                    onClick = {}
+                    title = stringResource(R.string.privacy_policy),
+                    icon = Icons.Outlined.Policy,
+                    onClick = {
+                        viewModel.openUri(
+                            "https://andres2002002.github.io/Linkarium/privacy",
+                            uriHelper::open
+                        )
+                    }
                 )
             }
         }
 
         // ── Contacto ─────────────────────────────────────────────────────────
         item { Spacer(Modifier.height(8.dp)) }
-        item { SettingsGroupHeader(title = stringResource(R.string.contact_us), icon = Icons.Outlined.Email) }
+        item {
+            SettingsGroupHeader(
+                title = stringResource(R.string.contact_us),
+                icon = Icons.Outlined.Email
+            )
+        }
         item {
             SettingsCard {
                 SettingsItem(
-                    title   = stringResource(R.string.email),
-                    subtitle = "habitiora@gmail.com",
-                    icon    = Icons.Outlined.Email,
-                    onClick = {}
+                    title = stringResource(R.string.email),
+                    subtitle = "support@veneros.dev",
+                    icon = Icons.Outlined.Email,
+                    onClick = {
+                    /* mailto:support@veneros.dev?subject=Linkarium%20Bug%20Report */
+                        val mailto = "mailto:support@veneros.dev?subject=Linkarium Bug Report".toUriSafe()
+                        mailto?.let {
+                            uriHelper.open(it)
+                        }
+                    }
                 )
                 SettingsDivider()
                 SettingsItem(
-                    title   = stringResource(R.string.github),
+                    title = stringResource(R.string.github),
                     subtitle = "andres2002002",
-                    icon    = Icons.Outlined.Code,
-                    onClick = {}
+                    icon = Icons.Outlined.Code,
+                    onClick = {
+                        viewModel.openUri(
+                            "https://github.com/andres2002002",
+                            uriHelper::open
+                        )
+                    }
+                )
+            }
+        }
+        item { Spacer(Modifier.height(8.dp)) }
+        item {
+            SettingsGroupHeader(
+                title = stringResource(R.string.delete_user_data_title),
+                icon = Icons.Outlined.DeleteForever
+            )
+        }
+        item {
+            SettingsCard {
+                SettingsItem(
+                    title = stringResource(R.string.delete_user_data_title),
+                    subtitle = stringResource(R.string.delete_user_data_subtitle),
+                    icon = Icons.Outlined.DeleteForever,
+                    onClick = {
+                        viewModel.deleteUserData()
+                    }
                 )
             }
         }
@@ -156,20 +272,20 @@ fun SettingsGroupHeader(
                 shape = MaterialTheme.shapes.medium
             )
             .padding(horizontal = 12.dp, vertical = 6.dp),
-        verticalAlignment     = Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Icon(
-            imageVector        = icon,
+            imageVector = icon,
             contentDescription = null,
-            tint               = MaterialTheme.colorScheme.primary,
-            modifier           = Modifier.size(16.dp)
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(16.dp)
         )
         Text(
-            text       = title,
-            style      = MaterialTheme.typography.labelLarge,
+            text = title,
+            style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
-            color      = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary
         )
     }
 }
@@ -184,9 +300,9 @@ private fun SettingsCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
-        modifier  = Modifier.fillMaxWidth(),
-        shape     = MaterialTheme.shapes.large,
-        colors    = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth(), content = content)
@@ -197,9 +313,9 @@ private fun SettingsCard(
 @Composable
 private fun SettingsDivider() {
     HorizontalDivider(
-        modifier  = Modifier.padding(horizontal = 16.dp),
+        modifier = Modifier.padding(horizontal = 16.dp),
         thickness = 0.5.dp,
-        color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
     )
 }
 
@@ -221,14 +337,14 @@ fun SettingsItem(
             .clickable { onClick() },
         headlineContent = {
             Text(
-                text  = title,
+                text = title,
                 style = MaterialTheme.typography.bodyLarge
             )
         },
         supportingContent = subtitle?.let {
             {
                 Text(
-                    text  = it,
+                    text = it,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -236,7 +352,7 @@ fun SettingsItem(
         },
         leadingContent = {
             Box(
-                modifier         = Modifier
+                modifier = Modifier
                     .size(36.dp)
                     .background(
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
@@ -245,19 +361,19 @@ fun SettingsItem(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector        = icon,
+                    imageVector = icon,
                     contentDescription = null,
-                    tint               = MaterialTheme.colorScheme.primary,
-                    modifier           = Modifier.size(18.dp)
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
                 )
             }
         },
         trailingContent = {
             Icon(
-                imageVector        = Icons.Outlined.ChevronRight,
+                imageVector = Icons.Outlined.ChevronRight,
                 contentDescription = null,
-                tint               = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                modifier           = Modifier.size(18.dp)
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(18.dp)
             )
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
@@ -277,14 +393,14 @@ fun SettingsItemToggle(
         modifier = Modifier.clip(MaterialTheme.shapes.large),
         headlineContent = {
             Text(
-                text  = title,
+                text = title,
                 style = MaterialTheme.typography.bodyLarge
             )
         },
         supportingContent = subtitle?.let {
             {
                 Text(
-                    text  = it,
+                    text = it,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -292,7 +408,7 @@ fun SettingsItemToggle(
         },
         leadingContent = {
             Box(
-                modifier         = Modifier
+                modifier = Modifier
                     .size(36.dp)
                     .background(
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
@@ -301,16 +417,16 @@ fun SettingsItemToggle(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector        = icon,
+                    imageVector = icon,
                     contentDescription = null,
-                    tint               = MaterialTheme.colorScheme.primary,
-                    modifier           = Modifier.size(18.dp)
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
                 )
             }
         },
         trailingContent = {
             Switch(
-                checked         = isChecked,
+                checked = isChecked,
                 onCheckedChange = onToggle
             )
         },
@@ -326,13 +442,13 @@ fun SettingsItemToggle(
 @Composable
 private fun SettingsFooter() {
     Column(
-        modifier            = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // Icono con halo sutil
         Box(
-            modifier         = Modifier
+            modifier = Modifier
                 .size(48.dp)
                 .background(
                     Brush.radialGradient(
@@ -346,21 +462,21 @@ private fun SettingsFooter() {
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector        = Icons.Outlined.LocalFlorist,
+                imageVector = ImageVector.vectorResource(R.drawable.linkarium_logo_24),
                 contentDescription = null,
-                tint               = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                modifier           = Modifier.size(24.dp)
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                modifier = Modifier.size(48.dp)
             )
         }
 
         Text(
-            text       = "Linkarium",
-            style      = MaterialTheme.typography.titleMedium,
+            text = "Linkarium",
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color      = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary
         )
         Text(
-            stringResource(R.string.footer_copyright),
+            stringResource(R.string.footer_copyright, "2026"),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

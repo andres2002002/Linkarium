@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.LocalFlorist
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -32,7 +30,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,15 +52,15 @@ fun GardensScreen(
     val gardens by viewModel.gardens.collectAsState()
 
     GardensContent(
-        modifier  = Modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        gardens     = gardens,
-        onClick     = viewModel::navigateToShowSeeds,
-        onMove      = viewModel::moveGarden,
+        gardens = gardens,
+        onClick = viewModel::navigateToShowSeeds,
+        onMove = viewModel::moveGarden,
         onDragStart = viewModel::onDragStart,
-        onDragEnd   = viewModel::onDragEnd,
-        onEdit      = viewModel::onEditGarden,
+        onDragEnd = viewModel::onDragEnd,
+        onEdit = viewModel::onEditGarden,
         onAddGarden = viewModel::onAddGarden
     )
 }
@@ -78,35 +78,35 @@ private fun GardensContent(
     onAddGarden: () -> Unit
 ) {
     val state = rememberAkariReorderableLazyState<LinkGarden>(
-        onMove      = { from, to -> onMove(from, to) },
-        onDragEnd   = onDragEnd,
+        onMove = { from, to -> onMove(from, to) },
+        onDragEnd = onDragEnd,
         onDragStart = onDragStart
     )
 
     Column(
-        modifier            = modifier,
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         AddNewGarden(
             modifier = Modifier.fillMaxWidth(),
-            onClick  = onAddGarden
+            onClick = onAddGarden
         )
 
         AkariReorderableLazyColumn(
-            modifier            = Modifier.weight(1f),
-            items               = gardens,
-            state               = state,
-            key                 = { item -> item.id },
-            contentPadding      = PaddingValues(bottom = 64.dp),
+            modifier = Modifier.weight(1f),
+            items = gardens,
+            state = state,
+            key = { item -> item.id },
+            contentPadding = PaddingValues(bottom = 64.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
-            dragActivation      = DragActivation.LongPress
+            dragActivation = DragActivation.LongPress
         ) { item, isDragging ->
             GardenItem(
-                modifier   = Modifier.akariDragHandle(),
+                modifier = Modifier.akariDragHandle(),
                 isDragging = isDragging,
-                garden     = item,
-                onClick    = { onClick(item) },
-                onEdit     = { onEdit(item) }
+                garden = item,
+                onClick = { onClick(item) },
+                onEdit = { onEdit(item) }
             )
         }
     }
@@ -129,28 +129,28 @@ private fun GardenItem(
     onEdit: () -> Unit
 ) {
     val elevation by animateDpAsState(
-        targetValue   = if (isDragging) 8.dp else 1.dp,
+        targetValue = if (isDragging) 8.dp else 1.dp,
         animationSpec = tween(280),
-        label         = "GardenItemElevation"
+        label = "GardenItemElevation"
     )
     val containerColor by animateColorAsState(
-        targetValue   = if (isDragging)
+        targetValue = if (isDragging)
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
         else
             MaterialTheme.colorScheme.surface,
         animationSpec = tween(280),
-        label         = "GardenItemColor"
+        label = "GardenItemColor"
     )
 
     Card(
-        modifier  = modifier.fillMaxWidth(),
-        onClick   = onClick,
-        shape     = MaterialTheme.shapes.large,
-        colors    = CardDefaults.cardColors(containerColor = containerColor),
+        modifier = modifier.fillMaxWidth(),
+        onClick = onClick,
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = containerColor),
         elevation = CardDefaults.cardElevation(defaultElevation = elevation)
     ) {
         Row(
-            modifier              = Modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 // Degradado horizontal sutil igual que SectionCard / DialogHeader
                 .background(
@@ -162,12 +162,12 @@ private fun GardenItem(
                     )
                 )
                 .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment     = Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Icono en contenedor cuadrado — mismo patrón que GardenSelector y DialogHeader
             Box(
-                modifier         = Modifier
+                modifier = Modifier
                     .size(44.dp)
                     .background(
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
@@ -176,33 +176,33 @@ private fun GardenItem(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector      = Icons.Filled.LocalFlorist,
+                    imageVector = ImageVector.vectorResource(id = R.drawable.folder_v2),
                     contentDescription = null,
-                    tint             = MaterialTheme.colorScheme.primary,
-                    modifier         = Modifier.size(22.dp)
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(22.dp)
                 )
             }
 
             // Nombre + descripción
             Column(
-                modifier            = Modifier.weight(1f),
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
-                    text       = garden.name,
-                    style      = MaterialTheme.typography.titleSmall,
+                    text = garden.name,
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    maxLines   = 1,
-                    overflow   = TextOverflow.Ellipsis
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 garden.description.takeIf { it.isNotBlank() }?.let { description ->
                     Text(
-                        text      = description,
-                        style     = MaterialTheme.typography.bodySmall,
-                        color     = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontStyle = FontStyle.Italic,
-                        maxLines  = 1,
-                        overflow  = TextOverflow.Ellipsis
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
@@ -210,9 +210,9 @@ private fun GardenItem(
             // Botón de edición
             IconButton(onClick = onEdit) {
                 Icon(
-                    imageVector      = Icons.Filled.MoreVert,
+                    imageVector = Icons.Filled.MoreVert,
                     contentDescription = stringResource(R.string.more_options),
-                    tint             = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -232,16 +232,16 @@ private fun AddNewGarden(
     onClick: () -> Unit
 ) {
     Card(
-        modifier  = modifier,
-        onClick   = onClick,
-        shape     = MaterialTheme.shapes.large,
-        colors    = CardDefaults.cardColors(
+        modifier = modifier,
+        onClick = onClick,
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
-            modifier              = Modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .background(
                     Brush.horizontalGradient(
@@ -253,34 +253,34 @@ private fun AddNewGarden(
                     )
                 )
                 .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment     = Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Icono con fondo primary sólido — diferenciador visual del CTA
             Box(
-                modifier         = Modifier
+                modifier = Modifier
                     .size(44.dp)
                     .clip(MaterialTheme.shapes.medium)
                     .background(MaterialTheme.colorScheme.primary),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector      = Icons.Default.Add,
+                    imageVector = Icons.Default.Add,
                     contentDescription = null,
-                    tint             = MaterialTheme.colorScheme.onPrimary,
-                    modifier         = Modifier.size(22.dp)
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(22.dp)
                 )
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text       = stringResource(R.string.new_garden),
-                    style      = MaterialTheme.typography.titleSmall,
+                    text = stringResource(R.string.new_garden),
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color      = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text  = stringResource(R.string.add_new_garden_description),
+                    text = stringResource(R.string.add_new_garden_description),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

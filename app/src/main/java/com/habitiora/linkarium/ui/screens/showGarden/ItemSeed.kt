@@ -1,7 +1,6 @@
 package com.habitiora.linkarium.ui.screens.showGarden
 
 import android.net.Uri
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -10,7 +9,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -46,7 +44,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -80,10 +77,12 @@ import com.habitiora.linkarium.ui.utils.uirHelper.UriHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
+
 @Composable
 fun ItemSeed(
     modifier: Modifier = Modifier,
     seed: LinkSeed,
+    defaultCoverUri: Uri,
     clipboardHelper: ClipboardHelper,
     urlHelper: UriHelper,
     widthSizeClass: WindowWidthSizeClass,
@@ -163,6 +162,7 @@ fun ItemSeed(
                     )
                     .semantics { contentDescription = "Seed item: ${seed.name}" },
                 seed = seed,
+                defaultCoverUri = defaultCoverUri,
                 showSelector = showSelector,
                 checked = checked,
                 onCheckedChange = { callbacks.onCheckedChange(it) },
@@ -212,6 +212,7 @@ fun ItemSeed(
 private fun PremiumHeader(
     modifier: Modifier = Modifier,
     seed: LinkSeed,
+    defaultCoverUri: Uri,
     showSelector: Boolean,
     showContent: Boolean,
     widthSizeClass: WindowWidthSizeClass,
@@ -227,7 +228,7 @@ private fun PremiumHeader(
 
         // 1. Imagen de fondo
         AsyncImage(
-            model = seed.coverUri?.toString() ?: ItemSeedDefaults.defaultPreview,
+            model = seed.coverUri?.toString() ?: defaultCoverUri,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
